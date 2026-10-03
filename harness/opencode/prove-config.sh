@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Check the deny list, the OpenCode map, and the rendered opencode.json.
-# No container. bash must not be denied.
+# Check tools.json, the per-module map, and the rendered opencode.json.
+# No container. Only search/fetch may be toggled; bash must stay unmapped.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -8,39 +8,40 @@ render=harness/opencode/render-config.sh
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-"$render" harness/deny harness/opencode/map "$tmp/opencode.json"
+"$render" harness/tools.json harness/opencode/tool-map.json "$tmp/opencode.json"
 diff -u harness/opencode/opencode.json "$tmp/opencode.json"
 
-python3 - "$tmp/opencode.json" <<'PY'
-import json, sys
-from pathlib import Path
+go run harness/opencode/check-config.go \
+  harness/tools.json harness/opencode/tool-map.json harness/opencode/opencode.json
 
-doc = json.load(open(sys.argv[1]))
-assert list(doc) == ["$schema", "permission"], list(doc)
-assert doc["$schema"] == "https://opencode.ai/config.json"
-assert doc["permission"] == {"websearch": "deny", "webfetch": "deny"}
-assert "bash" not in doc["permission"]
+fail() {
+  if "$render" "$@" >"$tmp/out" 2>"$tmp/err"; then
+    echo "renderer accepted bad input: $*" >&2
+    exit 1
+  fi
+}
 
-deny = [ln.strip() for ln in Path("harness/deny").read_text().splitlines() if ln.strip()]
-assert deny == ["search", "fetch"], deny
-maps = [ln.split() for ln in Path("harness/opencode/map").read_text().splitlines() if ln.strip()]
-assert maps == [["search", "websearch"], ["fetch", "webfetch"]], maps
-PY
-
-printf 'search\n' > "$tmp/deny"
-printf 'search bash\n' > "$tmp/map"
-if "$render" "$tmp/deny" "$tmp/map" "$tmp/bad.json" >"$tmp/out" 2>"$tmp/err"; then
-  echo "renderer allowed a bash deny" >&2
-  exit 1
-fi
+printf '{"search": false, "fetch": false}' > "$tmp/tools.json"
+printf '{"search": "bash", "fetch": "webfetch"}' > "$tmp/map.json"
+fail "$tmp/tools.json" "$tmp/map.json" "$tmp/bad.json"
 grep -q bash "$tmp/err"
 
-printf 'search\nmissing\n' > "$tmp/deny"
-printf 'search websearch\n' > "$tmp/map"
-if "$render" "$tmp/deny" "$tmp/map" "$tmp/bad.json" >"$tmp/out" 2>"$tmp/err"; then
-  echo "renderer allowed an unmapped deny name" >&2
-  exit 1
-fi
-grep -q "no map for missing" "$tmp/err"
+printf '{"search": false, "fetch": false, "extra": false}' > "$tmp/tools.json"
+printf '{"search": "websearch", "fetch": "webfetch"}' > "$tmp/map.json"
+fail "$tmp/tools.json" "$tmp/map.json" "$tmp/bad.json"
+grep -q "exactly" "$tmp/err"
+
+printf '{"search": "off", "fetch": false}' > "$tmp/tools.json"
+fail "$tmp/tools.json" "$tmp/map.json" "$tmp/bad.json"
+grep -q "must be bool" "$tmp/err"
+
+printf '{"search": false}' > "$tmp/tools.json"
+fail "$tmp/tools.json" "$tmp/map.json" "$tmp/bad.json"
+grep -q "exactly" "$tmp/err"
+
+# search on drops websearch from the rendered permission.
+printf '{"search": true, "fetch": false}' > "$tmp/tools.json"
+"$render" "$tmp/tools.json" "$tmp/map.json" "$tmp/on.json"
+go run harness/opencode/check-config.go --perm-only "$tmp/on.json" '{"webfetch":"deny"}'
 
 echo "prove-config ok"

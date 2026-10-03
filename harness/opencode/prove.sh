@@ -27,31 +27,7 @@ export PYTHONPATH="."
 "${harbor[@]}" run -p tasks/peasant-smoke \
   -a harness.opencode.agent:OpenCode -e podman
 
-python3 - "$ref" <<'PY'
-import sys
-from pathlib import Path
-
-ref = sys.argv[1].removeprefix("v")
-notes = sorted(Path("jobs").rglob("opencode-stage.txt"), key=lambda p: p.stat().st_mtime)
-if not notes:
-    sys.exit("no opencode-stage.txt under jobs/")
-text = notes[-1].read_text()
-print(notes[-1])
-print(text, end="")
-need = [
-    f"version: {ref}",
-    "websearch: deny",
-    "webfetch: deny",
-    "bash: absent",
-    "webfetch-tool: disabled",
-    "websearch-tool: disabled",
-    "bash-tool: enabled",
-    "auto: explicit deny holds",
-    "connect: failed",
-]
-missing = [line for line in need if line not in text]
-if missing:
-    sys.exit("agent stage log missing: " + ", ".join(missing))
-PY
+bare=${ref#v}
+go run harness/opencode/check-stage.go "$bare"
 
 echo "prove ok ref=$ref"
