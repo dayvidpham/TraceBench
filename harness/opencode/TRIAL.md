@@ -29,21 +29,23 @@ The Dockerfile does not add a firewall. It pins peasant at `4153b0026c9e73157ef6
 - `REVISION` → `/opt/opencode/REVISION`
 - `opencode.json` → `/opt/opencode/opencode.json`
 
-`run()` does not call a model. With the agent network locked it checks `opencode --version`, `OPENCODE_CONFIG=/opt/opencode/opencode.json opencode debug config`, and an HTTP/1.0 GET of `example.com:80`. The egress proxy accepts the TCP handshake and then drops the payload, so the check requires an `HTTP/` status line. That read must fail. The note is `jobs/**/opencode-stage.txt`.
+`run()` does not call a model. With the agent network locked it checks `opencode --version`, `OPENCODE_CONFIG=/opt/opencode/opencode.json opencode debug config`, that `webfetch` and `websearch` are disabled on the `build` agent, that the `bash` tool still runs, that `opencode run --help` keeps explicit denies in place under `--auto`, and an HTTP/1.0 GET of `example.com:80`. The egress proxy accepts the TCP handshake and then drops the payload, so the check requires an `HTTP/` status line. That read must fail. The note is `jobs/**/opencode-stage.txt`.
 
 ```bash
 PYTHONPATH=. harbor run -p tasks/peasant-smoke \
   -a harness.opencode.agent:OpenCode -e podman
 ```
 
-`harness/opencode/prove.sh` on 2026-10-03 wrote `jobs/2026-10-03__16-07-35/peasant-smoke__g75fUyz/agent/opencode-stage.txt` and Harbor scored that trial `1.0`:
+`harness/opencode/prove.sh` on 2026-10-03 wrote `jobs/2026-10-03__16-33-10/peasant-smoke__Q2rgydh/agent/opencode-stage.txt` and Harbor scored that trial `1.0`:
 
 ```
 version: 1.18.34
 websearch: deny
 webfetch: deny
 bash: absent
+webfetch-tool: disabled
+websearch-tool: disabled
+bash-tool: enabled
+auto: explicit deny holds
 connect: failed 4
 ```
-
-Oracle on the same task (`jobs/2026-10-03__16-08-17`) also scored `1.0`.

@@ -43,6 +43,10 @@ need = [
     "websearch: deny",
     "webfetch: deny",
     "bash: absent",
+    "webfetch-tool: disabled",
+    "websearch-tool: disabled",
+    "bash-tool: enabled",
+    "auto: explicit deny holds",
     "connect: failed",
 ]
 missing = [line for line in need if line not in text]

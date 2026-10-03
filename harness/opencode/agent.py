@@ -113,6 +113,37 @@ class OpenCode(BaseInstalledAgent):
         if "bash" in perm:
             raise RuntimeError("bash is set in the OpenCode permission object")
 
+        # Explicit deny removes the tool before a prompt exists. --auto only
+        # replies to permission.asked, and its help text refuses explicit denies.
+        for tool in ("webfetch", "websearch"):
+            denied = await environment.exec(
+                command=f"opencode debug agent build --tool {tool} --params '{{}}'",
+                env={"OPENCODE_CONFIG": "/opt/opencode/opencode.json"},
+                timeout_sec=90,
+            )
+            if f"Tool {tool} is disabled" not in _stdout(denied):
+                raise RuntimeError(f"{tool} was not disabled:\n{_stdout(denied)}")
+
+        bash_tool = await environment.exec(
+            command=(
+                "opencode debug agent build --tool bash "
+                """--params '{"command":"true"}'"""
+            ),
+            env={"OPENCODE_CONFIG": "/opt/opencode/opencode.json"},
+            timeout_sec=90,
+        )
+        bash_text = _stdout(bash_tool)
+        if bash_tool.return_code != 0 or "is disabled" in bash_text:
+            raise RuntimeError(f"bash tool did not run:\n{bash_text}")
+
+        help_text = await self.exec_as_agent(
+            environment,
+            "opencode run --help",
+            timeout_sec=60,
+        )
+        if "not explicitly denied" not in _stdout(help_text):
+            raise RuntimeError("opencode --auto does not say explicit denies stay denied")
+
         # Harbor redirects TCP to a local proxy that accepts the handshake,
         # then drops the payload. A bare connect can succeed while no HTTP
         # response comes back. Require a status line to call it a leak.
@@ -139,6 +170,10 @@ class OpenCode(BaseInstalledAgent):
                 "websearch: deny",
                 "webfetch: deny",
                 "bash: absent",
+                "webfetch-tool: disabled",
+                "websearch-tool: disabled",
+                "bash-tool: enabled",
+                "auto: explicit deny holds",
                 f"connect: failed {probe.return_code}",
                 "",
             ]
