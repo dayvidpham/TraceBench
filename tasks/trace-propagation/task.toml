@@ -1,0 +1,40 @@
+schema_version = "1.4"
+artifacts = []
+
+[task]
+name = "tracebench/trace-propagation"
+version = "1.0.0"
+description = "Fix W3C traceparent propagation across two services (SWE-style bug fix)."
+keywords = ["distributed-tracing", "python", "w3c", "bug-fix"]
+
+[[task.authors]]
+name = "TraceBench"
+
+[metadata]
+category = "programming"
+difficulty_explanation = "Requires reading 3 modules, reproducing broken trace correlation, and fixing header propagation (trace-id, sampled flag, tracestate) without breaking the W3C format."
+tags = ["distributed-tracing", "python", "w3c-trace-context"]
+
+[agent]
+timeout_sec = 600.0
+# Agent gets zero network during the run: no curl-ing solutions,
+# no pip-installing a patched lib, no exfiltrating tests.
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 120.0
+# Verifier also runs offline; tests use randomized ids so hardcoded
+# golden files cannot pass.
+network_mode = "no-network"
+
+[environment]
+# Baseline is public so agent.setup() (harness install) works.
+# [agent]/[verifier] overrides above lock it down for run/verify.
+network_mode = "public"
+build_timeout_sec = 600.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]
