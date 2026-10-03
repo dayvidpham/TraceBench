@@ -25,18 +25,15 @@ CUTOFF=$(git -C "$REPO_ROOT" log --format=%cI --reverse | sed -n '4p')
 [ -n "$CUTOFF" ] || fail "could not derive cutoff"
 rm -rf /tmp/tb-snap-s2 && go run ./cmd/snapshot --repo "$REPO_ROOT" \
   --cutoff-type date --cutoff-date "$CUTOFF" --out /tmp/tb-snap-s2 > /dev/null
-python3 - "/tmp/tb-snap-s2/history.json" "$CUTOFF" <<'EOF'
-import json, sys
-from datetime import datetime, timezone
-payload = json.load(open(sys.argv[1]))
-cutoff = datetime.fromisoformat(sys.argv[2].replace("Z", "+00:00"))
-bad = [c["sha"] for c in payload["commits"]
-       if datetime.fromisoformat(c["committer_time"]) > cutoff]
-assert not bad, f"commits after cutoff: {bad}"
-assert payload["commits"], "expected non-empty history"
-print(f"commits={len(payload['commits'])} files={len(payload['files'])}")
-EOF
-pass "S2 no commit after $CUTOFF"
+# Cross-check against git itself: snapshot must contain exactly the commits
+# git sees at/before the cutoff (committer date, same clock as ListHistory).
+WANT=$(git -C "$REPO_ROOT" rev-list --count --before="$CUTOFF" HEAD)
+GOT=$(jq '.commits | length' /tmp/tb-snap-s2/history.json)
+[ "$GOT" -gt 0 ] || fail "expected non-empty history"
+[ "$GOT" = "$WANT" ] || fail "commits $GOT != git rev-list --before count $WANT"
+FILES=$(jq '.files | length' /tmp/tb-snap-s2/history.json)
+echo "commits=$GOT files=$FILES"
+pass "S2 $GOT commits match git at $CUTOFF"
 
 echo "--- S3: determinism ---"
 rm -rf /tmp/tb-snap-s3a /tmp/tb-snap-s3b
@@ -44,8 +41,8 @@ go run ./cmd/snapshot --repo "$REPO_ROOT" --cutoff-type date \
   --cutoff-date "$CUTOFF" --out /tmp/tb-snap-s3a > /dev/null
 go run ./cmd/snapshot --repo "$REPO_ROOT" --cutoff-type date \
   --cutoff-date "$CUTOFF" --out /tmp/tb-snap-s3b > /dev/null
-HA=$(python3 -c "import json; print(json.load(open('/tmp/tb-snap-s3a/history.json'))['manifest_sha256'])")
-HB=$(python3 -c "import json; print(json.load(open('/tmp/tb-snap-s3b/history.json'))['manifest_sha256'])")
+HA=$(jq -r '.manifest_sha256' /tmp/tb-snap-s3a/history.json)
+HB=$(jq -r '.manifest_sha256' /tmp/tb-snap-s3b/history.json)
 [ "$HA" = "$HB" ] || fail "manifest mismatch $HA != $HB"
 pass "S3 deterministic ($HA)"
 
@@ -56,14 +53,9 @@ TOTAL=$(git -C "$REPO_ROOT" rev-list --count HEAD)
 rm -rf /tmp/tb-snap-s4 && go run ./cmd/snapshot --repo "$REPO_ROOT" \
   --cutoff-type pr --pr 999 --pr-start-override "$PR_START" \
   --out /tmp/tb-snap-s4 > /dev/null
-python3 - "/tmp/tb-snap-s4/history.json" "$TOTAL" <<'EOF'
-import json, sys
-payload = json.load(open(sys.argv[1]))
-total = int(sys.argv[2])
-assert len(payload["commits"]) == total - 1, \
-  f"expected {total-1} commits, got {len(payload['commits'])}"
-print(f"pr-exclusive commits={len(payload['commits'])}/{total}")
-EOF
+GOT_PR=$(jq '.commits | length' /tmp/tb-snap-s4/history.json)
+[ "$GOT_PR" = "$((TOTAL - 1))" ] || fail "expected $((TOTAL-1)) commits, got $GOT_PR"
+echo "pr-exclusive commits=$GOT_PR/$TOTAL"
 pass "S4 PR start $PR_START excluded"
 
 echo "ALL CHECKS PASSED"
