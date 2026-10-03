@@ -1,0 +1,124 @@
+# Wave brief — TraceBench PR <n>[, <n>]
+
+## 1. What this wave is
+
+A coordinated review of <one PR | two sibling PRs> by three independent reviewers, one per lens:
+
+- **Correctness** — does the implementation faithfully serve the issue and its invariants?
+- **API design** — is the surface no larger than the problem; boundaries, naming, contracts?
+- **Test quality** — fixtures, real services, observable assertions, `-race`?
+
+Each reviewer reviews every PR and votes **ACCEPT** or **REVISE** per PR. The orchestrator curates
+the findings afterwards into a two-part report: a short human document and a precise agent
+document.
+
+Scope boundaries to respect: <e.g. no routes, UI, migrations, dispatcher wiring; do not demand
+them>. Do not propose <e.g. a scoring formula>. Review what is here against the acceptance.
+
+## 2. Artifact(s)
+
+| | PR <n> | PR <n> (if two) |
+|---|---|---|
+| URL | | |
+| Issue | | |
+| Head SHA | | |
+| Merge base | | |
+| Current default branch | | |
+| Range | | |
+| CI at SHA | | |
+
+- Verify before trusting anything: `git -C <worktree> rev-parse HEAD` must equal the table's SHA,
+  and `gh pr view <n> -R dayvidpham/TraceBench --json headRefOid` must agree. State the verified SHA
+  at the top of your report.
+- Full patches: `<base-dir>/pr<n>.patch`.
+- <UI or not; evidence required or not.>
+- <Prior review status: first review | prior findings listed in §6.>
+
+## 3. Environment
+
+- Reviewer A: `<base-dir>/a/pr<n>` (detached at the head SHA), `<base-dir>/a/integration` scratch
+  at the current default branch.
+- Reviewer B: `<base-dir>/b/pr<n>`, `<base-dir>/b/integration`.
+- Reviewer C: `<base-dir>/c/pr<n>`, `<base-dir>/c/integration`.
+- <If the change needs a service, each reviewer's own instance and connection details go here.>
+
+PR checkouts are read-only. The integration checkout is disposable for local merge and generation
+experiments: no commits, no pushes, reset it when done.
+
+Test recipe (adjust to the repository gate in `AGENTS.md`):
+
+```sh
+gofmt -l .
+go vet ./...
+go build ./...
+go test -race ./...
+```
+
+<For a task change, add the task validation from README.md, for example
+`harbor run -p tasks/<name> -a oracle -e docker` (or `-e podman` on macOS).>
+
+<Note any gates that cannot run locally and why; CI covers them at the SHA.>
+
+## 4. Issue requirements and acceptance
+
+**Problem.** <bullets>
+
+**Scope.** <numbered bullets from the issue>
+
+**Acceptance.** <verbatim bullets from the issue>
+
+**Open decisions.** <rulings the issue leaves open, if any>
+
+## 5. Epic and invariants
+
+<The invariants and boundaries this PR must honor, with references.>
+
+## 6. Prior review items (re-reviews only)
+
+Every item from the previous review at the prior SHA must be confirmed or refuted against the
+current build, with evidence. Do not re-review only the fix.
+
+1. <prior finding> — <location, what to check>
+2. …
+
+## 7. Specific parity and verification pointers
+
+- <The extraction or move to diff against its previous implementation.>
+- <Callers that must behave identically.>
+- <Tests or fixtures the acceptance names, and whether they exist.>
+- <Generated output that must regenerate with zero diff.>
+
+## 8. Repository rules
+
+- Test cases live in named YAML fixtures with required-name manifests; closed sets assert exact
+  membership; the subject is never mocked; focused Go tests use `-race`.
+- Generated files are regenerated with the pinned tool, never hand-edited.
+- Public API or file-format changes state their compatibility impact.
+- No internal task taxonomy in code, docs, comments, or reports; public-audience prose.
+
+## 9. Output contract for each reviewer
+
+Write `<base-dir>/report-<a|b|c>.md` with:
+
+1. **Verdict** at the verified SHA — `ACCEPT` or `REVISE` (binary).
+2. **Problem statement** — grounded in the issue, in your own words.
+3. **Constraints** — the binding rules that shaped the solution.
+4. **Requirements** — mapped to where the code implements each.
+5. **Acceptance criteria** — each issue bullet assessed met / partial / deferred with evidence.
+6. **Developed solution** — what was built, key files, mechanism end to end.
+7. **Tradeoffs** — decisions taken, alternatives not taken, costs.
+8. **Findings** ranked `BLOCKER` / `IMPORTANT` / `MINOR`, each with `path:line`, a concrete
+   scenario, impact, and a specific fix.
+9. **An explanatory ASCII diagram** of the mechanism as built.
+10. **At least one `c4` diagram**, linted:
+    `python3 "$REPO_HOST/.claude/skills/c4-model/scripts/c4-lint.py" <report>` —
+    exit 0 required.
+11. **Checks run / skipped** with exact commands and observed results, and coverage limits.
+12. **Integration with the current default branch** — merge, generation, and relevant tests.
+
+## 10. Reviewer constraints
+
+- Read-only on the PR checkouts; scratch experiments only in your own integration checkout; no
+  edits, commits, or pushes.
+- No GitHub comments; the orchestrator consolidates and posts.
+- Time-box by prioritizing the load-bearing checks; <skip list and why>.
