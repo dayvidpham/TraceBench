@@ -53,9 +53,12 @@ IMG="$(find_task_image)"
 [ -n "${IMG:-}" ] || fail "no image with /peasant found"
 SHA="$(podman run --rm "$IMG" git -C /peasant rev-parse HEAD)"
 [ "$SHA" = "$PINNED_SHA" ] || fail "image SHA $SHA != pinned $PINNED_SHA"
-podman run --rm "$IMG" sha256sum /peasant/go.mod > /tmp/tb-v2-image.txt
-(cd /tmp 2>/dev/null || true)
-pass "V2 image at pinned SHA $SHA"
+# Working tree must match the committed blob at the pinned SHA (no tampering
+# between clone and build).
+TREE_HASH="$(podman run --rm "$IMG" sha256sum /peasant/go.mod | cut -d' ' -f1)"
+BLOB_HASH="$(podman run --rm "$IMG" git -C /peasant show HEAD:go.mod | sha256sum | cut -d' ' -f1)"
+[ "$TREE_HASH" = "$BLOB_HASH" ] || fail "working tree go.mod != HEAD blob"
+pass "V2 image at pinned SHA $SHA (tree matches blob)"
 
 echo "--- V3: host filesystem unchanged ---"
 git status --porcelain > /tmp/tb-v3-before.txt
