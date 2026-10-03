@@ -21,7 +21,7 @@ This skill serves one repository. Never use bare `gh` commands without repositor
 
 ```sh
 GH_REPO="dayvidpham/TraceBench"
-REPO_HOST="/home/minttea/codebases/dayvidpham/TraceBench"
+REPO_HOST="<repo-root>"   # the TraceBench checkout on main
 BASE="main"
 LIVE_REMOTE="origin"
 ```

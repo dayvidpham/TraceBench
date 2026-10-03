@@ -30,7 +30,7 @@ Resolve the repository before any command. Never rely on a bare PR number.
 GH_REPO="dayvidpham/TraceBench"
 PR=<number>
 LIVE_REMOTE="origin"
-REPO_HOST="/home/minttea/codebases/dayvidpham/TraceBench"
+REPO_HOST="<repo-root>"   # the TraceBench checkout on main
 ```
 
 ## Phase 0 — Recon

@@ -25,7 +25,7 @@ This skill serves one repository. Set explicit values and use them for every com
 
 ```sh
 GH_REPO="dayvidpham/TraceBench"
-REPO_HOST="/home/minttea/codebases/dayvidpham/TraceBench"
+REPO_HOST="<repo-root>"   # the TraceBench checkout on main
 BASE="main"
 LIVE_REMOTE="origin"
 ISSUE="<number>"
