@@ -43,6 +43,30 @@ class OpenCode(BaseInstalledAgent):
             raise RuntimeError("harness/opencode/version is empty")
         return ref
 
+    def _policy(self) -> tuple[dict, dict, dict]:
+        """Load the external toggle and the per-module map, return expected perm.
+
+        tools.json is the single external config (only search/fetch booleans).
+        tool-map.json is contained per module (harness name -> OpenCode key).
+        """
+        import json as _json
+
+        allowed = {"search", "fetch"}
+        tools = _json.loads((self._payload.parent / "tools.json").read_text())
+        mapping = _json.loads((self._payload / "tool-map.json").read_text())
+        if set(tools) != allowed or set(mapping) != allowed:
+            raise RuntimeError(f"policy must be exactly {sorted(allowed)}")
+        for name, enabled in tools.items():
+            if not isinstance(enabled, bool):
+                raise RuntimeError(f"tool {name!r} must be bool")
+        for tool in mapping.values():
+            if tool == "bash":
+                raise RuntimeError("refusing to map bash")
+        expected = {mapping[name]: "deny" for name in sorted(allowed) if not tools[name]}
+        if "bash" in expected:
+            raise RuntimeError("refusing to deny bash")
+        return tools, mapping, expected
+
     def _ensure_config(self) -> Path:
         path = self._payload / "opencode.json"
         if not path.is_file():
@@ -107,22 +131,29 @@ class OpenCode(BaseInstalledAgent):
         if start < 0:
             raise RuntimeError("opencode debug config did not print JSON")
         doc = json.loads(raw[start:])
+        tools, mapping, expected = self._policy()
         perm = doc.get("permission") or {}
-        if perm.get("websearch") != "deny" or perm.get("webfetch") != "deny":
-            raise RuntimeError(f"permission is {perm}")
+        if perm != expected:
+            raise RuntimeError(f"permission is {perm}, want {expected}")
         if "bash" in perm:
             raise RuntimeError("bash is set in the OpenCode permission object")
 
         # Explicit deny removes the tool before a prompt exists. --auto only
         # replies to permission.asked, and its help text refuses explicit denies.
-        for tool in ("webfetch", "websearch"):
-            denied = await environment.exec(
+        # Only search/fetch are toggleable; bash is never in the policy.
+        for name in sorted(mapping):
+            tool = mapping[name]
+            built = await environment.exec(
                 command=f"opencode debug agent build --tool {tool} --params '{{}}'",
                 env={"OPENCODE_CONFIG": "/opt/opencode/opencode.json"},
                 timeout_sec=90,
             )
-            if f"Tool {tool} is disabled" not in _stdout(denied):
-                raise RuntimeError(f"{tool} was not disabled:\n{_stdout(denied)}")
+            text = _stdout(built)
+            if not tools[name]:
+                if f"Tool {tool} is disabled" not in text:
+                    raise RuntimeError(f"{tool} was not disabled:\n{text}")
+            elif built.return_code != 0 or "is disabled" in text:
+                raise RuntimeError(f"{tool} was not enabled:\n{text}")
 
         bash_tool = await environment.exec(
             command=(
