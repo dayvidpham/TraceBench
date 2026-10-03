@@ -69,6 +69,24 @@ harbor view ./jobs
 | `tracebench/trace-propagation` | Fix W3C `traceparent` propagation across two services (trace-id, sampled flag, tracestate) | Medium: 3 files to read, reproduce, fix 1 function |
 | `tracebench/peasant-smoke` | Containerized Peasant codebase builds + fast unit tests pass (issue #1) | Smoke: no bug fix, proves image-origin and host cleanliness |
 
+## Corpus sampling
+
+`cmd/tracebench-sample` indexes merged `peasant-labs/peasant` pull requests,
+links them to agent sessions recorded in a local Peasant database (head-ref
+name matches, same-issue open windows, and commit associations; a session may
+link to several pull requests), and samples a time- and size-stratified
+train/val/test corpus with the raw transcripts:
+
+```bash
+go run ./cmd/tracebench-sample index
+go run ./cmd/tracebench-sample sample --train 30 --val 10 --test 9
+```
+
+Indexes land in `corpus/index/` and the dataset in `corpus/dataset/`;
+`corpus/` is ignored by git. Sessions whose raw source is OpenCode's
+monolithic database are exported per entry from the Peasant full-content
+capture, and the manifest flags missing or partial transcripts.
+
 ## Verification status
 
 * Test logic: buggy code fails 6/7 grading tests, oracle-fixed code passes 7/7.

@@ -1,0 +1,59 @@
+scenarios:
+  - name: pool_within_target
+    config: {train: 2, val: 1, test: 1, seed: 7, keep_groups: true}
+    candidates:
+      - {id: "r#1", group: g1, merged_at: "2026-08-01T00:00:00Z", lines: 10}
+      - {id: "r#2", group: g2, merged_at: "2026-08-02T00:00:00Z", lines: 200}
+      - {id: "r#3", group: g3, merged_at: "2026-08-03T00:00:00Z", lines: 4000}
+      - {id: "r#4", group: g4, merged_at: "2026-08-04T00:00:00Z", lines: 50000}
+    expect:
+      selected: 4
+      counts: {train: 2, val: 1, test: 1}
+
+  - name: stratified_coverage
+    config: {train: 6, val: 3, test: 3, seed: 11, keep_groups: true}
+    candidates:
+      - {id: "r#1", group: g1, merged_at: "2026-03-05T00:00:00Z", lines: 5}
+      - {id: "r#2", group: g2, merged_at: "2026-03-06T00:00:00Z", lines: 800}
+      - {id: "r#3", group: g3, merged_at: "2026-03-07T00:00:00Z", lines: 20000}
+      - {id: "r#4", group: g4, merged_at: "2026-04-05T00:00:00Z", lines: 8}
+      - {id: "r#5", group: g5, merged_at: "2026-04-06T00:00:00Z", lines: 850}
+      - {id: "r#6", group: g6, merged_at: "2026-04-07T00:00:00Z", lines: 21000}
+      - {id: "r#7", group: g7, merged_at: "2026-05-05T00:00:00Z", lines: 11}
+      - {id: "r#8", group: g8, merged_at: "2026-05-06T00:00:00Z", lines: 900}
+      - {id: "r#9", group: g9, merged_at: "2026-05-07T00:00:00Z", lines: 22000}
+      - {id: "r#10", group: g10, merged_at: "2026-06-05T00:00:00Z", lines: 14}
+      - {id: "r#11", group: g11, merged_at: "2026-06-06T00:00:00Z", lines: 950}
+      - {id: "r#12", group: g12, merged_at: "2026-06-07T00:00:00Z", lines: 23000}
+      - {id: "r#13", group: g13, merged_at: "2026-07-05T00:00:00Z", lines: 17}
+      - {id: "r#14", group: g14, merged_at: "2026-07-06T00:00:00Z", lines: 1000}
+      - {id: "r#15", group: g15, merged_at: "2026-07-07T00:00:00Z", lines: 24000}
+      - {id: "r#16", group: g16, merged_at: "2026-08-05T00:00:00Z", lines: 20}
+      - {id: "r#17", group: g17, merged_at: "2026-08-06T00:00:00Z", lines: 1050}
+      - {id: "r#18", group: g18, merged_at: "2026-08-07T00:00:00Z", lines: 25000}
+      - {id: "r#19", group: g19, merged_at: "2026-09-05T00:00:00Z", lines: 23}
+      - {id: "r#20", group: g20, merged_at: "2026-09-06T00:00:00Z", lines: 1100}
+      - {id: "r#21", group: g21, merged_at: "2026-09-07T00:00:00Z", lines: 26000}
+      - {id: "r#22", group: g22, merged_at: "2026-10-05T00:00:00Z", lines: 26}
+      - {id: "r#23", group: g23, merged_at: "2026-10-06T00:00:00Z", lines: 1150}
+      - {id: "r#24", group: g24, merged_at: "2026-10-07T00:00:00Z", lines: 27000}
+    expect:
+      selected: 12
+      counts: {train: 6, val: 3, test: 3}
+      cover_time_quartiles: true
+      cover_size_tertiles: true
+      deterministic: true
+
+  - name: groups_stay_together
+    config: {train: 2, val: 1, test: 1, seed: 3, keep_groups: true}
+    candidates:
+      - {id: "r#1", group: "issue-7", merged_at: "2026-08-01T00:00:00Z", lines: 10}
+      - {id: "r#2", group: "issue-7", merged_at: "2026-08-02T00:00:00Z", lines: 200}
+      - {id: "r#3", group: "issue-7", merged_at: "2026-08-03T00:00:00Z", lines: 3000}
+      - {id: "r#4", group: g4, merged_at: "2026-08-04T00:00:00Z", lines: 40}
+      - {id: "r#5", group: g5, merged_at: "2026-08-05T00:00:00Z", lines: 500}
+      - {id: "r#6", group: g6, merged_at: "2026-08-06T00:00:00Z", lines: 6000}
+      - {id: "r#7", group: g7, merged_at: "2026-08-07T00:00:00Z", lines: 70}
+      - {id: "r#8", group: g8, merged_at: "2026-08-08T00:00:00Z", lines: 800}
+    expect:
+      selected: 4
