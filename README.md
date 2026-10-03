@@ -74,11 +74,21 @@ harbor view ./jobs
 * `harbor run -p tasks/trace-propagation -a oracle -e docker` → reward `1.0`
   (mechanics verified with policy temporarily relaxed to `public`, see below).
 
-> macOS caveat: Docker Desktop's VM kernel lacks `CONFIG_NFT_FIB_INET`, so
-> Harbor correctly **fails closed** (`no-network is not supported`) instead of
-> running with weaker isolation. Strict policies enforce on Linux Docker and on
-> cloud sandboxes (`daytona`, `e2b`, `modal`, …). On a Mac, smoke-test mechanics
-> with a relaxed copy, keep the committed `task.toml` strict:
+> macOS: Docker Desktop's VM kernel lacks `CONFIG_NFT_FIB_INET`, so Harbor
+> correctly **fails closed** (`no-network is not supported`) instead of running
+> with weaker isolation. **Use Podman locally** — its VM kernel passes Harbor's
+> probe and `no-network` enforces correctly (verified: oracle reward `1.0`,
+> raw-socket HTTP probes return 0 bytes):
+>
+> ```bash
+> brew install podman
+> podman machine init && podman machine start
+> harbor run -p tasks/trace-propagation -a oracle -e podman
+> ```
+>
+> Linux Docker and cloud sandboxes (`daytona`, `e2b`, `modal`, …) also enforce
+> strictly. To smoke-test mechanics only with Docker Desktop, use a relaxed
+> copy — keep the committed `task.toml` strict:
 >
 > ```bash
 > rm -rf /tmp/tb-public && cp -r tasks/trace-propagation /tmp/tb-public
