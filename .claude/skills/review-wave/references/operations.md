@@ -143,7 +143,7 @@ Each prompt starts with `/reviewer`, names its lens, points at `$BASE_DIR/wave-b
 gives: its worktree, the report path it must write, and these constraints:
 
 - Verify the SHA before reviewing anything.
-- Write the report with bash heredocs (`cat > … <<'EOF'`); the `edit` tool is denied to reviewers.
+- Write the report as one file, with bash heredocs (`cat > … <<'EOF'`) or the edit tool.
 - Produce a verdict (`ACCEPT` / `REVISE`), problem statement, constraints, requirements,
   acceptance status, developed solution, tradeoffs, ranked findings with `path:line`, a concrete
   scenario, impact and a fix, an explanatory ASCII diagram, at least one `c4` diagram, checks run

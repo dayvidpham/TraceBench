@@ -5,7 +5,6 @@ permission:
   bash:
     "*": allow
   task: allow
-  edit: deny
   external_directory:
     "/tmp/*": allow
 ---
