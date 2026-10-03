@@ -14,6 +14,19 @@ Reviewer side: the `/reviewer` skill and the `reviewer` subagent. Operating mech
 - Three reviewers per wave; each reviewer looks over every PR in the wave.
 - Protocol: review wave → curate findings → structured report.
 
+## Pre-run evidence (once)
+
+- Before spawning reviewers, the orchestrator runs the authoritative checks at the exact reviewed
+  SHA once: the repository gate, the exact-head CI, and any gate CI does not run (run it manually,
+  for example the Harbor task validation). Do not make three reviewers each re-run the same suite.
+- Record the exact commands, observed results, run URLs, and wall times in the wave brief under a
+  "Validation evidence (already run)" heading. A green workflow wrapper is not evidence; a positive
+  `--- PASS: <test>` line or a verifier reward of `1.0` is.
+- Reviewers rely on that evidence. It only needs to be relevant to the change and up to date at the
+  reviewed SHA; a moved SHA makes it stale and restarts the wave. Spot-check a specific claim when
+  it is load-bearing rather than repeating a covered suite.
+- Name the coverage limits in the brief so reviewers know what the evidence does not establish.
+
 ## Review content, per PR
 
 - Problem statement, constraints, requirements, acceptance criteria, developed solution, tradeoffs.

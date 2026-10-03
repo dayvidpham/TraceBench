@@ -88,6 +88,27 @@ isolated instance with an empty base state. Integration tests run their own migr
 pre-migrate the base, and reset it before each full-package run. Record the connection details in
 the brief.
 
+## Phase 1b — Run the authoritative checks once
+
+The orchestrator runs the authoritative checks at the exact reviewed SHA once, before any reviewer
+starts. Three reviewers re-running the same suite is wasted time and yields three partial results.
+
+- Run the repository gate from the reviewed checkout, as `AGENTS.md` defines it: `gofmt -l .`,
+  `go vet ./...`, `go build ./...`, `go test -race ./...`, and `go mod tidy` with no diff.
+- Read the exact-head CI status (`gh pr checks <n> -R "$GH_REPO"`), and run any gate CI does not
+  run. For a task change, run the task validation from `README.md`, for example
+  `harbor run -p tasks/<name> -a oracle -e docker` (or `-e podman` on macOS).
+- Capture for each: the exact command or workflow, the observed result with its load-bearing output
+  line, the run URL, and the wall time. A green wrapper is not evidence; a positive
+  `--- PASS: <test>` line or a verifier reward of `1.0` is.
+- Write the results into the brief under "Validation evidence (already run)" and turn the reviewer
+  test recipe into a spot-check recipe: reproduce a specific claim when it is load-bearing; do not
+  repeat a suite the evidence already covers.
+- Name the coverage limits (container-bound task runs, network-restricted sandboxes, gates that
+  only run on Linux) so reviewers know what the evidence does not establish.
+- The evidence only needs to be relevant to the change and up to date at the reviewed SHA. A moved
+  SHA makes it stale and restarts the wave.
+
 ## Phase 2 — Write the wave brief
 
 Write one brief file at `$BASE_DIR/wave-brief.md` from `templates/wave-brief.md`. It carries
@@ -104,6 +125,8 @@ Rules for the brief:
 - Point at areas worth verifying; do not seed findings. The reviewers must find them.
 - Keep the reviewers' own constraints in the brief: read-only checkouts, scratch only in the
   integration checkout, no GitHub writes, no pushes, time-box.
+- Include the "Validation evidence (already run)" section from phase 1b, and frame the test recipe
+  as spot-checks, not a re-run.
 
 ## Phase 3 — Spawn reviewers
 
@@ -128,6 +151,8 @@ gives: its worktree, the report path it must write, and these constraints:
 - Lint every `c4` block with
   `python3 "$REPO_HOST/.claude/skills/c4-model/scripts/c4-lint.py" <report>`
   until it exits 0.
+- Consume the brief's "Validation evidence (already run)": verify it and spot-check specific claims
+  rather than repeating a covered suite.
 - Public-audience prose: no internal task IDs, slice or phase names, or workflow taxonomy.
 - No edits, commits, pushes, or GitHub comments; return findings only.
 - Never hand a subagent a bare PR number as its only target; give the SHA and local paths.
