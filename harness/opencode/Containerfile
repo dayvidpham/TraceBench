@@ -1,5 +1,0 @@
-ARG BASE
-FROM ${BASE}
-COPY src /opt/opencode
-COPY bin/opencode /usr/local/bin/opencode
-COPY REVISION /opt/opencode/REVISION

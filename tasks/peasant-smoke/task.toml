@@ -19,15 +19,18 @@ tags = ["peasant", "go", "smoke"]
 
 [agent]
 timeout_sec = 600.0
-# NOTE (#1 scope): no network policy is set here on purpose. All phases stay
-# public; lockdown is issue #6's job.
-network_mode = "public"
+# Agent gets zero network during agent.run(). Setup stays on the
+# environment baseline so the harness can be copied in.
+network_mode = "no-network"
 
 [verifier]
 timeout_sec = 600.0
-network_mode = "public"
+# Verifier runs offline. Modules are baked and GOPROXY=off.
+network_mode = "no-network"
 
 [environment]
+# Baseline is public so agent.setup() (harness install) works.
+# [agent] and [verifier] above lock the network for run and verify.
 network_mode = "public"
 build_timeout_sec = 1200.0
 os = "linux"

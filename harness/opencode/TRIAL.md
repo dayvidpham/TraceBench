@@ -1,54 +1,49 @@
-# OpenCode copy trial
+# OpenCode Harbor stage
 
-The copy starts. `opencode --version` inside the container prints `1.18.34`.
+The container image is built by Harbor from `tasks/peasant-smoke/environment/Dockerfile`. `harness/opencode` does not build an image.
 
-## Pin
+## Stages
 
-`harness/opencode/version` is `v1.18.34`. That tag is the GitHub latest release, and the release contains `opencode-linux-x64.tar.gz`. Tag `v2.0.22` has no GitHub release, so it has no linux release binary. OpenCode was not built inside the image.
+`tasks/peasant-smoke/task.toml` follows `tasks/trace-propagation`:
 
-`pull.sh` fetched that tag with depth 1. `rev-list --count --all` was 1. `REVISION` is `aec0b9a6d8898f68f923aaf08b7306d931fd9d76`. `src/.git` was removed. `find harness/opencode/src -name .git` prints nothing.
+- `[environment]` is `public`, so `agent.setup()` can copy the harness in.
+- `[agent]` is `no-network` during `agent.run()`.
+- `[verifier]` is `no-network`.
 
-The linux binary is the single `opencode` file from `opencode-linux-x64.tar.gz`, at `harness/opencode/bin/opencode`.
+The Dockerfile does not add a firewall. It pins peasant at `4153b0026c9e73157ef663368a7bb497c022afc1`, bakes modules, and sets `GOPROXY=off`.
 
-| File | sha256 |
-| --- | --- |
-| `harness/opencode/REVISION` | `9452a87f49dcecb98cb10bb74e4c4dd6c838145bea9cd6170873f1bd43696068` |
-| `harness/opencode/bin/opencode` | `9ca0b9953d49997601655e54f846a3efa464f237e47c6f1b04716d0f2e64c4c2` |
+## Pin and config
 
-## One run
+`harness/opencode/version` is `v1.18.34`. `pull.sh` fetches that tag with depth 1, checks the clone has one commit, writes `REVISION`, deletes `.git`, and downloads the linux release binary for this machine.
 
-Podman 5.4.2 was installed for this trial (it was not on `PATH`). The run was rootless. `tasks/trace-propagation/environment/Dockerfile` and `task.toml` were not edited. The image is `tracebench-trace-propagation`, built from that Dockerfile. No network flag was passed. No volume or bind mount was used.
+`harness/deny` lists `search` and `fetch`. `harness/opencode/map` maps those to `websearch` and `webfetch`. `render-config.sh` writes `opencode.json` with those two permissions set to `deny`. `bash` is not in that object.
 
-`tracebench-trace-propagation` keeps the base command `["python3"]`. A container created without `-i` (`tb-opencode-plain`) inspected as `created []`, and `podman start` left it `exited` with code 0. `podman exec` cannot attach to that state.
+## Agent
 
-The checked container is `tb-opencode-trial`, created with `-i` so the same `python3` command stays up while a fifo holds stdin. Files were copied while it was stopped:
+`harness/opencode/agent.py` is the Harbor agent `OpenCode`.
 
-- `harness/opencode/src` → `/opt/opencode`
-- `harness/opencode/bin/opencode` → `/usr/local/bin/opencode`
-- `harness/opencode/REVISION` → `/opt/opencode/REVISION`
+`install()` uploads, while the environment network is still public:
 
-After create, inspect was `created []`. After start, `Mounts` was still `[]`.
+- `src/` → `/opt/opencode`
+- `bin/opencode` → `/usr/local/bin/opencode`
+- `REVISION` → `/opt/opencode/REVISION`
+- `opencode.json` → `/opt/opencode/opencode.json`
 
-## Checks
-
-All of these passed in `tb-opencode-trial`:
-
-- `sha256sum` of `/opt/opencode/REVISION` and `/usr/local/bin/opencode` matched the host payload above.
-- `stat -c '%u'` on both paths was `0`.
-- `find /opt/opencode -name .git` printed nothing.
-- `opencode --version` stdout was `1.18.34`, the same ref as `v1.18.34`. Stderr was empty.
-
-`prove.sh` is that run. It stops the container on the way out (`tb-opencode-trial` then exits from that stop).
-
-## Reuse
-
-The live container was not committed. This build succeeded:
+`run()` does not call a model. With the agent network locked it checks `opencode --version`, `OPENCODE_CONFIG=/opt/opencode/opencode.json opencode debug config`, and an HTTP/1.0 GET of `example.com:80`. The egress proxy accepts the TCP handshake and then drops the payload, so the check requires an `HTTP/` status line. That read must fail. The note is `jobs/**/opencode-stage.txt`.
 
 ```bash
-podman build --build-arg BASE=tracebench-trace-propagation \
-  -f harness/opencode/Containerfile \
-  -t tracebench-opencode-reuse \
-  harness/opencode
+PYTHONPATH=. harbor run -p tasks/peasant-smoke \
+  -a harness.opencode.agent:OpenCode -e podman
 ```
 
-`podman run --rm localhost/tracebench-opencode-reuse opencode --version` printed `1.18.34`. The same two checksums matched, both paths were uid 0, and `find /opt/opencode -name .git` printed nothing.
+`harness/opencode/prove.sh` on 2026-10-03 wrote `jobs/2026-10-03__16-07-35/peasant-smoke__g75fUyz/agent/opencode-stage.txt` and Harbor scored that trial `1.0`:
+
+```
+version: 1.18.34
+websearch: deny
+webfetch: deny
+bash: absent
+connect: failed 4
+```
+
+Oracle on the same task (`jobs/2026-10-03__16-08-17`) also scored `1.0`.
