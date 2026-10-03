@@ -31,16 +31,18 @@ The Grok CLI session "OpenCode Harness Podman Copy Trial" ran before this checko
 
 ## Proven
 
-`harness/opencode/prove.sh` exited 0 on 2026-10-03. Job `jobs/2026-10-03__16-07-35`, trial `peasant-smoke__g75fUyz`, reward `1.0`. The stage note is `agent/opencode-stage.txt`:
+`harness/opencode/prove.sh` exited 0 on 2026-10-03. Job `jobs/2026-10-03__16-33-10`, trial `peasant-smoke__Q2rgydh`, reward `1.0`. The stage note is `agent/opencode-stage.txt`:
 
 ```
 version: 1.18.34
 websearch: deny
 webfetch: deny
 bash: absent
+webfetch-tool: disabled
+websearch-tool: disabled
+bash-tool: enabled
+auto: explicit deny holds
 connect: failed 4
 ```
 
-`connect: failed 4` is an HTTP/1.0 GET of `example.com:80` during the agent phase. The read got no status line. `run()` does not call a model.
-
-Oracle on the same task, job `jobs/2026-10-03__16-08-17`, scored reward `1.0` with the verifier still `no-network`.
+`webfetch` and `websearch` are disabled on the `build` agent inside the container. The `bash` tool still runs. `opencode run --help` says `--auto` auto-approves permissions that are not explicitly denied. `connect: failed 4` is an HTTP/1.0 GET of `example.com:80` during the agent phase. The read got no status line. `run()` does not call a model.
