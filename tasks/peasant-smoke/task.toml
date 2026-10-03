@@ -1,0 +1,38 @@
+schema_version = "1.4"
+artifacts = []
+
+[task]
+name = "tracebench/peasant-smoke"
+version = "1.0.0"
+description = "Containerized peasant codebase smoke task: build the binary and run a fast unit-test package. Proves the task codebase starts from the image (issue #1)."
+keywords = ["peasant", "go", "containerization", "smoke"]
+
+[[task.authors]]
+name = "TraceBench"
+
+[metadata]
+category = "programming"
+difficulty_explanation = "Smoke task, not a bug fix: build peasant at a pinned commit and run one fast test package. Difficulty is environment setup, not code reasoning."
+tags = ["peasant", "go", "smoke"]
+# Pinned peasant commit: 4153b0026c9e73157ef663368a7bb497c022afc1
+# (keep in sync with environment/Dockerfile PEASANT_SHA).
+
+[agent]
+timeout_sec = 600.0
+# NOTE (#1 scope): no network policy is set here on purpose. All phases stay
+# public; lockdown is issue #6's job.
+network_mode = "public"
+
+[verifier]
+timeout_sec = 600.0
+network_mode = "public"
+
+[environment]
+network_mode = "public"
+build_timeout_sec = 1200.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]

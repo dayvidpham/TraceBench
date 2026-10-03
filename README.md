@@ -67,6 +67,7 @@ harbor view ./jobs
 | Task | What it tests | Difficulty |
 | - | - | - |
 | `tracebench/trace-propagation` | Fix W3C `traceparent` propagation across two services (trace-id, sampled flag, tracestate) | Medium: 3 files to read, reproduce, fix 1 function |
+| `tracebench/peasant-smoke` | Containerized Peasant codebase builds + fast unit tests pass (issue #1) | Smoke: no bug fix, proves image-origin and host cleanliness |
 
 ## Verification status
 
