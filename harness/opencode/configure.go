@@ -1,8 +1,10 @@
-// Command render builds a generated opencode.json from the single parent
-// config (harness/config.json) and the per-harness mapping
-// definition (harness/opencode/tool-map.json).
+// Command configure validates the parent harness config and translates its
+// search/fetch toggles through this harness's local tool map.
 //
-// Only search/fetch may be toggled. bash is never representable.
+// Usage:
+//
+//	configure version <config.json>
+//	configure render <config.json> <tool-map.json> <out-config.json>
 package main
 
 import (
@@ -31,12 +33,7 @@ func loadObject(path string) map[string]json.RawMessage {
 	return obj
 }
 
-func main() {
-	if len(os.Args) != 4 {
-		fail("usage: render <config.json> <tool-map.json> <out.json>")
-	}
-	configPath, mapPath, outPath := os.Args[1], os.Args[2], os.Args[3]
-
+func loadConfig(configPath string) (string, map[string]bool) {
 	configRaw := loadObject(configPath)
 	if len(configRaw) != 2 {
 		fail("config must contain exactly version and tools")
@@ -90,7 +87,10 @@ func main() {
 			fail("tools must be exactly [fetch search], got unexpected %q", name)
 		}
 	}
+	return version, tools
+}
 
+func loadMap(mapPath string) map[string]string {
 	mapRaw := loadObject(mapPath)
 	if len(mapRaw) != len(allowed) {
 		fail("map must be exactly [fetch search], got %d keys", len(mapRaw))
@@ -127,6 +127,10 @@ func main() {
 		}
 	}
 
+	return mapping
+}
+
+func render(tools map[string]bool, mapping map[string]string, outPath string) {
 	permKeys := []string{}
 	for _, name := range allowed {
 		if !tools[name] {
@@ -175,4 +179,19 @@ func main() {
 	if err := os.WriteFile(outPath, []byte(buf), 0644); err != nil {
 		fail("write %s: %v", outPath, err)
 	}
+}
+
+func main() {
+	if len(os.Args) == 3 && os.Args[1] == "version" {
+		version, _ := loadConfig(os.Args[2])
+		fmt.Println(version)
+		return
+	}
+	if len(os.Args) == 5 && os.Args[1] == "render" {
+		_, tools := loadConfig(os.Args[2])
+		mapping := loadMap(os.Args[3])
+		render(tools, mapping, os.Args[4])
+		return
+	}
+	fail("usage: configure version <config.json>\n       configure render <config.json> <tool-map.json> <out-config.json>")
 }

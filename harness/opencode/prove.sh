@@ -7,15 +7,10 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 payload=harness/opencode
-ref=$(go run "$payload/config-value.go" harness/config.json version)
+ref=$(go run "$payload/configure.go" version harness/config.json)
 
 test -n "$ref"
-test -d "$payload/src"
-test -f "$payload/REVISION"
 test -x "$payload/bin/opencode"
-test -z "$(find "$payload/src" -name .git -print -quit)"
-"$payload/render-config.sh"
-test -f "$payload/opencode.json"
 
 if command -v harbor >/dev/null 2>&1; then
   harbor=(harbor)

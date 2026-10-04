@@ -72,40 +72,38 @@ class OpenCode(BaseInstalledAgent):
         return tools, mapping, expected
 
     def _ensure_config(self) -> Path:
-        path = self._payload / "opencode.json"
+        path = self._payload / "generated-config.json"
         # This output is never committed: render from the sole parent config
         # each time so no stale generated policy can be installed.
-        subprocess.run([str(self._payload / "render-config.sh")], check=True)
+        subprocess.run(
+            [
+                "go",
+                "run",
+                str(self._payload / "configure.go"),
+                "render",
+                str(self._payload.parent / "config.json"),
+                str(self._payload / "tool-map.json"),
+                str(path),
+            ],
+            check=True,
+        )
         if not path.is_file():
-            raise RuntimeError("opencode.json was not rendered")
+            raise RuntimeError("OpenCode config was not rendered")
         return path
 
     async def install(self, environment: BaseEnvironment) -> None:
         payload = self._payload
-        src = payload / "src"
         binary = payload / "bin" / "opencode"
-        revision = payload / "REVISION"
-        if not src.is_dir() or not binary.is_file() or not revision.is_file():
+        if not binary.is_file():
             raise RuntimeError(
                 "OpenCode payload is missing. Run harness/opencode/pull.sh first."
             )
-        if any(src.rglob(".git")):
-            raise RuntimeError("OpenCode src still contains .git")
 
         config = self._ensure_config()
         await self.exec_as_root(environment, "mkdir -p /opt/opencode")
-        await environment.upload_dir(src, "/opt/opencode")
         await environment.upload_file(binary, "/usr/local/bin/opencode")
-        await environment.upload_file(revision, "/opt/opencode/REVISION")
-        await environment.upload_file(config, "/opt/opencode/opencode.json")
+        await environment.upload_file(config, "/opt/opencode/config.json")
         await self.exec_as_root(environment, "chmod 755 /usr/local/bin/opencode")
-
-        git = await environment.exec(
-            command="find /opt/opencode -name '.git' -print",
-        )
-        hits = _stdout(git)
-        if hits:
-            raise RuntimeError(f"git metadata was copied into /opt/opencode:\n{hits}")
 
     async def run(
         self,
@@ -128,7 +126,7 @@ class OpenCode(BaseInstalledAgent):
         config = await self.exec_as_agent(
             environment,
             "opencode debug config",
-            env={"OPENCODE_CONFIG": "/opt/opencode/opencode.json"},
+            env={"OPENCODE_CONFIG": "/opt/opencode/config.json"},
             timeout_sec=120,
         )
         raw = _stdout(config)
@@ -150,7 +148,7 @@ class OpenCode(BaseInstalledAgent):
             tool = mapping[name]
             built = await environment.exec(
                 command=f"opencode debug agent build --tool {tool} --params '{{}}'",
-                env={"OPENCODE_CONFIG": "/opt/opencode/opencode.json"},
+                env={"OPENCODE_CONFIG": "/opt/opencode/config.json"},
                 timeout_sec=90,
             )
             text = _stdout(built)
@@ -165,7 +163,7 @@ class OpenCode(BaseInstalledAgent):
                 "opencode debug agent build --tool bash "
                 """--params '{"command":"true"}'"""
             ),
-            env={"OPENCODE_CONFIG": "/opt/opencode/opencode.json"},
+            env={"OPENCODE_CONFIG": "/opt/opencode/config.json"},
             timeout_sec=90,
         )
         bash_text = _stdout(bash_tool)
