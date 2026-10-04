@@ -226,7 +226,7 @@ flowchart TB
 | `job_name` | The run id: `--run-id`, or a generated UUIDv7 prefixed by `--run-label`. |
 | `n_attempts` | `3`. Repeats are separate runs; group them by cell. |
 | `tasks` | One `{path, source}` per task that was built; `source` is the run id. |
-| `agents` | One agent: the configuration's harness, model, and `reasoning_effort`, or `oracle`; `env.TRACEBENCH_RUN_ID`. |
+| `agents` | One agent: the configuration's harness, model, and thinking kwarg (`variant` for OpenCode, `reasoning_effort` otherwise), or `oracle`; `env.TRACEBENCH_RUN_ID`. |
 | `verifier.env` | `TRACEBENCH_RUN_ID`. |
 
 ## Components
