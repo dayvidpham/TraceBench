@@ -181,6 +181,6 @@ Workflow skills live in `.claude/skills/`:
 | `issue-handler` | Carry one issue through worktree, implementation, review, CI, and merge. |
 | `issue-orchestrator` | Run several approved issues as dependency-aware lanes. |
 | `epic-composer` | Turn follow-up items into approved epics and sub-issues. |
-| `review-wave` | Run the three-reviewer wave and publish one curated report. |
+| `review-wave` | Run the single-reviewer wave (all axes, lean mandate) and publish one curated report. |
 | `reviewer` | Independently review a PR or a wave and return ranked findings. |
-| `c4-model` | Draw software architecture in ASCII C4. |
+| `c4-model` | Draw software architecture in C4: Mermaid for TraceBench docs, ASCII where no renderer exists. |

@@ -1,7 +1,7 @@
 # <Repo> PR <n> — review
 
 Reviewed at commit `<head-sha>` (base `<merge-base>`; current `<default-branch>` `<base-head>`).
-Verdict: **<ready | changes requested>** — <n> blocker(s), <n> important, <n> minor. Three independent reviews (correctness, API design, tests); <n> requested changes. <Scope: backend-only/frontend, screenshots required or not.>
+Verdict: **<ready | changes requested>** — <n> blocker(s), <n> important, <n> minor. One independent review covering all axes (correctness, integration, test sanity); <n> requested changes. <Scope: backend-only/frontend, screenshots required or not.>
 
 ---
 
@@ -55,7 +55,7 @@ Verdict: **<ready | changes requested>** — <n> blocker(s), <n> important, <n> 
 | CI | `<status at head>` |
 | Diff | `<n files, +x/−y, scope>` |
 | Verdict | <changes requested — B<n> blocker, I<n> important, M<n> minor> |
-| Reviewer verdicts | correctness <accept/revise>; API design <…>; tests <…> |
+| Reviewer verdict | <accept / revise> |
 
 ## Acceptance status
 

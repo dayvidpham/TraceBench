@@ -3,7 +3,7 @@ Operating mechanics behind SKILL.md: isolation, reviewer prompts, curation, post
 # Review wave (TraceBench)
 
 Run an independent, evidence-based review of one or two sibling pull requests and produce a
-curated report the author can act on. The reviewers stop at findings; the orchestrator verifies
+curated report the author can act on. The reviewer stops at findings; the orchestrator verifies
 the load-bearing ones, decides what is worth keeping, and writes the public report.
 
 This skill is the orchestrator side of the review. The reviewer side is the `/reviewer` skill and
@@ -54,12 +54,12 @@ Collect before designing the wave:
 
 - The exact head SHA from `headRefOid`; record it and never review a different one.
 - The merge base and the current default branch. If the default branch moved, note the delta and
-  any file overlap with the PR; the reviewers need it for the integration check.
+  any file overlap with the PR; the reviewer needs it for the integration check.
 - CI status at the head (`statusCheckRollup`) and any known environment limitations the author
   reported.
 - The issue's scope and acceptance bullets, plus any epic or umbrella invariants the PR must honor.
 - Prior review records: `gh pr view "$PR" -R "$GH_REPO" --json comments,reviews`. If the PR was
-  reviewed before, the prior findings become the standing checklist every reviewer must re-walk
+  reviewed before, the prior findings become the standing checklist the reviewer must re-walk
   against the current SHA. Never re-review only the fix.
 - External constraints the review will depend on: if a finding hinges on a vendor or protocol
   contract (API caps, pagination limits, error semantics), fetch the current documentation and
@@ -67,31 +67,29 @@ Collect before designing the wave:
 
 ## Phase 1 — Isolate
 
-One PR checkout per reviewer, detached at the exact head SHA, plus one disposable integration
-checkout at the current default branch. For a two-PR wave, create one checkout per PR per reviewer
+One PR checkout for the reviewer, detached at the exact head SHA, plus one disposable integration
+checkout at the current default branch. For a two-PR wave, create one checkout per PR
 (`pr<n>` and `pr<m>`). PR checkouts stay pristine; scratch work happens only in the integration
 checkout.
 
 ```sh
 BASE_DIR=/tmp/opencode/<topic>
-for X in a b c; do
-  mkdir -p "$BASE_DIR/$X"
-  git -C "$REPO_HOST" worktree add --detach "$BASE_DIR/$X/pr<number>" <head-sha>
-  git -C "$REPO_HOST" worktree add -b review-<pr>-<X>-integration \
-    "$BASE_DIR/$X/integration" "$BASE_SHA"
-done
+mkdir -p "$BASE_DIR/review"
+git -C "$REPO_HOST" worktree add --detach "$BASE_DIR/review/pr<number>" <head-sha>
+git -C "$REPO_HOST" worktree add -b review-<pr>-integration \
+  "$BASE_DIR/review/integration" "$BASE_SHA"
 gh pr diff "$PR" -R "$GH_REPO" > "$BASE_DIR/pr<number>.patch"
 ```
 
-If the change needs a service (database, broker, object store), give each reviewer its own
-isolated instance with an empty base state. Integration tests run their own migrations; never
+If the change needs a service (database, broker, object store), give the reviewer one isolated
+instance with an empty base state. Integration tests run their own migrations; never
 pre-migrate the base, and reset it before each full-package run. Record the connection details in
 the brief.
 
 ## Phase 1b — Run the authoritative checks once
 
-The orchestrator runs the authoritative checks at the exact reviewed SHA once, before any reviewer
-starts. Three reviewers re-running the same suite is wasted time and yields three partial results.
+The orchestrator runs the authoritative checks at the exact reviewed SHA once, before the reviewer
+starts. The reviewer re-running the same suite is wasted time and yields partial results.
 
 - Run the repository gate from the reviewed checkout, as `AGENTS.md` defines it: `gofmt -l .`,
   `go vet ./...`, `go build ./...`, `go test -race ./...`, and `go mod tidy` with no diff.
@@ -105,14 +103,14 @@ starts. Three reviewers re-running the same suite is wasted time and yields thre
   test recipe into a spot-check recipe: reproduce a specific claim when it is load-bearing; do not
   repeat a suite the evidence already covers.
 - Name the coverage limits (container-bound task runs, network-restricted sandboxes, gates that
-  only run on Linux) so reviewers know what the evidence does not establish.
+  only run on Linux) so the reviewer knows what the evidence does not establish.
 - The evidence only needs to be relevant to the change and up to date at the reviewed SHA. A moved
   SHA makes it stale and restarts the wave.
 
 ## Phase 2 — Write the wave brief
 
 Write one brief file at `$BASE_DIR/wave-brief.md` from `templates/wave-brief.md`. It carries
-everything the reviewers need so they never guess: artifact table with exact SHAs, environment
+everything the reviewer needs so it never guesses: artifact table with exact SHAs, environment
 details, issue requirements and acceptance, epic invariants, the prior checklist for re-reviews,
 specific parity or verification pointers, repository rules, and the output contract.
 
@@ -120,48 +118,51 @@ Rules for the brief:
 
 - State the reviewed SHA and how to verify it (`git rev-parse HEAD`; `gh pr view --json headRefOid`).
 - Quote the acceptance bullets; do not summarize them away.
-- State scope boundaries so reviewers do not demand out-of-scope work (routes, UI, migrations,
+- State scope boundaries so the reviewer does not demand out-of-scope work (routes, UI, migrations,
   scoring formulas, and so on).
-- Point at areas worth verifying; do not seed findings. The reviewers must find them.
-- Keep the reviewers' own constraints in the brief: read-only checkouts, scratch only in the
+- Point at areas worth verifying; do not seed findings. The reviewer must find them.
+- Keep the reviewer's own constraints in the brief: read-only checkouts, scratch only in the
   integration checkout, no GitHub writes, no pushes, time-box.
 - Include the "Validation evidence (already run)" section from phase 1b, and frame the test recipe
   as spot-checks, not a re-run.
 
-## Phase 3 — Spawn reviewers
+## Phase 3 — Spawn the reviewer
 
-Run three `reviewer` subagents in **one parallel batch**, one per lens. Each reviewer covers every PR in the wave:
+Run **one** `reviewer` subagent covering all axes (user ruling 2026-10-04). It covers every PR in
+the wave:
 
-- **Correctness** — does the implementation faithfully serve the issue and its invariants; are
-  there gaps, regressions, or claims the code does not support?
-- **API design** — is the surface no larger than the problem; boundaries, naming, contracts,
-  over- and under-engineering.
-- **Test quality** — fixtures with required names, exact membership, strict decoding, real
-  services instead of mocking the subject, observable assertions, `-race`.
+- **Correctness and integration** — does the implementation faithfully serve the issue and its
+  invariants; are there gaps, regressions, or claims the code does not support; does it integrate
+  with the current default branch?
+- **Minimal test sanity** — fixtures with required names, exact membership, strict decoding, real
+  services instead of mocking the subject, observable assertions, `-race`. Under the lean mandate
+  these are advisory: flag only what could hide a leak or break the pipeline.
 
-Each prompt starts with `/reviewer`, names its lens, points at `$BASE_DIR/wave-brief.md`, and
-gives: its worktree, the report path it must write, and these constraints:
+The prompt starts with `/reviewer`, points at `$BASE_DIR/wave-brief.md`, and gives: the worktree,
+the report path it must write, and these constraints:
 
 - Verify the SHA before reviewing anything.
 - Write the report as one file, with bash heredocs (`cat > … <<'EOF'`) or the edit tool.
 - Produce a verdict (`ACCEPT` / `REVISE`), problem statement, constraints, requirements,
   acceptance status, developed solution, tradeoffs, ranked findings with `path:line`, a concrete
-  scenario, impact and a fix, an explanatory ASCII diagram, at least one `c4` diagram, checks run
-  and skipped, and the integration result against the current default branch.
+  scenario, impact and a fix, an explanatory ASCII diagram, at least one C4 diagram (a Mermaid
+  block per the `c4-model` skill; waived when the brief says so), checks run and skipped, and the
+  integration result against the current default branch.
 - Lint every `c4` block with
   `python3 "$REPO_HOST/.claude/skills/c4-model/scripts/c4-lint.py" <report>`
-  until it exits 0.
+  until it exits 0. Mermaid blocks are not linted: check that they render and follow the
+  `c4-model` skill's `references/mermaid-notation.md`.
 - Consume the brief's "Validation evidence (already run)": verify it and spot-check specific claims
   rather than repeating a covered suite.
 - Public-audience prose: no internal task IDs, slice or phase names, or workflow taxonomy.
 - No edits, commits, pushes, or GitHub comments; return findings only.
 - Never hand a subagent a bare PR number as its only target; give the SHA and local paths.
 
-Reviewers are foreground teammates: spawn them together and wait for all three before curating.
+The reviewer is a foreground teammate: spawn it and wait before curating.
 
 ## Phase 4 — Curate the findings
 
-Read all three reports in full. Treat them as evidence, not verdicts. For every finding that would
+Read the report in full. Treat it as evidence, not a verdict. For every finding that would
 change the report's verdict or a proposed fix:
 
 - Reproduce or verify it yourself when it is cheap: read the code the finding cites, run the test,
@@ -172,8 +173,8 @@ change the report's verdict or a proposed fix:
   validation gap, or documentation that would mislead. Drop impact-free style or process
   comments.
 - Decide one disposition per finding and record it: keep, downgrade, or drop, with the reason.
-  Note disagreements between reviewers and how they were resolved.
-- Fold duplicates from different reviewers into one finding with the best evidence.
+  Note any disputed claim and how it was resolved.
+- Fold duplicate claims into one finding with the best evidence.
 - Keep the severity rubric: `BLOCKER` (wrong or harmful results on the production path, security,
   broken gates), `IMPORTANT` (missing validation or coverage at a boundary, contract problems),
   `MINOR` (hygiene, clarity, optional hardening).
@@ -220,10 +221,12 @@ in posted text. Keep the whole comment under GitHub's 65,536-character limit.
   with user approval unless the user has already told you to post.
 - Verify the published body: fetch it back and check its length, first line, and that both parts
   are present.
-- Keep the wave record under `$BASE_DIR`: the brief, the three reviewer reports, and the posted
-  comment URL.
+- Keep the wave record under `$BASE_DIR`: the brief, the reviewer report, and the posted comment
+  URL.
 - When the PR later gets a new head, that head needs a new wave; a clean review of an older SHA
-  does not carry over, and the re-review walks the entire prior checklist again.
+  does not carry over, and the re-review walks the entire prior checklist again — except a focused
+  fix-verification pass for a small, non-functional delta, which must state what was and was not
+  re-walked.
 
 ## Phase 7 — Housekeeping
 
@@ -239,7 +242,7 @@ in posted text. Keep the whole comment under GitHub's 65,536-character limit.
 
 1. Verify the head SHA locally and on GitHub before any review statement; a stale SHA invalidates
    the wave.
-2. Reviewers make no edits, commits, pushes, or GitHub posts; they return findings.
+2. The reviewer makes no edits, commits, pushes, or GitHub posts; it returns findings.
 3. Never hand a subagent a bare PR number as its only target.
 4. Never accept reviewer findings as gospel: reproduce load-bearing claims and record every
    keep/downgrade/drop decision with its reason.
@@ -254,12 +257,12 @@ in posted text. Keep the whole comment under GitHub's 65,536-character limit.
 ## Stop and ask
 
 - The head SHA changes mid-wave; restart on the new SHA.
-- Reviewers disagree on a blocker you cannot settle with evidence.
+- A blocker claim cannot be settled with evidence.
 - A finding depends on external behavior you cannot verify (vendor API, production config).
 - The issue leaves a product or scope decision open that the review cannot resolve.
 - The landing order between two sibling PRs is ambiguous after the merge simulation.
 
 ## Files in this skill
 
-- `templates/wave-brief.md` — the brief the reviewers work from.
+- `templates/wave-brief.md` — the brief the reviewer works from.
 - `templates/review-comment.md` — the two-part report skeleton.

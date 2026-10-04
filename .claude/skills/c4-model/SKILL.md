@@ -1,18 +1,18 @@
 ---
 name: c4-model
-description: Describe and draw software architecture with the C4 model, in plain ASCII instead of Mermaid or PlantUML. Carries every C4 term with its sourced definition, the C4 principles, an ASCII notation with one template per diagram type, and a lint that checks that notation. Use when the user asks for a "C4 diagram", "system context diagram", "container diagram", "component diagram", "system landscape", "deployment diagram", "dynamic diagram", or "architecture diagram", asks to "describe the architecture" of a system, repo, or workspace, or asks what a C4 term such as "container" or "component" means.
+description: Describe and draw software architecture with the C4 model, in Mermaid for TraceBench and in plain ASCII where no renderer exists. Carries every C4 term with its sourced definition, the C4 principles, a Mermaid notation for TraceBench, an ASCII notation with one template per diagram type, and a lint that checks the ASCII notation. Use when the user asks for a "C4 diagram", "system context diagram", "container diagram", "component diagram", "system landscape", "deployment diagram", "dynamic diagram", or "architecture diagram", asks to "describe the architecture" of a system, repo, or workspace, or asks what a C4 term such as "container" or "component" means.
 ---
 
-# Describe architecture with the C4 model, in ASCII
+# Describe architecture with the C4 model
 
 The C4 model (Simon Brown, c4model.com) describes a software system as a set of zoom levels:
 System Context, Containers, Components, and Code. Each level is a map of one element from the
-level above. This skill fixes three things: the vocabulary, the principles, and one ASCII notation that a
-script can check. With them, every diagram in the workspace reads the same way.
+level above. This skill fixes three things: the vocabulary, the principles, and one notation that
+a script can check, plus the Mermaid notation this repository renders on GitHub.
 
-Draw in ASCII, not Mermaid or PlantUML. ASCII renders everywhere the workspace writes: GitHub
-Markdown, issue bodies, commit messages, terminals, and agent transcripts. It
-never depends on a renderer version.
+Draw TraceBench diagrams in Mermaid: GitHub renders them in the repository docs, issues, and pull
+requests. Keep ASCII for commit messages, terminals, and agent transcripts, where nothing renders
+Mermaid. ASCII never depends on a renderer version.
 
 ## When to use it, and when not
 
@@ -46,13 +46,16 @@ it, or as a component inside that container.
    no row, and do not leave a row out of the picture. The tables are the model; the diagram is a
    view of it. Keep the tables in the same file as the diagram when the diagram is long-lived.
 
-3. **Draw with the notation below.** Load `references/ascii-notation.md` for the full rules and
-   one template per diagram type. Load `examples/peasant-labs.md` to see the workspace drawn at
-   every level.
+3. **Draw with the notation below.** Load `references/mermaid-notation.md` and write a `mermaid`
+   fenced block for TraceBench diagrams. Load `references/ascii-notation.md` for the full ASCII
+   rules and one template per diagram type; load `examples/peasant-labs.md` to see the workspace
+   drawn at every level.
 
 4. **Lint the file.** Run `python3 scripts/c4-lint.py <file.md>` from this skill directory. It
    finds every fenced block whose info string is `c4` and checks the notation. Fix every
-   finding. Run `python3 scripts/c4-lint.py --self-test` once after any change to the script;
+   finding. Mermaid blocks are not linted: check that they render (for example in the GitHub
+   preview) and follow `references/mermaid-notation.md`. Run
+   `python3 scripts/c4-lint.py --self-test` once after any change to the script;
    the fixture in `scripts/testdata/lint-cases.md` must stay green.
 
 5. **Walk the review checklist** in `references/principles.md` before the diagram ships. The lint
@@ -61,14 +64,18 @@ it, or as a component inside that container.
 
 6. **Place it.** A diagram that describes a repo goes in that repo's `AGENTS.md` or `docs/`. A
    diagram that describes the workspace goes in the workspace guide. A diagram that explains one
-   change goes in the issue or PR body. Keep the model tables next to long-lived diagrams so that
-   the next edit updates both.
+   change goes in the issue or PR body. TraceBench diagrams are Mermaid blocks in the repo's
+   `README.md` or `docs/`. Keep the model tables next to long-lived diagrams so that the next
+   edit updates both.
 
 ## Notation, quick reference
 
-A diagram is a fenced code block with the info string `c4`. Line 1 is the title. The last section
-is the key. The full rules, the closed set of nine type tags, the tags each diagram type may
-carry, and one template per diagram type are in `references/ascii-notation.md`.
+TraceBench uses Mermaid: a fenced block with the info string `mermaid`, a caption line above the
+block, and the C4 type tags in the node labels; see `references/mermaid-notation.md`. ASCII
+remains for non-rendering contexts: a fenced code block with the info string `c4`, line 1 the
+title, the last section the key. The full ASCII rules, the closed set of nine type tags, the tags
+each diagram type may carry, and one template per diagram type are in
+`references/ascii-notation.md`.
 
 ```
 Container diagram: <scope>
@@ -111,7 +118,8 @@ Key:
    deployment diagram.
 3. Every relationship is one arrow, one direction, one intent label. On container, component,
    and deployment diagrams the label also names the technology or protocol.
-4. Every diagram has a title of the form `<Type> diagram: <scope>` and a `Key:` section.
+4. Every diagram has a title of the form `<Type> diagram: <scope>`. ASCII diagrams end with a
+   `Key:` section; Mermaid diagrams carry the title and the key in the caption above the block.
 5. A container is a runtime unit: an application or a data store that must be running for the
    system to work. It is not a Docker container. Where a container runs belongs on a deployment
    diagram, never on the container diagram.
@@ -122,8 +130,9 @@ Key:
 7. Do not draw a code diagram by hand. Generate it from the source, or leave it out.
 8. Match the diagram to the code. When the two disagree, the diagram is wrong. Re-derive the
    element and relationship tables from the source before you redraw.
-9. Every C4 diagram passes `scripts/c4-lint.py` before it ships. A lint finding is a defect in
-   the diagram, not a reason to relax the lint.
+9. Every ASCII C4 diagram passes `scripts/c4-lint.py` before it ships. A lint finding is a defect
+   in the diagram, not a reason to relax the lint. Mermaid diagrams must render and follow
+   `references/mermaid-notation.md`.
 10. Cite the model, not memory. When a definition matters, quote `references/glossary.md`, which
     cites c4model.com page by page.
 
@@ -138,6 +147,8 @@ Key:
   rules, the diagram review checklist, and the history of the model.
 - **`references/ascii-notation.md`** The full ASCII notation: box, boundary, arrow, key, layout
   rules, and one template per diagram type.
+- **`references/mermaid-notation.md`** The Mermaid notation for TraceBench: narrow top-to-bottom
+  flowcharts, C4 type tags in node labels, captions, and one example.
 
 ### Examples
 
