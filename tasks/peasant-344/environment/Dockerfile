@@ -1,39 +1,35 @@
-FROM golang:1.25-bookworm
+FROM tracebench/peasant-base:838a6dd0a73524db6ae96a931c224ff66090aa70
+# ^ built via tasks/_base (one-time cache warmer). If the base image is
+# absent, build it first — see tasks/_base/README.md.
 
-# git for the checkout; ca-certificates for module downloads at build time.
-# nodejs/npm (+curl) are pre-installed so Harbor installed-agents (e.g. opencode)
-# pass their `command -v curl bash stdbuf node npm` check and skip the
-# package-manager probe — that probe breaks on Podman Desktop for Mac, where
-# the compose-shim warning pollutes stdout and crashes agent setup with
-# KeyError. (bash/coreutils ship with bookworm; node here is only a placeholder,
-# Harbor installs a modern node via nvm at agent-setup time.)
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl nodejs npm \
-    && rm -rf /var/lib/apt/lists/*
-
-ARG PEASANT_REPO=https://github.com/peasant-labs/peasant.git
 # Base commit of peasant#344 (pre-PR, post-#337 on develop). Task starts here.
+# (Snapshot commit of the base image must postdate this.)
 ARG BASE_SHA=d3bc07f6568291ee70afb146409aae98d4f8e3d7
 
-# Base tree ONLY (issue #27): init an empty repo and fetch just the base
-# commit by SHA, then drop the remote. The image contains exactly one commit,
-# zero refs, and no oracle material — the answer key is not discoverable via
-# `git log --all`, tags, branches, or fetches (a plain `--depth 1` clone
-# would still pull the default-branch tip, which postdates the fix).
-# The oracle patch ships in solution/oracle.patch, which Harbor copies into
-# the container for oracle runs only (never visible to the agent).
-RUN git init /peasant \
-    && cd /peasant \
-    && git remote add origin "${PEASANT_REPO}" \
-    && git fetch --depth 1 origin "${BASE_SHA}" \
-    && git checkout "${BASE_SHA}" \
+# Base tree ONLY (issue #27): check out the base commit, then truncate every
+# history vector — refs, reflogs, remotes, unreachable objects — so the fix
+# (which exists upstream of this checkout) is undiscoverable. The oracle
+# patch ships in solution/oracle.patch, copied in for oracle runs only.
+RUN cd /peasant \
+    && git checkout --quiet "${BASE_SHA}" \
+    && git for-each-ref --format='delete %(refname)' | git update-ref --stdin \
+    && git reflog expire --expire=now --all \
+    && git gc --prune=now --quiet \
     && git remote remove origin \
-    && git log --oneline -1 && git for-each-ref
+    && rm -rf .git/logs .git/FETCH_HEAD .git/ORIG_HEAD \
+    && echo "--- leak asserts (build-breakers) ---" \
+    && test "$(git rev-list --all --count)" = 1 \
+    && test -z "$(git for-each-ref)" \
+    && test -z "$(git fsck --unreachable 2>/dev/null)" \
+    && git rev-parse pr-344 >/dev/null 2>&1 && exit 1 || true \
+    && git log --oneline -1
 
 WORKDIR /peasant
 
-# Bake the module cache and build artifacts into the image so that agent and
-# verifier phases need zero network access.
-RUN go mod download && go build ./...
+# Rebuild at the base commit. `go clean -cache` first: the base image's cache
+# contains post-fix export data (future function names) — it must not ship.
+# Module cache is kept (dependency sources only, no peasant code).
+RUN go clean -cache && go mod download && go build ./...
 
 # Hermetic by construction: no module fetches after image build.
 ENV GOPROXY=off GOFLAGS=-mod=readonly
