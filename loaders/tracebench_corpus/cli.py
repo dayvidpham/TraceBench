@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .corpus import Corpus, load_corpus
 from .oracle import build_oracle, payload_commits, payload_request, write_oracle
+from .pipeline import PipelineError, read_pr_list, run_pipeline
 from .repository_spec import find_repository_spec, load_repository_specs
 from .skeleton import build_skeleton
 from .target_config import find_target_config, load_target_configs
@@ -116,6 +117,39 @@ def main(argv: list[str] | None = None) -> int:
         "--spec", default=None, help="repository adaptation spec supplying the build command"
     )
 
+    pipeline_parser = commands.add_parser(
+        "pipeline", help="build one runnable Harbor task per PR and a Harbor job config"
+    )
+    pipeline_parser.add_argument(
+        "--prs", action="append", required=True, metavar="FILE_OR_ID",
+        help="pull request id (owner/repo#N) or a newline-delimited file of ids; repeatable",
+    )
+    pipeline_parser.add_argument("--repo-dir", required=True, help="local repository clone")
+    pipeline_parser.add_argument("--index", required=True, help="corpus/index/merged_prs.json")
+    pipeline_parser.add_argument("--dest", required=True, help="output directory (tasks/, payloads/, job config)")
+    pipeline_parser.add_argument(
+        "--spec", default=None, help="repository adaptation spec (default: the Go/Peasant spec)"
+    )
+    pipeline_parser.add_argument("--target-configs", default=None, help="target-configuration spec")
+    pipeline_parser.add_argument("--target-config", default=None, help="configuration name in --target-configs")
+    pipeline_parser.add_argument(
+        "--run-id", default=None, help="run id (default: derived from the target configuration)"
+    )
+    pipeline_parser.add_argument(
+        "--run-label", default=None,
+        help="run id label when deriving (default: tracebench-<configuration name>)",
+    )
+    pipeline_parser.add_argument(
+        "--snapshot-bin", default=None, help="built snapshot binary (default: go run ./cmd/snapshot)"
+    )
+    pipeline_parser.add_argument(
+        "--job-config-format", choices=("yaml", "json"), default=None,
+        help="job config format (default: yaml when PyYAML is installed, else json)",
+    )
+    pipeline_parser.add_argument(
+        "--force", action="store_true", help="rebuild existing payload and task directories"
+    )
+
     args = parser.parse_args(argv)
     if args.command == "oracle":
         return _oracle(args)
@@ -140,6 +174,8 @@ def main(argv: list[str] | None = None) -> int:
         return _bundle(corpus, args.pr, Path(args.dest))
     if args.command == "task":
         return _task(corpus, args)
+    if args.command == "pipeline":
+        return _pipeline(corpus, args)
     return _bundle_all(corpus, Path(args.dest), args.split)
 
 
@@ -273,4 +309,46 @@ def _oracle(args: argparse.Namespace) -> int:
         f"wrote {solution}: oracle for {args.pr} changes {len(oracle.changed_files)} files; "
         f"applied tree {oracle.applied_tree} verified"
     )
+    return 0
+
+
+def _pipeline(corpus: Corpus, args: argparse.Namespace) -> int:
+    try:
+        pr_ids = read_pr_list(args.prs)
+        target_config = None
+        if args.target_config or args.target_configs:
+            if not (args.target_config and args.target_configs):
+                raise ValueError("--target-config and --target-configs must be used together")
+            target_config = find_target_config(
+                load_target_configs(args.target_configs), args.target_config
+            )
+        result = run_pipeline(
+            corpus,
+            pr_ids,
+            Path(args.dest),
+            repo_dir=args.repo_dir,
+            pr_index=load_pr_index(args.index),
+            specs=load_repository_specs(args.spec),
+            target_config=target_config,
+            run_id=args.run_id,
+            run_label=args.run_label,
+            snapshot_bin=args.snapshot_bin,
+            job_config_format=args.job_config_format,
+            force=args.force,
+        )
+    except (PipelineError, ValueError, OSError) as exc:
+        print(f"tracebench-corpus: {exc}", file=sys.stderr)
+        return 2
+    print(f"run {result.run_id}: {len(result.tasks)} tasks")
+    for task in result.tasks:
+        print(f"  {task.summary_line()}")
+    print(f"wrote {result.job_config}")
+    failed = [task for task in result.tasks if task.status != "ok"]
+    if failed:
+        print(
+            f"tracebench-corpus: {len(failed)} of {len(result.tasks)} tasks failed; "
+            "fix the named part and re-run with --force",
+            file=sys.stderr,
+        )
+        return 1
     return 0

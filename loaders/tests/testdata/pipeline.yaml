@@ -1,0 +1,50 @@
+# Pipeline driver fixture: a linear repository whose commits are the merge
+# commits of the listed pull requests. Each commit writes `files` on top of the
+# previous tree.
+commits:
+  - name: base
+    files:
+      go.mod: "module example.com/demo\n"
+      main.go: "package main\n\nfunc main() {}\n"
+      main_test.go: "package main\n\nimport \"testing\"\n\nfunc TestMain0(t *testing.T) {}\n"
+  - name: pr20
+    pr: 20
+    files:
+      greet.go: "package main\n\nfunc greet() string { return \"hi\" }\n"
+      greet_test.go: "package main\n\nimport \"testing\"\n\nfunc TestGreet(t *testing.T) { _ = greet() }\n"
+  - name: pr22
+    pr: 22
+    files:
+      greet.go: "package main\n\nfunc greet() string { return \"hello\" }\n"
+      greet_test.go: "package main\n\nimport \"testing\"\n\nfunc TestGreet(t *testing.T) {\n\tif greet() != \"hello\" {\n\t\tt.Fatal(\"greet\")\n\t}\n}\n"
+
+# Side commits off a named commit; their trees hold exactly `files`. PR 21's
+# merge has no test files, so its golden suite is missing.
+side_commits:
+  - pr: 21
+    parent: base
+    files:
+      README.txt: "no tests here\n"
+
+# Tasks the two-PR build must produce (task directory names under tasks/).
+expected_tasks:
+  "peasant-labs/peasant#20": peasant-pr-0020
+  "peasant-labs/peasant#22": peasant-pr-0022
+
+# Parts every built task carries.
+required_parts:
+  - task.toml
+  - environment/repo
+  - tests/golden
+  - tests/test.sh
+  - solution/oracle.patch
+
+# Run-id derivation cases: the target configuration name from
+# target_configurations.yaml, the label, and the expected run-id prefix.
+run_ids:
+  - config: opencode-gpt-medium
+    label: null
+    prefix: tracebench-opencode-gpt-medium-
+  - config: claude-code-sonnet-high
+    label: nightly
+    prefix: nightly-
