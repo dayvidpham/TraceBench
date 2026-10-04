@@ -81,7 +81,10 @@ def test_task_payload_layout_and_integration_point(standard_dump, standard_index
     assert request["trace_cutoff"]["basis"] == "merged_at"
     assert request["trace_cutoff"]["time"] == "2026-09-01T00:00:00Z"
     assert request["glob_dialect"] == "doublestar globs relative to the repository root"
-    assert "Adapter required" in request["note"]
+    assert "materialize_worktree" in request["note"]
+    assert "tree_commit^{tree}" in request["note"]
+    assert "merge_commit" in request["note"]
+    assert "Adapter required" not in request["note"]
     assert "**/*_test.go" in request["test_patterns"]
 
     task = json.loads((payload.path / "task.json").read_text())
