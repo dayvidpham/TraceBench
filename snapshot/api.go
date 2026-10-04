@@ -56,42 +56,39 @@ func SnapshotRepo(repoPath string, cutoff Cutoff, opts Options) (*Snapshot, erro
 	}
 	exclusive := cutoff.Kind == CutoffPR
 
-	commits, err := ListHistory(repoPath, cutoffTime)
-	if err != nil {
-		return nil, err
-	}
-	if exclusive {
-		kept := commits[:0]
-		for _, c := range commits {
-			if c.CommitterTime.Before(cutoffTime) {
-				kept = append(kept, c)
-			}
-		}
-		commits = kept
-	} else {
-		kept := commits[:0]
-		for _, c := range commits {
-			if !c.CommitterTime.After(cutoffTime) {
-				kept = append(kept, c)
-			}
-		}
-		commits = kept
-	}
-	if len(commits) == 0 {
-		if _, err := ResolveSHABefore(repoPath, cutoffTime); err != nil {
+	var commits []Commit
+	var sha, treeSHA string
+	if pinnedSHA != "" {
+		// The pinned commit alone decides RepoSHA/TreeSHA; history is its
+		// ancestry, never HEAD's time-filtered log.
+		sha, treeSHA = pinnedSHA, pinnedTree
+		if commits, err = ListAncestors(repoPath, pinnedSHA); err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("snapshot: no commit satisfies cutoff %s",
-			cutoffTime.UTC().Format(time.RFC3339))
-	}
-	// Newest satisfying commit owns the tree, so files obey the cutoff.
-	// A commit cutoff pins the tree exactly instead of selecting by time.
-	sha := commits[len(commits)-1].SHA
-	treeSHA := pinnedTree
-	if pinnedSHA != "" {
-		sha = pinnedSHA
-	} else if treeSHA, err = TreeSHA(repoPath, sha); err != nil {
-		return nil, err
+	} else {
+		if commits, err = ListHistory(repoPath, cutoffTime); err != nil {
+			return nil, err
+		}
+		kept := commits[:0]
+		for _, c := range commits {
+			if (exclusive && c.CommitterTime.Before(cutoffTime)) ||
+				(!exclusive && !c.CommitterTime.After(cutoffTime)) {
+				kept = append(kept, c)
+			}
+		}
+		commits = kept
+		if len(commits) == 0 {
+			if _, err := ResolveSHABefore(repoPath, cutoffTime); err != nil {
+				return nil, err
+			}
+			return nil, fmt.Errorf("snapshot: no commit satisfies cutoff %s",
+				cutoffTime.UTC().Format(time.RFC3339))
+		}
+		// Newest satisfying commit owns the tree, so files obey the cutoff.
+		sha = commits[len(commits)-1].SHA
+		if treeSHA, err = TreeSHA(repoPath, sha); err != nil {
+			return nil, err
+		}
 	}
 	files, err := ListTree(repoPath, sha)
 	if err != nil {

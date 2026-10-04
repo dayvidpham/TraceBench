@@ -27,10 +27,21 @@ go run ./cmd/snapshot --repo /path/to/repo \
 go run ./cmd/snapshot --repo /path/to/repo \
   --cutoff-type pr --pr 123 --pr-start-override 2026-09-01T00:00:00Z \
   --out /tmp/snap --materialize
+
+# commit cutoff: pin one exact commit (works in bare clones / unborn HEAD)
+go run ./cmd/snapshot --repo /path/to/repo \
+  --cutoff-type commit --commit <sha> --out /tmp/snap --materialize
 ```
 
+A commit cutoff takes `repo_sha`/`tree_sha` from the pinned commit itself,
+independent of HEAD; `cutoff_time` is that commit's committer date and
+`commits` is its ancestry. The commit need not be reachable from HEAD.
+
 Output: `history.json` (+ `manifest_sha256`), and with `--materialize`
-also `repo/` (exact `git archive` tree) and `traces/`.
+also `repo/` (exact `git archive` tree) and `traces/`. `history.json`
+carries `repo_sha` (the selected commit) and `tree_sha` (its root tree,
+`git rev-parse <repo_sha>^{tree}`); consumers verify the materialized
+tree against `tree_sha` and fail closed on drift.
 
 ## Peasant binary contract
 

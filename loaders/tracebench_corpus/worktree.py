@@ -18,7 +18,7 @@ from pathlib import Path
 SNAPSHOT_MODULE = Path(__file__).resolve().parents[2] / "snapshot"
 
 
-class WorktreeError(RuntimeError):
+class WorktreeError(ValueError):
     """The secure worktree could not be materialized or failed verification."""
 
 
@@ -54,6 +54,16 @@ def _tree_commit(repo_dir: Path, payload_dir: Path) -> str:
         raise WorktreeError(
             f"materialize_worktree: {request_path} is not valid JSON ({exc}); rebuild the payload."
         ) from None
+    except (OSError, UnicodeDecodeError) as exc:
+        raise WorktreeError(
+            f"materialize_worktree: cannot read {request_path} ({exc}); check that it is a "
+            "readable UTF-8 file and rebuild the payload."
+        ) from None
+    if not isinstance(request, dict):
+        raise WorktreeError(
+            f"materialize_worktree: {request_path} must hold a JSON object, got "
+            f"{type(request).__name__}; rebuild the payload."
+        )
     tree_commit = request.get("tree_commit")
     if tree_commit:
         return tree_commit
@@ -92,7 +102,14 @@ def materialize_worktree(
     expected_tree = _git(repo_dir, "rev-parse", f"{commit_sha}^{{tree}}")
 
     dest = payload_dir / "repo"
-    if dest.exists() and any(dest.iterdir()):
+    try:
+        occupied = dest.exists() and any(dest.iterdir())
+    except OSError as exc:
+        raise WorktreeError(
+            f"materialize_worktree: cannot use {dest} as the worktree destination for "
+            f"tree_commit {commit_sha} ({exc}); remove it so a directory can be written."
+        ) from None
+    if occupied:
         raise WorktreeError(
             f"materialize_worktree: {dest} is not empty; remove it before re-materializing."
         )
@@ -116,8 +133,7 @@ def materialize_worktree(
                 f"materialize_worktree: snapshot failed for tree_commit {commit_sha}: "
                 f"{proc.stderr.strip() or proc.stdout.strip()}"
             )
-        history_src = out / "history.json"
-        history = json.loads(history_src.read_text())
+        history = _read_history(out / "history.json", commit_sha)
         got_tree = history.get("tree_sha")
         if got_tree != expected_tree:
             raise WorktreeError(
@@ -135,6 +151,22 @@ def materialize_worktree(
     return WorktreeResult(
         repo_path=dest, tree_commit=commit_sha, tree_sha=expected_tree
     )
+
+
+def _read_history(path: Path, commit: str) -> dict:
+    try:
+        history = json.loads(path.read_text())
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise WorktreeError(
+            f"materialize_worktree: snapshot for tree_commit {commit} produced an unreadable "
+            f"{path.name} ({exc}); the snapshot tool must write valid JSON; rebuild it."
+        ) from None
+    if not isinstance(history, dict):
+        raise WorktreeError(
+            f"materialize_worktree: snapshot for tree_commit {commit} wrote {path.name} as "
+            f"{type(history).__name__}, not a JSON object; rebuild the snapshot tool."
+        )
+    return history
 
 
 def _verify_tree(repo: Path, commit: str) -> None:

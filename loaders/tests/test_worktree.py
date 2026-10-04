@@ -89,7 +89,7 @@ def test_default_go_run_and_merge_parent_fallback(tmp_path, repo):
 def test_tree_drift_fails_closed(tmp_path, repo, snapshot_bin):
     bogus = "f" * 40
     fake = _wrapper(tmp_path, snapshot_bin,
-                    f"sed -i 's/\"tree_sha\": \"[0-9a-f]*\"/\"tree_sha\": \"{bogus}\"/' "
+                    f"sed -i.bak 's/\"tree_sha\": \"[0-9a-f]*\"/\"tree_sha\": \"{bogus}\"/' "
                     '"$OUT/history.json"')
     payload = _payload(tmp_path, tree_commit=repo["pre"], merge_commit=repo["merge"])
     with pytest.raises(WorktreeError) as err:
@@ -120,3 +120,90 @@ def test_empty_tree_fails_closed(tmp_path, repo, snapshot_bin):
     payload = _payload(tmp_path, tree_commit=repo["pre"], merge_commit=repo["merge"])
     with pytest.raises(WorktreeError, match="empty"):
         materialize_worktree(repo["path"], payload, snapshot_bin=fake)
+
+
+def test_worktree_error_is_value_error():
+    assert issubclass(WorktreeError, ValueError)
+
+
+def test_request_missing_fails_closed(tmp_path, repo):
+    payload = tmp_path / "payload"
+    payload.mkdir()
+    with pytest.raises(WorktreeError, match="repo-request.json is missing"):
+        materialize_worktree(repo["path"], payload)
+
+
+@pytest.mark.parametrize("body", ["not json", "[]"])
+def test_request_invalid_fails_closed(tmp_path, repo, body):
+    payload = tmp_path / "payload"
+    payload.mkdir()
+    (payload / "repo-request.json").write_text(body)
+    with pytest.raises(WorktreeError, match="repo-request.json"):
+        materialize_worktree(repo["path"], payload)
+
+
+def test_request_unreadable_fails_closed(tmp_path, repo):
+    payload = tmp_path / "payload"
+    (payload / "repo-request.json").mkdir(parents=True)
+    with pytest.raises(WorktreeError, match="cannot read"):
+        materialize_worktree(repo["path"], payload)
+
+
+def test_neither_commit_fails_closed(tmp_path, repo):
+    payload = _payload(tmp_path, tree_commit=None, merge_commit=None)
+    with pytest.raises(WorktreeError, match="neither tree_commit nor merge_commit"):
+        materialize_worktree(repo["path"], payload)
+
+
+def test_non_empty_dest_fails_closed(tmp_path, repo, snapshot_bin):
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    (payload / "repo").mkdir()
+    (payload / "repo" / "stale.txt").write_text("x")
+    with pytest.raises(WorktreeError, match=r"repo is not empty"):
+        materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+
+
+def test_dest_is_file_fails_closed(tmp_path, repo, snapshot_bin):
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    (payload / "repo").write_text("x")
+    with pytest.raises(WorktreeError) as err:
+        materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+    assert str(payload / "repo") in str(err.value) and repo["pre"] in str(err.value)
+
+
+def test_pre_existing_empty_dest_is_replaced(tmp_path, repo, snapshot_bin):
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    (payload / "repo").mkdir()
+    materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+    assert sorted(p.name for p in (payload / "repo").iterdir()) == ["a.txt"]
+
+
+def test_snapshot_binary_not_executable_fails_closed(tmp_path, repo):
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    with pytest.raises(WorktreeError, match="cannot run the snapshot tool"):
+        materialize_worktree(repo["path"], payload, snapshot_bin=tmp_path / "missing-bin")
+
+
+def test_snapshot_nonzero_exit_fails_closed(tmp_path, repo):
+    fake = tmp_path / "failing-snapshot"
+    fake.write_text("#!/bin/sh\necho boom >&2\nexit 3\n")
+    fake.chmod(0o755)
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    with pytest.raises(WorktreeError) as err:
+        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
+    assert repo["pre"] in str(err.value) and "boom" in str(err.value)
+    assert not (payload / "repo").exists()
+
+
+@pytest.mark.parametrize("post", [
+    'rm "$OUT/history.json"',
+    "printf '[]' > \"$OUT/history.json\"",
+    "printf 'not json' > \"$OUT/history.json\"",
+])
+def test_bad_history_fails_closed(tmp_path, repo, snapshot_bin, post):
+    fake = _wrapper(tmp_path, snapshot_bin, post)
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    with pytest.raises(WorktreeError) as err:
+        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
+    assert repo["pre"] in str(err.value) and "history.json" in str(err.value)
+    assert not (payload / "repo").exists()
