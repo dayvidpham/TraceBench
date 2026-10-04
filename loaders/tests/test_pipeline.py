@@ -154,6 +154,7 @@ def test_index_only_pr_builds_a_task(pipeline_env, tmp_path, snapshot_bin, capsy
     # The environment healthcheck warms the pre-PR Go build before the offline phases.
     environment = tomllib.loads((task / "task.toml").read_text())["environment"]
     assert "go mod download" in environment["healthcheck"]["command"]
+    assert "safe.directory" in environment["healthcheck"]["command"]
 
 
 @needs_go

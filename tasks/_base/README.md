@@ -70,6 +70,11 @@ verifier phases keep `GOPROXY=off` and no-network, resolving everything from
 the warmed cache. The healthcheck doubles as a readiness check: the pre-PR tree
 must build before the agent starts.
 
+The healthcheck also runs `git config --system --add safe.directory
+/workdir/repo`: Harbor's upload preserves the host UID, so git would otherwise
+reject the uploaded repository as foreign to the container user — breaking the
+agent's git commands and Go's VCS stamping.
+
 ## Leak model of hand-built tasks (what we truncate and why)
 
 The agent must find exactly the base tree — nothing that names or contains

@@ -60,11 +60,16 @@ def warm_healthcheck(spec: RepositorySpec) -> str | None:
     environment phase still has its network, so resolve the base state's
     modules and build it once there; the agent and verifier phases then run
     offline. Doubles as a readiness check on the pre-PR tree.
+
+    Harbor's upload preserves the host UID, so git sees the uploaded
+    repository as foreign to the container user; marking it safe system-wide
+    keeps the agent's git commands and Go's VCS stamping working.
     """
     if spec.framework != "go":
         return None
     repo = f"{DEFAULT_WORKDIR}/repo"
     return (
+        f"git config --system --add safe.directory {repo} && "
         f"cd {repo} && GOPROXY={GO_PROXY} go mod download && "
         f"GOPROXY={GO_PROXY} {spec.build_command}"
     )
