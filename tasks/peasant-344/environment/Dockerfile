@@ -1,7 +1,13 @@
 FROM golang:1.25-bookworm
 
 # git for the checkout; ca-certificates for module downloads at build time.
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
+# nodejs/npm (+curl) are pre-installed so Harbor installed-agents (e.g. opencode)
+# pass their `command -v curl bash stdbuf node npm` check and skip the
+# package-manager probe — that probe breaks on Podman Desktop for Mac, where
+# the compose-shim warning pollutes stdout and crashes agent setup with
+# KeyError. (bash/coreutils ship with bookworm; node here is only a placeholder,
+# Harbor installs a modern node via nvm at agent-setup time.)
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
 ARG PEASANT_REPO=https://github.com/peasant-labs/peasant.git
