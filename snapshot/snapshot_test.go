@@ -389,6 +389,31 @@ func TestCommitCutoffPinnedOlderThanHEADHistory(t *testing.T) {
 	equalStr(t, subjects(s.Commits), []string{"old.txt"})
 }
 
+func TestCommitCutoffKeepsAncestorCommittedAfterPin(t *testing.T) {
+	repo := testRepo(t)
+	// Parent committed with a future committer date; its child is older.
+	commitAt(t, repo, "future.txt", "f", "2030-01-01T00:00:00+00:00")
+	commitAt(t, repo, "child.txt", "c", "2026-04-01T00:00:00+00:00")
+	pinned := revParse(t, repo, "HEAD")
+	c, err := ByCommit(pinned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := SnapshotRepo(repo, c, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, subj := range subjects(s.Commits) {
+		if subj == "future.txt" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("ancestor with later committer date missing from commits: %v", subjects(s.Commits))
+	}
+}
+
 func TestCommitCutoffBareCloneUnbornHEAD(t *testing.T) {
 	src := testRepo(t)
 	pinned := revParse(t, src, "HEAD~1")

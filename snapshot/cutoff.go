@@ -13,8 +13,8 @@ import (
 const (
 	CutoffDate = "date"
 	CutoffPR   = "pr"
-	// CutoffCommit selects the exact tree of one commit; history stays
-	// time-based at that commit's committer date (inclusive).
+	// CutoffCommit selects the exact tree of one commit; history is that
+	// commit's full ancestry (ListAncestors), with no date filter.
 	CutoffCommit = "commit"
 )
 

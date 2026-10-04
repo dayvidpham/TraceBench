@@ -123,10 +123,10 @@ def materialize_worktree(
         ]
         try:
             proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
-        except FileNotFoundError as exc:
+        except OSError as exc:
             raise WorktreeError(
                 f"materialize_worktree: cannot run the snapshot tool ({exc}); install Go or "
-                "pass snapshot_bin pointing at a built `snapshot` binary."
+                "pass snapshot_bin pointing at a built, executable `snapshot` binary."
             ) from None
         if proc.returncode != 0:
             raise WorktreeError(
@@ -145,7 +145,14 @@ def materialize_worktree(
         _verify_tree(materialized, commit_sha)
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
-            dest.rmdir()
+            try:
+                dest.rmdir()
+            except OSError as exc:
+                raise WorktreeError(
+                    f"materialize_worktree: cannot replace the empty destination {dest} for "
+                    f"tree_commit {commit_sha} ({exc}); remove it (it may be a symlink) and "
+                    "re-run."
+                ) from None
         shutil.move(str(materialized), str(dest))
 
     return WorktreeResult(

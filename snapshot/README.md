@@ -65,7 +65,7 @@ streaming JSONL decode and concurrent walks are where Go pays off.
 
 - `cutoff.go` — CutoffResolver
 - `peasant.go` — BinaryPeasantClient / StubPeasantClient
-- `repo.go` — RepoSnapshotter (`ls-tree`) + HistoryExtractor (`log --before`)
+- `repo.go` — RepoSnapshotter (`ls-tree`) + HistoryExtractor (`log --before`; `ListAncestors` for commit cutoffs)
 - `trace.go` — TraceCollector
 - `api.go` — assemble + deterministic serialize (sorted, UTC)
 - `cmd/snapshot` — CLI
