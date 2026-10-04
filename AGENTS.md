@@ -20,6 +20,7 @@ inside a task may instead live in that task's own module.
 | Build | `go build ./...` |
 | Test | `go test -race ./...` |
 | Python tests | `uv run pytest` (uv workspace at the repository root) |
+| Task pipeline | `uv run tracebench-corpus --corpus <dump> pipeline --prs <id-or-file> --repo-dir <clone> --index corpus/index/merged_prs.json --dest <dir> [--spec <spec>] [--run-id <id>]` |
 | Tidy | `go mod tidy` (must leave `go.mod` and `go.sum` unchanged) |
 | Commit | `git agent-commit -m "type(scope): summary"` (never plain `git commit`) |
 
@@ -56,6 +57,29 @@ Tasks follow the Harbor layout in `README.md` (`tasks/<name>/` with `instruction
   with thin `main` functions, `internal/` for packages not importable outside the module, `pkg/`
   only for packages deliberately published for external import, and `testdata/` for fixtures.
 - Keep packages small; names are short, lower case, and free of stutter with their symbols.
+- The Python loader lives in `loaders/tracebench_corpus/`, one module per step: `cli.py`
+  (commands), `corpus.py` (dump loading and bundles), `task.py` (payload assembly), `golden.py`
+  (golden suite and the canonical doublestar matcher), `test_manifest.py` (case catalog),
+  `worktree.py` (secure worktree through the snapshot tool), `oracle.py` (oracle patch and
+  `solve.sh`), `repository_spec.py` (test and build command per repository), `target_config.py`
+  (harness, model, thinking), `skeleton.py` (Harbor task directory), `verifier.py` (in-sandbox
+  grading, standard library only), and `pipeline.py` (batch driver and Harbor job config). Its
+  tests and `testdata/*.yaml` fixtures live in `loaders/tests/`.
+
+### Task pipeline
+
+`tracebench-corpus pipeline` builds one runnable Harbor task per pull request: payload, golden
+suite, case catalog, secure worktree at `tree_commit` (no `.git`, tree hash asserted), verified
+oracle, and the task with its verifier. It writes `<dest>/payloads/`, `<dest>/tasks/`, and
+`<dest>/job-config.yaml` (run id, `n_attempts: 3`, `TRACEBENCH_RUN_ID`). A failed task names
+the failed part and the others still build. Validate a built task with
+`harbor run -p <dest>/tasks/<name> -a oracle -e podman` (reward 1.0) when Harbor is installed.
+
+To modify it: the test and build command per repository live in the repository adaptation spec
+(`--spec`, default in `repository_spec.py`); the reward rules and `test-results.json` live in
+`verifier.py`; the task layout lives in `skeleton.py`; the test patterns and their matcher live
+in `golden.py`. Every step fails closed. `loaders/README.md` ("Pipeline" and "How to modify")
+is the reference; `docs/architecture.md` shows the flow.
 
 ## Go standards
 
@@ -138,7 +162,8 @@ test or CI check fails when the committed output drifts from a fresh generation.
 
 - `README.md` — task layout and the isolation model (authoritative).
 - `docs/architecture.md` — C4 diagrams, dynamic views, and call sequences of the corpus and task-generation system.
-- `loaders/README.md` — loader API, task payload contract, and skeleton layout.
+- `loaders/README.md` — loader API, task payload contract, skeleton layout, the pipeline, the
+  verifier contract, and how to modify them.
 - `snapshot/README.md` — snapshot usage and the peasant binary contract.
 - `tasks/_base/README.md` — shared base image build order and the leak model.
 

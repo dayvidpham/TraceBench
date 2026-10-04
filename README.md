@@ -123,6 +123,97 @@ configuration for a run, and generates Harbor task skeletons from those
 payloads. The loader is a uv workspace member; from the repository root run
 `uv sync` and `uv run pytest`.
 
+## Build a task from the corpus
+
+The `pipeline` command of the loader turns a list of merged pull requests into
+runnable Harbor tasks: one task directory per pull request, plus one Harbor job
+config for the run.
+
+Prerequisites:
+
+* A corpus dump: `go run ./cmd/tracebench-sample fetch --dest data/tracebench`,
+  or a local `corpus/dump` written by `tracebench-sample dump`.
+* A local clone of the target repository (for example `peasant-labs/peasant`)
+  that contains each pull request's pre-PR commit and merge commit.
+* The merged-PR index, `corpus/index/merged_prs.json` (written by
+  `tracebench-sample index`). It supplies each pull request's `merge_commit`.
+* Go on the `PATH` (the pipeline runs the `snapshot` tool with
+  `go run ./cmd/snapshot` unless `--snapshot-bin` names a built binary).
+
+Commands:
+
+```bash
+uv sync
+uv run tracebench-corpus --corpus data/tracebench pipeline \
+  --prs "peasant-labs/peasant#343" \
+  --repo-dir /path/to/peasant-clone \
+  --index corpus/index/merged_prs.json \
+  --dest build/run-1 \
+  --run-id tracebench-smoke-1
+```
+
+* `--prs` takes a pull request id (`owner/repo#N`) or a file with one id per
+  line (blank lines and `#` comments are skipped). Repeat it to add more.
+* `--spec FILE` selects a repository adaptation spec (the test and build
+  command per repository). Without it, the shipped Go/Peasant default applies.
+* `--run-id ID` names the run. Without it, pass `--target-configs SPEC
+  --target-config NAME`, and the run id is derived from the target
+  configuration and the pull request list.
+* `--force` rebuilds payload and task directories that already exist.
+
+Outputs under `--dest`:
+
+| Path | Contents |
+|---|---|
+| `payloads/<slug>-pr-NNNN/` | The task payload: `pr.json`, `prior-traces/`, `repo/`, `tests/`, `test-manifest.json`, `solution/`, `repo-request.json`, `task.json`. |
+| `tasks/<slug>-pr-NNNN/` | The Harbor task: `task.toml`, `instruction.md`, `environment/`, `tests/`, `solution/`. |
+| `job-config.yaml` | The Harbor job config: `job_name` (the run id), `n_attempts: 3`, the built tasks, and `TRACEBENCH_RUN_ID` in `agents[].env` and `verifier.env`. It is `job-config.json` when PyYAML is not installed. |
+
+`<slug>` is `peasant` for `peasant-labs/peasant` and `peasant-archive` for the
+prerelease archive; `NNNN` is the zero-padded pull request number. The command
+prints one line per pull request. A task that fails names the failed part (for
+example `environment/repo` or `solution/oracle.patch`) and does not stop the
+other tasks; the job config lists only the tasks that were built, and the exit
+code is 1 when any task failed.
+
+Verify with Harbor:
+
+```bash
+# The oracle applies solution/oracle.patch, then the verifier runs; expect reward 1.0.
+harbor run -p build/run-1/tasks/peasant-pr-0343 -a oracle -e podman
+
+# Run every task of the run under the job config.
+harbor run -c build/run-1/job-config.yaml
+```
+
+Harbor is not installed in every development environment. Where it is not,
+these are the documented commands, and the loader tests cover the parts that
+run without it.
+
+How the pieces fit:
+
+1. **Corpus dump** — the pull request, its sessions, and the prior traces.
+2. **Payload** — `pr.json`, the prior traces up to the pull request's develop
+   boundary, and `repo-request.json` (the pre-PR commit `tree_commit` and the
+   test patterns).
+3. **Secure worktree** — `repo/` is the tree of `tree_commit`, written by the
+   `snapshot` tool in commit mode, with no `.git`. Its tree hash must equal
+   `git rev-parse <tree_commit>^{tree}`.
+4. **Golden suite** — every test file at `merge_commit` that matches the test
+   patterns, plus `test-manifest.json`, the catalog of the test cases.
+5. **Oracle** — `solution/oracle.patch` is `git diff <tree_commit>
+   <merge_commit>`; the build fails closed unless the patch reproduces
+   `merge_commit^{tree}`. `solution/solve.sh` applies it and runs the build
+   command.
+6. **Skeleton** — the Harbor task directory that references the shared base
+   image and uploads `environment/` at start.
+7. **Verifier** — `tests/test.sh` removes the pre-PR tests, overlays the golden
+   suite, runs the test command, and writes the reward (`passed / total`) to
+   `/logs/verifier/reward.txt` and a per-case report to `test-results.json`.
+8. **Job config** — one Harbor job per run id.
+
+See [`loaders/README.md`](loaders/README.md) for each step and how to modify it.
+
 ## Verification status
 
 * Test logic: buggy code fails 6/7 grading tests, oracle-fixed code passes 7/7.
