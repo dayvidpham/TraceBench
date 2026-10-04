@@ -154,7 +154,7 @@ current extractor does not classify JavaScript or TypeScript test cases.
 Without `--repo-dir`, task generation cannot classify PR changes and does
 not write a manifest.
 The existing `tests/golden/` directory name predates this classification: it
-holds the full merged-state suite, while the manifest's `golden` flags identify
+holds the extracted merged-state suite, while the manifest's `golden` flags identify
 the PR-added or PR-modified cases within it.
 
 ### Target configurations
@@ -203,7 +203,7 @@ tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
 | `tests/golden/` | the payload's extracted merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |
 | `tests/manifest.json` | verifier-side golden-suite manifest (commit, patterns, paths) |
 | `tests/test-manifest.json` | verifier-only copy of the case catalog when the payload has one |
-| `tests/test.sh` | removes pre-PR test files matching the payload's test patterns, overlays the golden suite, runs it, writes `/logs/verifier/reward.txt`; fails closed when golden tests are missing |
+| `tests/test.sh` | removes pre-PR test files matching the payload's test patterns, overlays the golden suite, runs it, writes `/logs/verifier/reward.txt`; fails closed when golden tests are missing. (target contract: today `test.sh` still writes `0` to `reward.txt` until the verifier runner lands) |
 | `solution/` | the payload's `solution/` (oracle patch and generated `solve.sh`) when `oracle` has run; otherwise a placeholder `solve.sh` that exits non-zero |
 
 Without `oracle` output the oracle is an explicit placeholder: such a skeleton

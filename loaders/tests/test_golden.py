@@ -244,3 +244,51 @@ def test_payload_patterns_from_repo_request(tmp_path) -> None:
     (tmp_path / "repo-request.json").write_text("{not json")
     with pytest.raises(ValueError, match="repo-request.json"):
         payload_test_patterns(tmp_path)
+
+
+def test_custom_patterns_drive_extraction_and_manifest(git_repo, tmp_path, write_dump) -> None:
+    repo, commit = git_repo
+    commit("base")
+    _write(repo, "src/lib_test.rs", "fn t() {}\n")
+    _write(repo, "src/lib.rs", "fn f() {}\n")
+    merge = commit("merge")
+    dump = _dump_for(tmp_path, write_dump)
+    payload = TaskBuilder(
+        Corpus(dump), pr_index={f"{LIVE}#22": {"merge_commit": merge}},
+        repo_dir=repo, materialize_tests=True,
+    ).build(f"{LIVE}#22", tmp_path / "payload", test_patterns=["**/*.rs"])
+    assert payload.golden_tests == 2
+    manifest = json.loads((payload.path / "tests" / MANIFEST_NAME).read_text())
+    assert manifest["patterns"] == ["**/*.rs"]
+    request = json.loads((payload.path / "repo-request.json").read_text())
+    assert request["test_patterns"] == ["**/*.rs"]
+
+
+def test_payload_patterns_fail_closed_on_directory_and_os_error(tmp_path, monkeypatch) -> None:
+    (tmp_path / "repo-request.json").mkdir()
+    with pytest.raises(ValueError, match="not a file"):
+        payload_test_patterns(tmp_path)
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "repo-request.json").write_text("{}")
+
+    def boom(*_args, **_kwargs):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(Path, "read_text", boom)
+    with pytest.raises(ValueError, match="could not be read"):
+        payload_test_patterns(other)
+
+
+def test_manifest_directory_collision_fails_closed(git_repo, tmp_path) -> None:
+    repo, commit = git_repo
+    _write(repo, "manifest.json/x_test.go", "package x\n")
+    merge = commit("merge")
+    with pytest.raises(GoldenSuiteError, match="manifest.json/"):
+        materialize_golden_tests(repo, merge, ["**/*_test.go"], tmp_path / "t1")
+    _write(repo, "y_test.go", "package y\n")
+    merge = commit("root test")
+    dest = tmp_path / "t2"
+    (dest / MANIFEST_NAME).mkdir(parents=True)
+    with pytest.raises(GoldenSuiteError, match="is a directory"):
+        materialize_golden_tests(repo, merge, ["y_test.go"], dest)

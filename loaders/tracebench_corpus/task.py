@@ -71,10 +71,20 @@ def payload_test_patterns(payload: str | Path) -> list[str]:
     naming the file when it is corrupt.
     """
     request = Path(payload) / "repo-request.json"
-    if not request.is_file():
+    if not request.exists() and not request.is_symlink():
         return list(DEFAULT_TEST_PATTERNS)
+    if not request.is_file():
+        raise ValueError(
+            f"cannot read test patterns: {request} exists but is not a file. "
+            "Remove it or regenerate the payload with `tracebench-corpus task ... --force`."
+        )
     try:
         data = json.loads(request.read_text())
+    except OSError as exc:
+        raise ValueError(
+            f"cannot read test patterns: {request} could not be read ({exc}). "
+            "Check its permissions or regenerate the payload."
+        ) from exc
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise ValueError(
             f"cannot read test patterns: {request} is not valid JSON ({exc}). "
@@ -193,7 +203,10 @@ class TaskBuilder:
         *,
         force: bool = False,
         target_config: TargetConfiguration | None = None,
+        test_patterns: list[str] | tuple[str, ...] | None = None,
     ) -> TaskPayload:
+        # Resolved once: extraction and repo-request.json use the same list.
+        patterns = list(test_patterns) if test_patterns else list(DEFAULT_TEST_PATTERNS)
         pr = self.corpus.pull_requests.get(pr_id)
         if pr is None:
             raise KeyError(f"pull request {pr_id} is not in the corpus")
@@ -218,7 +231,7 @@ class TaskBuilder:
         golden_tests: list[str] | None = None
         if self.materialize_tests:
             golden_tests = materialize_golden_tests(
-                self.repo_dir, merge_commit, payload_test_patterns(dest), dest / "tests",
+                self.repo_dir, merge_commit, patterns, dest / "tests",
                 pr_id=pr_id,
             )
         cutoff_ms = _iso_to_ms(cutoff_time)
@@ -305,7 +318,7 @@ class TaskBuilder:
                 "repo/": "working tree at tree_commit (the pre-PR state)",
                 "tests/": "every test file at merge_commit (the merged state)",
             },
-            "test_patterns": list(DEFAULT_TEST_PATTERNS),
+            "test_patterns": list(patterns),
             "glob_dialect": "doublestar globs relative to the repository root",
             "merge_commit_policy": "required; pass --index when the corpus record lacks one",
             "note": (
