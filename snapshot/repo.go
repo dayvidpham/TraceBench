@@ -110,9 +110,19 @@ func ListTree(repo, sha string) ([]FileEntry, error) {
 // ListHistory returns commits with committer date <= cutoff,
 // oldest-first with SHA tie-break for determinism.
 func ListHistory(repo string, cutoff time.Time) ([]Commit, error) {
+	return listLog(repo, "--before="+formatGitTime(cutoff))
+}
+
+// ListAncestors lists rev and every commit reachable from it, independent
+// of HEAD (works in bare clones with an unborn HEAD).
+func ListAncestors(repo, rev string) ([]Commit, error) {
+	return listLog(repo, rev)
+}
+
+func listLog(repo string, args ...string) ([]Commit, error) {
 	format := "%H%x00%P%x00%aI%x00%cI%x00%s%x1f"
-	out, err := gitRun(repo, 60*time.Second, "log",
-		"--before="+formatGitTime(cutoff), "--format="+format)
+	out, err := gitRun(repo, 60*time.Second,
+		append(append([]string{"log"}, args...), "--format="+format)...)
 	if err != nil {
 		return nil, err
 	}

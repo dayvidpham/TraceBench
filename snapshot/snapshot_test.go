@@ -360,3 +360,53 @@ func TestCLIEndToEnd(t *testing.T) {
 		t.Fatalf("unexpected payload: %s", raw)
 	}
 }
+
+func TestCommitCutoffPinnedOlderThanHEADHistory(t *testing.T) {
+	repo := testRepo(t)
+	// An orphan commit dated before every HEAD commit, unreachable from HEAD.
+	head, err := exec.Command("git", "-C", repo, "symbolic-ref", "--short", "HEAD").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	branch := strings.TrimSpace(string(head))
+	git(t, repo, nil, "checkout", "-q", "--orphan", "old")
+	git(t, repo, nil, "rm", "-rqf", ".")
+	commitAt(t, repo, "old.txt", "old", "2020-01-01T00:00:00+00:00")
+	pinned := revParse(t, repo, "HEAD")
+	git(t, repo, nil, "checkout", "-q", "-f", branch)
+	c, err := ByCommit(pinned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := SnapshotRepo(repo, c, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.RepoSHA != pinned || s.TreeSHA != revParse(t, repo, pinned+"^{tree}") {
+		t.Fatalf("repo_sha %s tree_sha %s, want pinned %s", s.RepoSHA, s.TreeSHA, pinned)
+	}
+	equalStr(t, filePaths(s.Files), []string{"old.txt"})
+	equalStr(t, subjects(s.Commits), []string{"old.txt"})
+}
+
+func TestCommitCutoffBareCloneUnbornHEAD(t *testing.T) {
+	src := testRepo(t)
+	pinned := revParse(t, src, "HEAD~1")
+	bare := filepath.Join(t.TempDir(), "bare.git")
+	if out, err := exec.Command("git", "init", "-q", "--bare", bare).CombinedOutput(); err != nil {
+		t.Fatalf("git init --bare: %v\n%s", err, out)
+	}
+	git(t, bare, nil, "fetch", "-q", src, "+refs/heads/*:refs/remotes/src/*")
+	c, err := ByCommit(pinned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := SnapshotRepo(bare, c, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.RepoSHA != pinned || s.TreeSHA != revParse(t, src, pinned+"^{tree}") {
+		t.Fatalf("repo_sha %s tree_sha %s, want pinned %s", s.RepoSHA, s.TreeSHA, pinned)
+	}
+	equalStr(t, filePaths(s.Files), []string{"a.txt", "b.txt"})
+}
