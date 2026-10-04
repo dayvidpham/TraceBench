@@ -38,22 +38,26 @@ class OpenCode(BaseInstalledAgent):
         return "opencode"
 
     def _version_ref(self) -> str:
-        ref = (self._payload / "version").read_text().strip()
-        if not ref:
-            raise RuntimeError("harness/opencode/version is empty")
+        config = json.loads((self._payload.parent / "config.json").read_text())
+        ref = config.get("version")
+        if not isinstance(ref, str) or not ref:
+            raise RuntimeError("harness/config.json version must be a non-empty string")
         return ref
 
     def _policy(self) -> tuple[dict, dict, dict]:
         """Load the external toggle and the per-module map, return expected perm.
 
-        tools.json is the single external config (only search/fetch booleans).
+        config.json is the single external config (version plus search/fetch).
         tool-map.json is contained per module (harness name -> OpenCode key).
         """
-        import json as _json
-
         allowed = {"search", "fetch"}
-        tools = _json.loads((self._payload.parent / "tools.json").read_text())
-        mapping = _json.loads((self._payload / "tool-map.json").read_text())
+        config = json.loads((self._payload.parent / "config.json").read_text())
+        if set(config) != {"tools", "version"}:
+            raise RuntimeError("harness/config.json must contain only version and tools")
+        tools = config.get("tools")
+        mapping = json.loads((self._payload / "tool-map.json").read_text())
+        if not isinstance(tools, dict):
+            raise RuntimeError("harness/config.json tools must be an object")
         if set(tools) != allowed or set(mapping) != allowed:
             raise RuntimeError(f"policy must be exactly {sorted(allowed)}")
         for name, enabled in tools.items():
@@ -69,8 +73,9 @@ class OpenCode(BaseInstalledAgent):
 
     def _ensure_config(self) -> Path:
         path = self._payload / "opencode.json"
-        if not path.is_file():
-            subprocess.run([str(self._payload / "render-config.sh")], check=True)
+        # This output is never committed: render from the sole parent config
+        # each time so no stale generated policy can be installed.
+        subprocess.run([str(self._payload / "render-config.sh")], check=True)
         if not path.is_file():
             raise RuntimeError("opencode.json was not rendered")
         return path
