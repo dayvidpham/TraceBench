@@ -47,6 +47,34 @@ tracebench-corpus --repo dayvidpham/TraceBench bundle "peasant-labs/peasant#343"
 tracebench-corpus --corpus corpus/dump bundle-all --dest bundles --split test
 ```
 
+## Task payloads
+
+`task` assembles the payload for one benchmark task: the pull request, the
+traces of the codebase merged before it (excluding the PR's own sessions), and
+integration points for the repository tooling.
+
+```bash
+tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
+  --index corpus/index/merged_prs.json --dest task-343
+```
+
+| path | contents |
+|---|---|
+| `pr.json` | the pull request; enriched with `merge_commit`, `created_at`, and `base_ref` when `--index` is passed |
+| `prior-traces/` | `traces.jsonl`, `metadata.jsonl`, `transcripts/`, and `manifest.json` for every pull request of the same codebase family merged before this PR's start, excluding this PR's own sessions |
+| `repo/` | **integration point**: the working tree at the pre-PR state; empty until the repository tooling fills it |
+| `tests/` | **integration point**: every test file at the merged state (the golden suite); empty until filled |
+| `repo-request.json` | exactly what the repository tooling must materialize: repo, merge commit, base-commit rule, cutoff, and test patterns |
+| `task.json` | payload summary (cutoff, prior trace/session/PR counts) |
+
+The codebase family pairs `peasant-labs/peasant` with
+`peasant-labs/peasant-prerelease-archive`, so a live task sees archive traces
+as prior context. The repository integration point matches the `snapshot/`
+module (issue #2), which resolves the same PR cutoff and materializes
+repository trees.
+
+Python API: `TaskBuilder(corpus, pr_index=...).build(pr_id, dest)`.
+
 ## Harbor integration
 
 `materialize` writes a directory that can be copied into a task's
