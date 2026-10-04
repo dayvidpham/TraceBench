@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/dayvidpham/TraceBench/internal/corpus"
@@ -37,16 +38,15 @@ type Options struct {
 	Targets map[string]int
 	// Database is the Peasant database the sessions were read from.
 	Database string
-	// RepoHost is the repository checkout the trace keys were derived under.
-	RepoHost string
 	// Seed is the sampler seed used to select and split the dataset.
 	Seed int64
 }
 
 // SessionTrace is a session selected for one pull request.
 type SessionTrace struct {
-	Session corpus.Session
-	Method  corpus.Attribution
+	Session  corpus.Session
+	Method   corpus.Attribution
+	Relation string
 }
 
 // Bundle is one sampled pull request with its sessions.
@@ -58,7 +58,7 @@ type Bundle struct {
 // Transcript records one collected transcript.
 type Transcript struct {
 	SessionID  string             `json:"session_id"`
-	SourcePath string             `json:"source_path"`
+	SourceFile string             `json:"source_file,omitempty"`
 	Path       string             `json:"path,omitempty"`
 	SHA256     string             `json:"sha256,omitempty"`
 	Size       int64              `json:"size"`
@@ -68,9 +68,12 @@ type Transcript struct {
 	Error      string             `json:"error,omitempty"`
 	Detail     string             `json:"detail,omitempty"`
 	Method     corpus.Attribution `json:"method,omitempty"`
+	Relation   string             `json:"relation,omitempty"`
 }
 
-// SessionDetail is the session metadata stored beside a pull request.
+// SessionDetail is the session metadata stored beside a pull request. Local
+// absolute paths are reduced to portable values: worktree directory names and
+// source file basenames only.
 type SessionDetail struct {
 	ID            string             `json:"id"`
 	ParentID      string             `json:"parent_id,omitempty"`
@@ -80,11 +83,10 @@ type SessionDetail struct {
 	EndedAt       time.Time          `json:"ended_at"`
 	Branch        string             `json:"branch,omitempty"`
 	Worktree      string             `json:"worktree,omitempty"`
-	SessionCwd    string             `json:"session_cwd,omitempty"`
-	ProjectCwd    string             `json:"project_cwd,omitempty"`
 	ProjectRemote string             `json:"project_remote,omitempty"`
-	SourcePath    string             `json:"source_path,omitempty"`
+	SourceFile    string             `json:"source_file,omitempty"`
 	Method        corpus.Attribution `json:"method"`
+	Relation      string             `json:"relation,omitempty"`
 }
 
 // PRRecord is one pull request in the dataset manifest.
@@ -117,7 +119,6 @@ type Manifest struct {
 	SchemaVersion int            `json:"schema_version"`
 	GeneratedAt   time.Time      `json:"generated_at"`
 	Database      string         `json:"database,omitempty"`
-	RepoHost      string         `json:"repo_host,omitempty"`
 	Seed          int64          `json:"seed"`
 	Targets       map[string]int `json:"split_targets"`
 	Counts        map[string]int `json:"split_counts"`
@@ -140,8 +141,7 @@ func Collect(ctx context.Context, datasetDir string, bundles []Bundle, opts Opti
 	manifest := &Manifest{
 		SchemaVersion: ManifestSchemaVersion,
 		GeneratedAt:   time.Now().UTC(),
-		Database:      opts.Database,
-		RepoHost:      opts.RepoHost,
+		Database:      filepath.Base(opts.Database),
 		Seed:          opts.Seed,
 		Targets:       opts.Targets,
 		Counts:        map[string]int{},
@@ -150,6 +150,7 @@ func Collect(ctx context.Context, datasetDir string, bundles []Bundle, opts Opti
 		manifest.Targets = map[string]int{}
 	}
 	var problems []error
+	homeDir, _ := os.UserHomeDir()
 
 	sorted := append([]Bundle(nil), bundles...)
 	sort.Slice(sorted, func(i, j int) bool {
@@ -196,12 +197,14 @@ func Collect(ctx context.Context, datasetDir string, bundles []Bundle, opts Opti
 			details = append(details, SessionDetail{
 				ID: session.ID, ParentID: session.ParentID, Harness: session.Harness,
 				ModelID: session.ModelID, StartedAt: time.UnixMilli(session.StartMS).UTC(),
-				EndedAt: session.End(), Branch: session.Branch, Worktree: session.Worktree,
-				SessionCwd: session.SessionCwd, ProjectCwd: session.ProjectCwd,
-				ProjectRemote: session.ProjectRemote, SourcePath: session.SourcePath,
-				Method: trace.Method,
+				EndedAt: session.End(), Branch: session.Branch,
+				Worktree: filepath.Base(session.Worktree), ProjectRemote: session.ProjectRemote,
+				SourceFile: filepath.Base(session.SourcePath), Method: trace.Method,
+				Relation: trace.Relation,
 			})
-			transcript := collectTranscript(ctx, transcriptsDir, datasetDir, session, trace.Method, opts.Transcripts)
+			transcript := collectTranscript(ctx, transcriptsDir, datasetDir, session, trace.Method, trace.Relation, opts.Transcripts)
+			transcript.Error = scrubPaths(transcript.Error, homeDir, session.SourcePath, opts.Database)
+			transcript.Detail = scrubPaths(transcript.Detail, homeDir, session.SourcePath, opts.Database)
 			if transcript.Missing {
 				if !opts.AllowMissing {
 					problems = append(problems, fmt.Errorf("session %s (pull request %s): %s",
@@ -233,10 +236,10 @@ func Collect(ctx context.Context, datasetDir string, bundles []Bundle, opts Opti
 	if err := writeJSON(filepath.Join(datasetDir, "manifest.json"), manifest); err != nil {
 		return manifest, err
 	}
-	if len(problems) > 0 {
-		return manifest, fmt.Errorf("collect transcripts: %w", errors.Join(problems...))
+	if len(problems) == 0 {
+		return manifest, nil
 	}
-	return manifest, nil
+	return manifest, fmt.Errorf("collect transcripts: %w", errors.Join(problems...))
 }
 
 func problemMessage(transcript Transcript) string {
@@ -247,6 +250,24 @@ func problemMessage(transcript Transcript) string {
 		return transcript.Detail
 	}
 	return "transcript unavailable"
+}
+
+// scrubPaths replaces known local roots in diagnostic text with portable
+// forms so dataset metadata never carries machine-specific paths.
+func scrubPaths(message, homeDir string, roots ...string) string {
+	if message == "" {
+		return message
+	}
+	for _, root := range roots {
+		if root == "" {
+			continue
+		}
+		message = strings.ReplaceAll(message, root, filepath.Base(root))
+	}
+	if homeDir != "" {
+		message = strings.ReplaceAll(message, homeDir, "~")
+	}
+	return message
 }
 
 // SortTranscripts orders transcripts by session id for stable output.
@@ -261,9 +282,15 @@ func collectTranscript(
 	transcriptsDir, datasetDir string,
 	session corpus.Session,
 	method corpus.Attribution,
+	relation string,
 	provider TranscriptProvider,
 ) Transcript {
-	transcript := Transcript{SessionID: session.ID, SourcePath: session.SourcePath, Method: method}
+	transcript := Transcript{
+		SessionID:  session.ID,
+		SourceFile: filepath.Base(session.SourcePath),
+		Method:     method,
+		Relation:   relation,
+	}
 	opened, err := openTranscript(ctx, session, provider)
 	if err != nil {
 		transcript.Missing = true
@@ -330,6 +357,19 @@ func openTranscript(ctx context.Context, session corpus.Session, provider Transc
 		}, nil
 	}
 	return provider.Open(ctx, session)
+}
+
+// LoadManifest reads a dataset manifest written by Collect.
+func LoadManifest(path string) (*Manifest, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return nil, fmt.Errorf("decode %s: %w", path, err)
+	}
+	return &manifest, nil
 }
 
 func writeJSON(path string, value any) error {

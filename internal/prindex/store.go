@@ -20,6 +20,7 @@ type Index struct {
 	Sessions    []corpus.Session     `json:"-"`
 	Traces      []corpus.TraceLink   `json:"-"`
 	Commits     []CommitMapping      `json:"-"`
+	Relations   []SessionRelation    `json:"-"`
 	Summary     Summary              `json:"summary"`
 }
 
@@ -37,6 +38,7 @@ type Summary struct {
 	TotalSessions          int           `json:"total_sessions"`
 	SessionsWithKeys       int           `json:"sessions_with_keys"`
 	LinkedSessions         int           `json:"linked_sessions"`
+	RelatedSessions        int           `json:"related_sessions,omitempty"`
 	Traces                 int           `json:"traces"`
 	CommitHashes           int           `json:"commit_hashes,omitempty"`
 	CommitHashesResolved   int           `json:"commit_hashes_resolved,omitempty"`
@@ -126,6 +128,7 @@ func SaveIndex(dir string, idx Index) error {
 		{"sessions.json", idx.Sessions},
 		{"traces.json", idx.Traces},
 		{"commits.json", idx.Commits},
+		{"session_relations.json", idx.Relations},
 		{"summary.json", idx.Summary},
 	}
 	for _, file := range files {
@@ -159,6 +162,14 @@ func LoadIndex(dir string) (Index, error) {
 		}
 	} else if !os.IsNotExist(err) {
 		return Index{}, fmt.Errorf("stat %s: %w", commitsPath, err)
+	}
+	relationsPath := filepath.Join(dir, "session_relations.json")
+	if _, err := os.Stat(relationsPath); err == nil {
+		if err := readJSONFile(relationsPath, &idx.Relations); err != nil {
+			return Index{}, err
+		}
+	} else if !os.IsNotExist(err) {
+		return Index{}, fmt.Errorf("stat %s: %w", relationsPath, err)
 	}
 	seen := map[string]bool{}
 	for _, pr := range idx.MergedPRs {

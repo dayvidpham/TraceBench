@@ -16,6 +16,9 @@ import (
 //go:embed testdata/attribution.yaml
 var attributionYAML []byte
 
+//go:embed testdata/relations.yaml
+var relationsYAML []byte
+
 type attributionFixtures struct {
 	Scenarios []attributionScenario `yaml:"scenarios"`
 }
@@ -167,4 +170,79 @@ func parseFixtureTime(t *testing.T, value string) time.Time {
 		t.Fatalf("parse fixture time %q: %v", value, err)
 	}
 	return parsed.UTC()
+}
+
+type relationFixtures struct {
+	Scenarios []relationScenario `yaml:"scenarios"`
+}
+
+type relationScenario struct {
+	Name     string             `yaml:"name"`
+	Sessions []relationSession  `yaml:"sessions"`
+	Evidence []relationEvidence `yaml:"evidence"`
+	Linked   []string           `yaml:"linked"`
+	Expect   []relationExpect   `yaml:"expect"`
+}
+
+type relationSession struct {
+	ID       string `yaml:"id"`
+	ParentID string `yaml:"parent_id"`
+}
+
+type relationEvidence struct {
+	From string `yaml:"from"`
+	To   string `yaml:"to"`
+	Kind string `yaml:"kind"`
+}
+
+type relationExpect struct {
+	Session      string   `yaml:"session"`
+	Linked       bool     `yaml:"linked"`
+	AncestorOf   []string `yaml:"ancestor_of"`
+	DescendantOf []string `yaml:"descendant_of"`
+	ForkOf       []string `yaml:"fork_of"`
+}
+
+func TestBuildSessionRelationsFixtures(t *testing.T) {
+	var fixtures relationFixtures
+	if err := yaml.Unmarshal(relationsYAML, &fixtures); err != nil {
+		t.Fatalf("decode relations fixtures: %v", err)
+	}
+	if len(fixtures.Scenarios) == 0 {
+		t.Fatal("relations fixtures contain no scenarios")
+	}
+	for _, scenario := range fixtures.Scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			sessions := make([]corpus.Session, 0, len(scenario.Sessions))
+			for _, s := range scenario.Sessions {
+				sessions = append(sessions, corpus.Session{ID: s.ID, ParentID: s.ParentID})
+			}
+			evidence := make([]corpus.SessionEdge, 0, len(scenario.Evidence))
+			for _, e := range scenario.Evidence {
+				evidence = append(evidence, corpus.SessionEdge{From: e.From, To: e.To, Kind: e.Kind})
+			}
+			linked := map[string]bool{}
+			for _, id := range scenario.Linked {
+				linked[id] = true
+			}
+
+			got := map[string]SessionRelation{}
+			for _, relation := range BuildSessionRelations(sessions, evidence, linked) {
+				got[relation.SessionID] = relation
+			}
+			want := map[string]SessionRelation{}
+			for _, e := range scenario.Expect {
+				want[e.Session] = SessionRelation{
+					SessionID:    e.Session,
+					Linked:       e.Linked,
+					AncestorOf:   e.AncestorOf,
+					DescendantOf: e.DescendantOf,
+					ForkOf:       e.ForkOf,
+				}
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Fatalf("relations mismatch\n got: %+v\nwant: %+v", got, want)
+			}
+		})
+	}
 }

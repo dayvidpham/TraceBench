@@ -88,6 +88,9 @@ const (
 	// AttributionLatestMerge marks a session with no merge after it; it is
 	// attributed to the latest same-issue pull request already merged.
 	AttributionLatestMerge Attribution = "latest_merge"
+	// AttributionContext marks a session copied into a pull request bundle
+	// because it is a parent, child, or fork of an attributed session.
+	AttributionContext Attribution = "context"
 )
 
 // TraceLink pairs one session with the pull request it is attributed to.
@@ -96,6 +99,14 @@ type TraceLink struct {
 	SessionID string      `json:"session_id"`
 	Method    Attribution `json:"method"`
 	Keys      []string    `json:"keys,omitempty"`
+}
+
+// SessionEdge is a lineage edge from one session to another, such as a
+// session that was started by or continued from another session.
+type SessionEdge struct {
+	From string `json:"from"`
+	To   string `json:"to"`
+	Kind string `json:"kind"`
 }
 
 // Transcript source kinds recorded in the dataset manifest.

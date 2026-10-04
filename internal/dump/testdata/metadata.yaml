@@ -1,0 +1,86 @@
+scenarios:
+  - name: full_artifact
+    session:
+      id: 11111111-1111-1111-1111-111111111111
+      parent_id: 22222222-2222-2222-2222-222222222222
+      harness: claude-code
+      model_id: claude-sonnet-4-6
+      start_ms: 1000
+      end_ms: 91000
+      ingested_ms: 95000
+      source_format: jsonl
+      branch: develop
+      worktree: /home/someone/repo/peasant-343--feat--thing
+      source_path: /home/someone/.claude/projects/x/session.jsonl
+      project_hash: abcdef
+      project_name: peasant
+      project_remote: github.com/peasant-labs/peasant
+      host_slug: someone-laptop
+      tool_version: 2.1.47
+      root_session_id: 11111111-1111-1111-1111-111111111111
+      session_purpose: interaction
+      adapter_version: 3
+    metrics:
+      turn_count: 5
+      tool_calls: 2
+      subagent_count: 1
+      input_tokens: 100
+      output_tokens: 50
+      duration_minutes: 1.5
+    commits:
+      - {hash: aaaa, message: "feat: thing", author_name: Someone, author_email: someone@example.com, commit_time: 10, author_time: 20}
+    associations:
+      - {id: assoc-1, observed_commit_hash: bbbb}
+    relationships:
+      - {kind: started_by, target_state: target_known, target_local_id: 33333333-3333-3333-3333-333333333333, evidence: native_typed}
+    subagent_ids: [44444444-4444-4444-4444-444444444444]
+    expect:
+      session_id: 11111111-1111-1111-1111-111111111111
+      parent_uuid: 22222222-2222-2222-2222-222222222222
+      host_slug_prefix: "host-"
+      commits: 1
+      associations: 1
+      relationships: 1
+      subagents: 1
+      adapter_version: 3
+      purpose: interaction
+      duration_ms: 90000
+
+  - name: invalid_source_format
+    session:
+      id: 11111111-1111-1111-1111-111111111111
+      harness: claude-code
+      model_id: m
+      start_ms: 1
+      end_ms: 2
+      source_format: not-a-format
+      project_hash: abc
+      project_name: peasant
+    expect_error: true
+
+  - name: invalid_purpose
+    session:
+      id: 11111111-1111-1111-1111-111111111111
+      harness: claude-code
+      model_id: m
+      start_ms: 1
+      end_ms: 2
+      source_format: jsonl
+      session_purpose: not-a-purpose
+      project_hash: abc
+      project_name: peasant
+    expect_error: true
+
+  - name: invalid_relationship
+    session:
+      id: 11111111-1111-1111-1111-111111111111
+      harness: claude-code
+      model_id: m
+      start_ms: 1
+      end_ms: 2
+      source_format: jsonl
+      project_hash: abc
+      project_name: peasant
+    relationships:
+      - {kind: invented_kind, target_state: target_known, target_local_id: 33333333-3333-3333-3333-333333333333, evidence: native_typed}
+    expect_error: true

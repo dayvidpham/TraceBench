@@ -23,8 +23,7 @@ type CommitRef struct {
 // LoadSessionCommits returns every session-to-commit observation recorded in
 // the database, from both the commit and association tables.
 func LoadSessionCommits(ctx context.Context, dbPath string) ([]CommitRef, error) {
-	u := readOnlyURL(dbPath)
-	db, err := sql.Open("sqlite", u)
+	db, err := sql.Open("sqlite", readOnlyURL(dbPath))
 	if err != nil {
 		return nil, fmt.Errorf("open peasant database %s: %w", dbPath, err)
 	}
@@ -53,6 +52,42 @@ func LoadSessionCommits(ctx context.Context, dbPath string) ([]CommitRef, error)
 		return nil, fmt.Errorf("iterate session commits: %w", err)
 	}
 	return refs, nil
+}
+
+// LoadSessionEdges returns resolved cross-session lineage edges from the
+// relationship evidence table, such as a session started by or given context
+// from another session.
+func LoadSessionEdges(ctx context.Context, dbPath string) ([]corpus.SessionEdge, error) {
+	db, err := sql.Open("sqlite", readOnlyURL(dbPath))
+	if err != nil {
+		return nil, fmt.Errorf("open peasant database %s: %w", dbPath, err)
+	}
+	defer db.Close()
+	db.SetMaxOpenConns(1)
+
+	rows, err := db.QueryContext(ctx, `
+		SELECT session_id, target_local_id, kind
+		FROM session_relationship_evidence
+		WHERE target_state IN ('target_known', 'target_known_retained')
+		  AND COALESCE(target_local_id, '') != ''
+		ORDER BY session_id, kind, target_local_id`)
+	if err != nil {
+		return nil, fmt.Errorf("query session edges from %s: %w", dbPath, err)
+	}
+	defer rows.Close()
+
+	var edges []corpus.SessionEdge
+	for rows.Next() {
+		var edge corpus.SessionEdge
+		if err := rows.Scan(&edge.From, &edge.To, &edge.Kind); err != nil {
+			return nil, fmt.Errorf("scan session edge: %w", err)
+		}
+		edges = append(edges, edge)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate session edges: %w", err)
+	}
+	return edges, nil
 }
 
 // TranscriptReader produces per-session transcripts. A bounded plain file

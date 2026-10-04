@@ -1,0 +1,85 @@
+scenarios:
+  - name: parent_chain
+    sessions:
+      - {id: P2}
+      - {id: P1, parent_id: P2}
+      - {id: L1, parent_id: P1}
+    linked: [L1]
+    expect:
+      - {session: L1, linked: true}
+      - {session: P1, ancestor_of: [L1]}
+      - {session: P2, ancestor_of: [L1]}
+
+  - name: descendants
+    sessions:
+      - {id: L1}
+      - {id: C1, parent_id: L1}
+      - {id: C2, parent_id: C1}
+    linked: [L1]
+    expect:
+      - {session: L1, linked: true}
+      - {session: C1, descendant_of: [L1]}
+      - {session: C2, descendant_of: [L1]}
+
+  - name: fork_edge
+    sessions:
+      - {id: L1}
+      - {id: F1}
+    evidence:
+      - {from: L1, to: F1, kind: context_from}
+    linked: [L1]
+    expect:
+      - {session: L1, linked: true}
+      - {session: F1, fork_of: [L1]}
+
+  - name: fork_ancestor_chain
+    sessions:
+      - {id: L1}
+      - {id: F1}
+      - {id: P1, parent_id: F1}
+    evidence:
+      - {from: L1, to: F1, kind: started_by}
+    linked: [L1]
+    expect:
+      - {session: L1, linked: true}
+      - {session: F1, fork_of: [L1]}
+
+  - name: linked_ancestor_stays_linked
+    sessions:
+      - {id: P}
+      - {id: L, parent_id: P}
+    linked: [P, L]
+    expect:
+      - {session: P, linked: true, ancestor_of: [L]}
+      - {session: L, linked: true, descendant_of: [P]}
+
+  - name: shared_parent
+    sessions:
+      - {id: P}
+      - {id: L1, parent_id: P}
+      - {id: L2, parent_id: P}
+    linked: [L1, L2]
+    expect:
+      - {session: P, ancestor_of: [L1, L2]}
+      - {session: L1, linked: true}
+      - {session: L2, linked: true}
+
+  - name: cycle_is_terminating
+    sessions:
+      - {id: A}
+      - {id: B, parent_id: A}
+    evidence:
+      - {from: A, to: B, kind: started_by}
+    linked: [A]
+    expect:
+      - {session: A, linked: true}
+      - {session: B, fork_of: [A], descendant_of: [A]}
+
+  - name: evidence_to_unknown_session_is_ignored
+    sessions:
+      - {id: L1}
+    evidence:
+      - {from: L1, to: missing, kind: started_by}
+    linked: [L1]
+    expect:
+      - {session: L1, linked: true}

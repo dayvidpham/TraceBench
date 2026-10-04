@@ -37,7 +37,10 @@ func TestCollectCopiesTranscriptsAndRecordsMissing(t *testing.T) {
 		{
 			Assignment: sampler.Assignment{PR: pr, Split: sampler.Train, Group: "peasant-labs/peasant#issue-343"},
 			Sessions: []SessionTrace{
-				{Session: corpus.Session{ID: "session-one", SourcePath: sourcePath, StartMS: 1000, EndMS: 2000}, Method: corpus.AttributionExact},
+				{Session: corpus.Session{
+					ID: "session-one", SourcePath: sourcePath, StartMS: 1000, EndMS: 2000,
+					Worktree: "/home/someone/repo/peasant-343--feat--thing",
+				}, Method: corpus.AttributionExact},
 				{Session: corpus.Session{ID: "session-missing", SourcePath: filepath.Join(sourceDir, "gone.jsonl")}, Method: corpus.AttributionNextMerge},
 			},
 		},
@@ -104,8 +107,16 @@ func TestCollectCopiesTranscriptsAndRecordsMissing(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(datasetDir, "manifest.json")); err != nil {
 		t.Fatalf("manifest.json: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(datasetDir, "train", "peasant-labs--peasant", "pr-0343", "pr.json")); err != nil {
+	prFile := filepath.Join(datasetDir, "train", "peasant-labs--peasant", "pr-0343", "pr.json")
+	prBytes, err := os.ReadFile(prFile)
+	if err != nil {
 		t.Fatalf("pr.json: %v", err)
+	}
+	if strings.Contains(string(prBytes), "/home/") || strings.Contains(string(prBytes), sourceDir) {
+		t.Fatalf("pr.json leaks local paths:\n%s", prBytes)
+	}
+	if !strings.Contains(string(prBytes), "peasant-343--feat--thing") {
+		t.Fatalf("pr.json lost the portable worktree name:\n%s", prBytes)
 	}
 }
 

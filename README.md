@@ -74,18 +74,28 @@ harbor view ./jobs
 `cmd/tracebench-sample` indexes merged `peasant-labs/peasant` pull requests,
 links them to agent sessions recorded in a local Peasant database (head-ref
 name matches, same-issue open windows, and commit associations; a session may
-link to several pull requests), and samples a time- and size-stratified
-train/val/test corpus with the raw transcripts:
+link to several pull requests), closes over parent/child/fork session lineage
+so bundles carry their full session forest, and samples a time- and
+size-stratified train/val/test corpus with the raw transcripts:
 
 ```bash
 go run ./cmd/tracebench-sample index
 go run ./cmd/tracebench-sample sample --train 30 --val 10 --test 9
+go run ./cmd/tracebench-sample dump
 ```
 
-Indexes land in `corpus/index/` and the dataset in `corpus/dataset/`;
-`corpus/` is ignored by git. Sessions whose raw source is OpenCode's
-monolithic database are exported per entry from the Peasant full-content
-capture, and the manifest flags missing or partial transcripts.
+Indexes land in `corpus/index/`, the sampled dataset in `corpus/dataset/`, and
+`dump/` holds a flat, publishable dump: `metadata.jsonl` records in
+`schema.UnifiedMetadata`, `transcripts/` envelopes in
+`schema.TranscriptContent` (`session_detail`), plus `pull_requests.jsonl` and
+`traces.jsonl` indexes. Transcripts pass through the `redact` pipeline at the
+standard level, metadata omits machine-specific paths, and `--pin-prs FILE`
+reproduces a previous sample. `--source village-pull` builds the same dump
+from `peasant village pull` directories instead of the local database, with
+collective provenance in `village_pulls.jsonl`. `corpus/` is ignored by git.
+Sessions whose raw source is OpenCode's monolithic database are exported per
+entry from the Peasant full-content capture, and the manifests flag missing or
+partial transcripts.
 
 ## Verification status
 
