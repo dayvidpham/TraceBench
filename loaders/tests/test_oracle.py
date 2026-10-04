@@ -98,6 +98,9 @@ def test_patch_applies_cleanly_and_reproduces_merge_tree(pr_repo, tmp_path):
 def test_equivalence_mismatch_fails_closed_naming_both_trees(pr_repo, monkeypatch, tmp_path):
     repo, tree_commit, merge_commit = pr_repo
     real_git = oracle_module._git
+    # Fault injection is necessary: a real `git diff A B` always reproduces
+    # B's tree, so the mismatch branch is unreachable without corrupting the
+    # patch between generation and verification.
 
     def truncated_diff(repo_dir, *args, input=None):
         out = real_git(repo_dir, *args, input=input)
@@ -280,3 +283,74 @@ def test_cli_spec_without_matching_repo_exits_2(pr_repo, tmp_path, capsys):
         "--spec", str(spec),
     ]) == 2
     assert "no repository spec matches" in capsys.readouterr().err
+
+
+def test_cli_invalid_json_repo_request_exits_2(pr_repo, tmp_path, capsys):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    (payload / "repo-request.json").write_text("{not json")
+    assert main(["oracle", PR_ID, "--repo-dir", str(repo), "--payload", str(payload)]) == 2
+    assert "not valid JSON" in capsys.readouterr().err
+    assert not (payload / "solution").exists()
+
+
+def test_cli_empty_repo_request_names_merge_commit(pr_repo, tmp_path, capsys):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    (payload / "repo-request.json").write_text("{}")
+    assert main(["oracle", PR_ID, "--repo-dir", str(repo), "--payload", str(payload)]) == 2
+    assert "merge_commit" in capsys.readouterr().err
+
+
+def test_cli_payload_without_task_json_exits_2(pr_repo, tmp_path, capsys):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    (payload / "task.json").unlink()
+    assert main(["oracle", PR_ID, "--repo-dir", str(repo), "--payload", str(payload)]) == 2
+    assert "task.json" in capsys.readouterr().err
+    assert not (payload / "solution").exists()
+
+
+def test_cli_pr_mismatch_with_payload_exits_2(pr_repo, tmp_path, capsys):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    request = json.loads((payload / "repo-request.json").read_text())
+    request.update(pr=PR_ID, repo="peasant-labs/peasant")
+    (payload / "repo-request.json").write_text(json.dumps(request))
+    assert main(["oracle", "peasant-labs/peasant#99", "--repo-dir", str(repo),
+                 "--payload", str(payload)]) == 2
+    err = capsys.readouterr().err
+    assert PR_ID in err and "peasant-labs/peasant#99" in err
+    assert not (payload / "solution").exists()
+
+
+def test_cli_spec_repo_comes_from_payload(pr_repo, tmp_path):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    request = json.loads((payload / "repo-request.json").read_text())
+    request.update(pr="mirror/fork#22", repo="peasant-labs/peasant")
+    (payload / "repo-request.json").write_text(json.dumps(request))
+    spec = Path(__file__).parent / "testdata" / "oracle_spec.yaml"
+    assert main(["oracle", "mirror/fork#22", "--repo-dir", str(repo),
+                 "--payload", str(payload), "--spec", str(spec)]) == 0
+    assert "spec-build-ran" in (payload / "solution" / "solve.sh").read_text()
+
+
+def test_identical_commits_yield_empty_verified_patch(pr_repo):
+    repo, _, merge_commit = pr_repo
+    result = build_oracle(repo, merge_commit, merge_commit, None)
+    assert result.patch == b""
+    assert result.changed_files == ()
+    assert result.verified is True
+    assert result.applied_tree == _git(repo, "rev-parse", f"{merge_commit}^{{tree}}")
+
+
+def test_non_utf8_filename_does_not_raise(git_repo):
+    repo, commit = git_repo
+    base = commit("base")
+    name = b"caf\xe9.txt"
+    with open(os.path.join(os.fsencode(repo), name), "wb") as handle:
+        handle.write(b"x\n")
+    merge = commit("merge")
+    result = build_oracle(repo, base, merge, None)
+    assert os.fsdecode(name) in result.changed_files
