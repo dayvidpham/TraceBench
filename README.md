@@ -50,23 +50,54 @@ tasks/<name>/
 
 ## Quickstart
 
+Enter the dev shell (Go, uv, and the `docker-compose` that Harbor's podman provider needs) and
+install Harbor:
+
 ```bash
+nix develop            # or: direnv allow
 uv tool install harbor
+```
 
-# Prove the task is solvable (oracle runs solution, then verifier):
-harbor run -p tasks/trace-propagation -a oracle -e docker
+Our runner is `tracebench-corpus pipeline`: it turns a list of merged pull requests into runnable
+Harbor tasks plus one Harbor job config, and `harbor run` executes the job. Two jobs are ready to
+run:
 
-# Smoke-test a real agent (needs network ONLY on the host for the model API;
-# the sandbox itself stays offline during the run):
-harbor run -p tasks/trace-propagation -a claude-code \
-  -m anthropic/claude-haiku-4-5 -e docker
+```bash
+# Before any Harbor run, re-tag the shared images (Harbor's teardown removes the image a task
+# references; the :keep aliases hold them):
+scripts/ensure-task-images.sh
+
+# The hand-built feasibility task (tasks/peasant-344): the oracle applies solution/oracle.patch
+# and the verifier runs the fail-to-pass tests. Expect reward 1.0.
+harbor run -p tasks/peasant-344 -a oracle -e podman
+
+# Our three-PR generated job (peasant#344, #406, #527): build it, then run the job config.
+# The corpus dump and index live under corpus/ (see Corpus sampling).
+printf 'peasant-labs/peasant#344\npeasant-labs/peasant#406\npeasant-labs/peasant#527\n' > /tmp/prs.txt
+uv sync
+uv run tracebench-corpus --corpus corpus/dump pipeline \
+  --prs /tmp/prs.txt \
+  --repo-dir /path/to/peasant-clone \
+  --index corpus/index/merged_prs.json \
+  --dest build/mvp \
+  --run-id tracebench-mvp
+harbor run -c build/mvp/job-config-tracebench-mvp.yaml -e podman -k 1
 
 # Inspect trajectories / verifier logs:
 harbor view ./jobs
 ```
 
-For the full proof-of-concept runbook — image setup, the `peasant-344` MVP, and the generated
-pipeline — see [`docs/proof-of-concept.md`](docs/proof-of-concept.md).
+Generated tasks score around 0.998 under the oracle (the residual is the documented calibration
+set). To smoke-test a real agent, network is needed ONLY on the host for the model API; the
+sandbox itself stays offline during the run:
+
+```bash
+harbor run -p tasks/peasant-344 -a claude-code -m anthropic/claude-haiku-4-5 -e podman
+```
+
+For the full proof-of-concept runbook — dependencies, image setup with the `:keep` re-tag step,
+the jobs above end to end, and troubleshooting — see
+[`docs/proof-of-concept.md`](docs/proof-of-concept.md).
 
 ## Tasks
 
