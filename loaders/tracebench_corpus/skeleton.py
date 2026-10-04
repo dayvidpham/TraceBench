@@ -42,6 +42,9 @@ from .task import GENERATED_ENTRIES, clear_generated, payload_test_patterns
 SKELETON_ENTRIES = ("environment", "tests", "solution", "task.toml", "instruction.md", "task-payload.json")
 #: Container working directory; the task payload lands under it.
 DEFAULT_WORKDIR = "/workdir"
+#: Bot footers appended to pull request bodies by automation. Everything from
+#: the marker to the end is noise, not task content.
+_BODY_FOOTERS = ("<!-- codesmith:footer -->",)
 
 
 @dataclass(frozen=True)
@@ -329,6 +332,16 @@ def _task_toml(
     return "\n".join(lines)
 
 
+def _strip_body_footer(body: str) -> str:
+    """Cut automation footers from a pull request body for ``instruction.md``."""
+    cut = len(body)
+    for marker in _BODY_FOOTERS:
+        index = body.find(marker)
+        if index != -1:
+            cut = min(cut, index)
+    return body[:cut].rstrip()
+
+
 def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> str:
     lines = [
         f"# {pr.get('title') or pr['id']}",
@@ -354,7 +367,7 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
             f"{type(raw_body).__name__}; regenerate the payload"
         )
     else:
-        body = raw_body.strip()
+        body = _strip_body_footer(raw_body.strip())
     if body:
         lines.append(body)
     lines.extend(["</pull_request_body>", ""])

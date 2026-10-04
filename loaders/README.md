@@ -220,7 +220,7 @@ tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
 | path | contents |
 |---|---|
 | `task.toml` | registry-safe name (`<org>/<repo-slug>-pr-<number>`), PR metadata, `[environment].docker_image` (the shared base image) and `workdir`, offline network policy for agent and verifier, and the environment healthcheck that warms the pre-PR dependency and build caches while the environment network is still up (the agent and verifier phases stay offline) |
-| `instruction.md` | scaffolded from the pull request: the full PR body is the goal, wrapped in `<pull_request_body>` tags |
+| `instruction.md` | scaffolded from the pull request: the full PR body is the goal, wrapped in `<pull_request_body>` tags; automation footers (for example codesmith) are cut |
 | `environment/repo/`, `environment/prior-traces/` | task data, uploaded into the container workdir at environment start; **no per-task image is built** |
 | `tests/golden/` | the payload's extracted merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |
 | `tests/manifest.json` | verifier-side golden-suite manifest (commit, patterns, paths) |
