@@ -11,9 +11,9 @@ from conftest import ARCHIVE, LIVE, TESTDATA, envelope, metadata
 from tracebench_corpus import (
     Corpus,
     TaskBuilder,
-    find_adaptation,
-    load_adaptations,
+    find_target_config,
     load_pr_index,
+    load_target_configs,
     repo_family,
 )
 from tracebench_corpus.cli import main
@@ -343,73 +343,60 @@ def _standard_records():
     return standard_records()
 
 
-ADAPTATION_NAMES = [adaptation.name for adaptation in load_adaptations(TESTDATA / "adaptations.yaml")]
+TARGET_CONFIG_NAMES = [
+    configuration.name
+    for configuration in load_target_configs(TESTDATA / "target_configurations.yaml")
+]
 
 
-@pytest.mark.parametrize("adaptation_name", ADAPTATION_NAMES)
-def test_adaptation_keeps_only_matching_prior_sessions(
-    adaptation_name, adaptation_spec, adaptation_records, adaptation_index, tmp_path, write_dump
+@pytest.mark.parametrize("config_name", TARGET_CONFIG_NAMES)
+def test_target_configuration_is_recorded_and_does_not_filter(
+    config_name, target_config_spec, standard_dump, standard_index, tmp_path
 ) -> None:
-    pull_requests, traces, metadata_records, transcripts = adaptation_records
-    root = write_dump(
-        tmp_path / "dump",
-        pull_requests=pull_requests,
-        traces=traces,
-        metadata_records=metadata_records,
-        transcripts=transcripts,
-    )
-    adaptation = find_adaptation(adaptation_spec, adaptation_name)
-    payload = TaskBuilder(Corpus(root), pr_index=adaptation_index).build(
-        f"{LIVE}#22", tmp_path / "task", adaptation=adaptation
+    configuration = find_target_config(target_config_spec, config_name)
+    payload = TaskBuilder(Corpus(standard_dump), pr_index=standard_index).build(
+        f"{LIVE}#22", tmp_path / "task", target_config=configuration
     )
     sessions = {
         json.loads(line)["session_id"]
         for line in (payload.path / "prior-traces" / "traces.jsonl").read_text().splitlines()
     }
-    assert sessions == {f"session-{adaptation_name}"}
-    assert payload.adaptation == adaptation_name
-    assert payload.excluded_by_adaptation == len(adaptation_spec) - 1
+    # The configuration never removes prior context: every prior session stays.
+    assert sessions == {"a1", "l1"}
+    assert payload.target_config == config_name
 
     manifest = json.loads((payload.path / "prior-traces" / "manifest.json").read_text())
-    assert manifest["adaptation"]["name"] == adaptation_name
-    assert len(manifest["excluded_by_adaptation"]) == len(adaptation_spec) - 1
+    assert manifest["target_configuration"] == configuration.to_dict()
+    assert "excluded_by_adaptation" not in manifest
     task = json.loads((payload.path / "task.json").read_text())
-    assert task["adaptation"]["name"] == adaptation_name
+    assert task["target_configuration"]["name"] == config_name
 
 
-def test_task_cli_adaptation(adaptation_spec, adaptation_records, adaptation_index, tmp_path, write_dump, capsys) -> None:
-    pull_requests, traces, metadata_records, transcripts = adaptation_records
-    dump = write_dump(
-        tmp_path / "dump",
-        pull_requests=pull_requests,
-        traces=traces,
-        metadata_records=metadata_records,
-        transcripts=transcripts,
-    )
-    index_path = write_index(tmp_path, adaptation_index)
+def test_task_cli_target_configuration(standard_dump, standard_index, tmp_path, capsys) -> None:
+    index_path = write_index(tmp_path, standard_index)
     assert main([
-        "--corpus", str(dump), "task", f"{LIVE}#22",
+        "--corpus", str(standard_dump), "task", f"{LIVE}#22",
         "--index", str(index_path),
-        "--adaptations", str(TESTDATA / "adaptations.yaml"),
-        "--adaptation", "opencode-gpt-medium",
-        "--dest", str(tmp_path / "adapted"),
+        "--target-configs", str(TESTDATA / "target_configurations.yaml"),
+        "--target-config", "opencode-gpt-medium",
+        "--dest", str(tmp_path / "configured"),
     ]) == 0
     output = capsys.readouterr().out
-    assert "adapted to opencode-gpt-medium" in output
+    assert "target configuration: opencode-gpt-medium" in output
 
     assert main([
-        "--corpus", str(dump), "task", f"{LIVE}#22",
+        "--corpus", str(standard_dump), "task", f"{LIVE}#22",
         "--index", str(index_path),
-        "--adaptation", "opencode-gpt-medium",
+        "--target-config", "opencode-gpt-medium",
         "--dest", str(tmp_path / "half"),
     ]) == 2
     assert "must be used together" in capsys.readouterr().err
 
     assert main([
-        "--corpus", str(dump), "task", f"{LIVE}#22",
+        "--corpus", str(standard_dump), "task", f"{LIVE}#22",
         "--index", str(index_path),
-        "--adaptations", str(TESTDATA / "adaptations.yaml"),
-        "--adaptation", "nope",
+        "--target-configs", str(TESTDATA / "target_configurations.yaml"),
+        "--target-config", "nope",
         "--dest", str(tmp_path / "unknown"),
     ]) == 2
-    assert "unknown adaptation" in capsys.readouterr().err
+    assert "unknown target configuration" in capsys.readouterr().err

@@ -208,8 +208,9 @@ def _task_toml(
         f"split = {_toml_string(pr.get('split', ''))}",
         f"prior_sessions = {int(summary.get('prior_sessions', 0))}",
         *(
-            [f"adaptation = {_toml_string(summary['adaptation']['name'])}"]
-            if isinstance(summary.get("adaptation"), dict) and summary["adaptation"].get("name")
+            [f"target_configuration = {_toml_string(summary['target_configuration']['name'])}"]
+            if isinstance(summary.get("target_configuration"), dict)
+            and summary["target_configuration"].get("name")
             else []
         ),
         "difficulty_explanation = "

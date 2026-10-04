@@ -15,8 +15,8 @@ from tracebench_corpus import (
     Corpus,
     TaskBuilder,
     build_skeleton,
-    find_adaptation,
     find_path_pattern,
+    find_target_config,
     task_slug,
 )
 from tracebench_corpus.cli import main
@@ -95,26 +95,18 @@ def test_skeleton_task_toml_parses(tmp_path, standard_dump, standard_index) -> N
     assert config["environment"]["network_mode"] == "public"
 
 
-def test_skeleton_records_adaptation(
-    tmp_path, adaptation_spec, adaptation_records, adaptation_index, write_dump
+def test_skeleton_records_target_configuration(
+    tmp_path, target_config_spec, standard_dump, standard_index
 ) -> None:
-    pull_requests, traces, metadata_records, transcripts = adaptation_records
-    dump = write_dump(
-        tmp_path / "dump",
-        pull_requests=pull_requests,
-        traces=traces,
-        metadata_records=metadata_records,
-        transcripts=transcripts,
-    )
     payload = tmp_path / "payload"
-    adaptation = find_adaptation(adaptation_spec, "opencode-gpt-medium")
-    TaskBuilder(Corpus(dump), pr_index=adaptation_index).build(
-        f"{LIVE}#22", payload, adaptation=adaptation
+    configuration = find_target_config(target_config_spec, "opencode-gpt-medium")
+    TaskBuilder(Corpus(standard_dump), pr_index=standard_index).build(
+        f"{LIVE}#22", payload, target_config=configuration
     )
     build_skeleton(payload, tmp_path / "task")
     with (tmp_path / "task" / "task.toml").open("rb") as handle:
         config = tomllib.load(handle)
-    assert config["metadata"]["adaptation"] == "opencode-gpt-medium"
+    assert config["metadata"]["target_configuration"] == "opencode-gpt-medium"
 
 
 def test_verifier_removes_stale_tests_and_copies_golden(tmp_path, standard_dump, standard_index) -> None:

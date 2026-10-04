@@ -33,8 +33,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .adaptation import Adaptation
 from .corpus import Corpus
+from .target_config import TargetConfiguration
 
 #: Repository suffixes that belong to the same codebase family. The
 #: prerelease archive is the live repository's pre-launch history, so a task
@@ -87,8 +87,7 @@ class TaskPayload:
     merge_commit: str
     sessions_past_cutoff: int
     missing_sessions: int
-    adaptation: str | None = None
-    excluded_by_adaptation: int = 0
+    target_config: str | None = None
 
 
 class TaskBuilder:
@@ -149,7 +148,7 @@ class TaskBuilder:
         dest: str | Path,
         *,
         force: bool = False,
-        adaptation: Adaptation | None = None,
+        target_config: TargetConfiguration | None = None,
     ) -> TaskPayload:
         pr = self.corpus.pull_requests.get(pr_id)
         if pr is None:
@@ -177,7 +176,6 @@ class TaskBuilder:
         session_ids: list[str] = []
         seen: set[str] = set()
         past_cutoff: list[str] = []
-        excluded_by_adaptation: list[str] = []
         for candidate in prior_prs:
             for trace in self.corpus.sessions_for_pr(candidate["id"]):
                 if trace.session_id in own_sessions:
@@ -187,10 +185,6 @@ class TaskBuilder:
                 if end_ms is not None and end_ms > cutoff_ms:
                     if trace.session_id not in past_cutoff:
                         past_cutoff.append(trace.session_id)
-                    continue
-                if adaptation is not None and not adaptation.matches(metadata):
-                    if trace.session_id not in excluded_by_adaptation:
-                        excluded_by_adaptation.append(trace.session_id)
                     continue
                 traces.append(_trace_record(trace))
                 if trace.session_id not in seen:
@@ -239,8 +233,7 @@ class TaskBuilder:
                 "materialized_sessions": materialized,
                 "excluded_pr_sessions": sorted(own_sessions),
                 "sessions_past_cutoff": sorted(past_cutoff),
-                "excluded_by_adaptation": sorted(excluded_by_adaptation),
-                "adaptation": adaptation.to_dict() if adaptation else None,
+                "target_configuration": target_config.to_dict() if target_config else None,
                 "missing_sessions": sorted(missing),
                 "metadata_schema_version": self.corpus.manifest.get("metadata_schema_version"),
                 "push_contract_version": self.corpus.manifest.get("push_contract_version"),
@@ -278,8 +271,7 @@ class TaskBuilder:
                 "prior_sessions": len(session_ids),
                 "prior_pull_requests": len(prior_prs),
                 "sessions_past_cutoff": len(past_cutoff),
-                "excluded_by_adaptation": len(excluded_by_adaptation),
-                "adaptation": adaptation.to_dict() if adaptation else None,
+                "target_configuration": target_config.to_dict() if target_config else None,
                 "missing_sessions": len(missing),
                 "repo_request": "repo-request.json",
             },
@@ -296,8 +288,7 @@ class TaskBuilder:
             merge_commit=merge_commit,
             sessions_past_cutoff=len(past_cutoff),
             missing_sessions=len(missing),
-            adaptation=adaptation.name if adaptation else None,
-            excluded_by_adaptation=len(excluded_by_adaptation),
+            target_config=target_config.name if target_config else None,
         )
 
     def _prior_pull_requests(

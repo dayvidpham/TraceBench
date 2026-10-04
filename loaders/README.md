@@ -57,8 +57,8 @@ integration points for the repository tooling.
 tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
   --index corpus/index/merged_prs.json \
   --repo-dir /path/to/peasant-clone \
-  --adaptations loaders/tests/testdata/adaptations.yaml \
-  --adaptation claude-code-sonnet-high \
+  --target-configs loaders/tests/testdata/target_configurations.yaml \
+  --target-config claude-code-sonnet-high \
   --dest task-343
 ```
 
@@ -69,7 +69,7 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
 | `repo/` | **integration point**: the working tree at the pre-PR state; empty until the repository tooling fills it |
 | `tests/` | **integration point**: every test file at the merged state (the golden suite); empty until filled |
 | `repo-request.json` | the contract for the repository tooling: `tree_commit`, `trace_cutoff`, test patterns, glob dialect, merge-commit policy |
-| `task.json` | payload summary: cutoff, adaptation, counts, exclusions |
+| `task.json` | payload summary: cutoff, target configuration, counts, exclusions |
 
 ### Prior context rules
 
@@ -93,30 +93,33 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
   sessions.
 - **Scope.** Prior traces cover the sampled pull requests only; the corpus is a
   sample, not the repository's full history.
-- **Adaptation.** When `--adaptation NAME` selects an entry from
-  `--adaptations SPEC`, only prior sessions whose harness, model, and thinking
-  level match the entry are kept; the rest are recorded as
-  `excluded_by_adaptation`. The adaptation is recorded in the payload and in a
-  generated skeleton's `task.toml` metadata.
+- **Target configuration.** `--target-config NAME` selects an entry from
+  `--target-configs SPEC`. The payload records the harness, model, and
+  thinking level for the runner. The configuration does **not** filter prior
+  context: the model receives every prior trace, independent of the
+  configuration. A generated skeleton's `task.toml` metadata carries the
+  configuration name.
 
-### Adaptations
+### Target configurations
 
-An adaptation spec names the harness, model, and thinking level a task run
-targets (thinking is one of `none`, `low`, `medium`, `high`, `xhigh`):
+A target configuration names the harness, model, and thinking level that a
+benchmark run uses (thinking is one of `none`, `low`, `medium`, `high`,
+`xhigh`):
 
 ```yaml
-adaptations:
+target_configurations:
   - name: claude-code-sonnet-high
     harness: claude-code
     model: claude-sonnet-4-6
     thinking: high
 ```
 
-`load_adaptations(path)` validates the spec (unique names, closed thinking
-set, known keys); `Adaptation.matches(metadata)` applies the axes. The corpus
-contract does not carry a thinking level, so matching derives it: declared
-`thinkingLevel` metadata matches exactly, and otherwise a session with
-`stats.thoughtTokens` counts as thinking and one without as `none`.
+`load_target_configs(path)` validates the spec (unique names, closed thinking
+set, known keys) and `find_target_config(configs, name)` selects one entry.
+The record always carries all three axes; a missing axis is `null` (stubbed).
+The corpus does not carry a thinking level yet; the upstream work is tracked in
+`peasant-labs/schema#147` (schema field) and `peasant-labs/peasant#545`
+(populate at ingest).
 
 ### Destination hygiene
 

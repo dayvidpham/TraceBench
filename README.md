@@ -115,9 +115,9 @@ A Python loader for Harbor task environments and verifiers lives in
 HuggingFace), joins traces, PRs, metadata, and transcript turns, materializes
 self-contained per-PR bundles, assembles task payloads (PR + prior traces up
 to the PR's develop boundary + integration points for the pre-PR repo and
-merged-state golden tests), adapts prior context to a target
-harness/model/thinking configuration, and generates Harbor task skeletons
-from those payloads.
+merged-state golden tests), records the target harness/model/thinking
+configuration for a run, and generates Harbor task skeletons from those
+payloads.
 
 ## Verification status
 

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from tracebench_corpus import Adaptation, load_adaptations
+from tracebench_corpus import load_target_configs
 
 ARCHIVE = "peasant-labs/peasant-prerelease-archive"
 LIVE = "peasant-labs/peasant"
@@ -42,22 +42,6 @@ def envelope(session_id: str) -> dict:
 
 def metadata(session_id: str, end: str | None) -> dict:
     record: dict = {"sessionId": session_id, "harness": "claude-code"}
-    if end:
-        record["timestamp"] = {"start": 0, "end": iso_ms(end)}
-    return record
-
-
-def metadata_for(session_id: str, adaptation: Adaptation, end: str | None) -> dict:
-    """Session metadata for one adaptation: harness, model, and thinking."""
-    record: dict = {
-        "sessionId": session_id,
-        "harness": adaptation.harness,
-        "model": adaptation.model,
-    }
-    if adaptation.thinking:
-        record["thinkingLevel"] = adaptation.thinking
-    if adaptation.thinking and adaptation.thinking != "none":
-        record["stats"] = {"thoughtTokens": 120}
     if end:
         record["timestamp"] = {"start": 0, "end": iso_ms(end)}
     return record
@@ -152,43 +136,9 @@ def standard_index() -> dict[str, dict]:
 
 
 @pytest.fixture
-def adaptation_spec() -> list[Adaptation]:
-    """The adaptation matrix from testdata, loaded by the shared loader."""
-    return load_adaptations(TESTDATA / "adaptations.yaml")
-
-
-@pytest.fixture
-def adaptation_records(adaptation_spec: list[Adaptation]):
-    """One prior PR per adaptation, plus a target PR with its own session."""
-    pull_requests = [
-        {"id": f"{LIVE}#22", "repo": LIVE, "number": 22, "title": "the task",
-         "split": "test", "merged_at": "2026-09-01T00:00:00Z"},
-    ]
-    traces = [
-        {"pr": f"{LIVE}#22", "session_id": "own", "method": "exact", "split": "test"},
-    ]
-    metadata_records = [metadata("own", "2026-08-30T00:00:00Z")]
-    transcripts = {"own": envelope("own")}
-    for position, adaptation in enumerate(adaptation_spec):
-        number = 100 + position
-        pr_id = f"{LIVE}#{number}"
-        session_id = f"session-{adaptation.name}"
-        pull_requests.append({
-            "id": pr_id, "repo": LIVE, "number": number, "title": adaptation.name,
-            "split": "train", "merged_at": "2026-08-01T00:00:00Z",
-        })
-        traces.append({"pr": pr_id, "session_id": session_id, "method": "exact", "split": "train"})
-        metadata_records.append(metadata_for(session_id, adaptation, "2026-07-20T00:00:00Z"))
-        transcripts[session_id] = envelope(session_id)
-    return pull_requests, traces, metadata_records, transcripts
-
-
-@pytest.fixture
-def adaptation_index(adaptation_spec: list[Adaptation]) -> dict[str, dict]:
-    index = {f"{LIVE}#22": {"merge_commit": "c22"}}
-    for position, _ in enumerate(adaptation_spec):
-        index[f"{LIVE}#{100 + position}"] = {"merge_commit": f"c{100 + position}"}
-    return index
+def target_config_spec():
+    """The target-configuration matrix from testdata, loaded by the shared loader."""
+    return load_target_configs(TESTDATA / "target_configurations.yaml")
 
 
 @pytest.fixture

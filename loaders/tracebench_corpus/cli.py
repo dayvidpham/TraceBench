@@ -7,9 +7,9 @@ import os
 import sys
 from pathlib import Path
 
-from .adaptation import Adaptation, find_adaptation, load_adaptations
 from .corpus import Corpus, load_corpus
 from .skeleton import build_skeleton
+from .target_config import find_target_config, load_target_configs
 from .task import TaskBuilder, load_pr_index
 
 _SPLITS = ("train", "val", "test")
@@ -53,14 +53,14 @@ def main(argv: list[str] | None = None) -> int:
         help="local clone used to resolve the develop boundary by commit ancestry",
     )
     task_parser.add_argument(
-        "--adaptations",
+        "--target-configs",
         default=None,
-        help="adaptation spec (YAML or JSON) with harness/model/thinking configurations",
+        help="target-configuration spec (YAML or JSON) with harness/model/thinking entries",
     )
     task_parser.add_argument(
-        "--adaptation",
+        "--target-config",
         default=None,
-        help="adaptation name from --adaptations; keeps only matching prior sessions",
+        help="target configuration name from --target-configs; recorded in the payload",
     )
     task_parser.add_argument(
         "--force",
@@ -141,13 +141,17 @@ def _bundle_all(corpus: Corpus, dest: Path, split: str | None) -> int:
 def _task(corpus: Corpus, args: argparse.Namespace) -> int:
     try:
         index = load_pr_index(args.index) if args.index else None
-        adaptation = None
-        if args.adaptation or args.adaptations:
-            if not (args.adaptation and args.adaptations):
-                raise ValueError("--adaptation and --adaptations must be used together")
-            adaptation = find_adaptation(load_adaptations(args.adaptations), args.adaptation)
+        target_config = None
+        if args.target_config or args.target_configs:
+            if not (args.target_config and args.target_configs):
+                raise ValueError("--target-config and --target-configs must be used together")
+            target_config = find_target_config(
+                load_target_configs(args.target_configs), args.target_config
+            )
         builder = TaskBuilder(corpus, pr_index=index, repo_dir=args.repo_dir)
-        payload = builder.build(args.pr, Path(args.dest), force=args.force, adaptation=adaptation)
+        payload = builder.build(
+            args.pr, Path(args.dest), force=args.force, target_config=target_config
+        )
     except (KeyError, ValueError, OSError) as exc:
         print(f"tracebench-corpus: {exc}", file=sys.stderr)
         return 2
@@ -156,8 +160,8 @@ def _task(corpus: Corpus, args: argparse.Namespace) -> int:
         f"{payload.prior_pull_requests} pull requests ({payload.prior_sessions} sessions, "
         f"cutoff basis {payload.cutoff_basis} at {payload.cutoff_time})"
     )
-    if payload.adaptation:
-        print(f"  adapted to {payload.adaptation}; {payload.excluded_by_adaptation} sessions filtered out")
+    if payload.target_config:
+        print(f"  target configuration: {payload.target_config}")
     if payload.sessions_past_cutoff or payload.missing_sessions:
         print(
             f"  excluded {payload.sessions_past_cutoff} sessions past the cutoff; "
