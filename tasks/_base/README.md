@@ -46,7 +46,7 @@ repo holding the full real history truncated at the base SHA) into `/workdir` at
 | `/root/.cache/go-build` (post-fix symbols in export data) | emptied with `go clean -cache` |
 | `/go/pkg/mod` (dependency sources only) | kept: no peasant code |
 | `/workdir` (Harbor's container start `chdir`s into it) | created; `WORKDIR` |
-| network | `GOPROXY=off`, `GOFLAGS=-mod=readonly` |
+| network | `GOPROXY=off`, `GOFLAGS=-mod=readonly -buildvcs=false` |
 
 Verify after a build:
 

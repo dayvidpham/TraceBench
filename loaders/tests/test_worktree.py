@@ -24,7 +24,7 @@ def _git(repo: Path, *args: str, date: str | None = None) -> str:
 def _commit(repo: Path, name: str, content: str, date: str) -> str:
     (repo / name).write_text(content)
     _git(repo, "add", name)
-    _git(repo, "commit", "-q", "-m", name, date=date)
+    _git(repo, "-c", "commit.gpgsign=false", "commit", "-q", "-m", name, date=date)
     return _git(repo, "rev-parse", "HEAD")
 
 

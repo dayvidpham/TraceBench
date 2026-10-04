@@ -6,5 +6,7 @@
 FROM tracebench/peasant-base:latest
 WORKDIR /
 RUN rm -rf /peasant && go clean -cache && mkdir -p /workdir
-ENV GOPROXY=off GOFLAGS=-mod=readonly
+# VCS stamping is off: uploaded repositories are foreign to the container user,
+# so git-based stamping fails builds that the task does not need stamped.
+ENV GOPROXY=off GOFLAGS="-mod=readonly -buildvcs=false"
 WORKDIR /workdir

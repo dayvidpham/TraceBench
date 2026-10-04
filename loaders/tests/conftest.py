@@ -160,7 +160,7 @@ def git_repo(tmp_path: Path):
     def commit(name: str) -> str:
         (repo / f"{name}.txt").write_text(name)
         git("add", ".")
-        git("commit", "-q", "-m", name)
+        git("-c", "commit.gpgsign=false", "commit", "-q", "-m", name)
         return git("rev-parse", "HEAD")
 
     return repo, commit

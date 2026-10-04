@@ -60,7 +60,7 @@ def pipeline_env(git_repo, tmp_path, write_dump) -> dict:
         for path, content in spec["files"].items():
             (repo / path).write_text(content)
         git("add", ".")
-        git("commit", "-q", "-m", spec["name"])
+        git("-c", "commit.gpgsign=false", "commit", "-q", "-m", spec["name"])
         named[spec["name"]] = git("rev-parse", "HEAD")
         if "pr" in spec:
             merges[spec["pr"]] = named[spec["name"]]

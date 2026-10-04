@@ -8,6 +8,26 @@ from pathlib import Path
 
 
 _TEST_FUNCTION = re.compile(r"(?m)^func\s+((?:Test|Fuzz)[A-Z0-9_]\w*|Example\w*)\s*\(")
+_GO_BUILD_LINE = re.compile(r"^\s*//go:build\s+(.+?)\s*$")
+_LEGACY_BUILD_LINE = re.compile(r"^\s*//\s*\+build\s+(.+?)\s*$")
+
+#: GOOS values Go recognizes; the task container builds for linux.
+_GOOS = frozenset({
+    "aix", "android", "darwin", "dragonfly", "freebsd", "hurd", "illumos",
+    "ios", "js", "linux", "nacl", "netbsd", "openbsd", "plan9", "solaris",
+    "wasip1", "windows", "zos",
+})
+#: GOARCH values Go recognizes; the task container builds for amd64.
+_GOARCH = frozenset({
+    "386", "amd64", "arm", "arm64", "loong64", "mips", "mips64", "mips64le",
+    "mipsle", "ppc64", "ppc64le", "riscv64", "s390x", "sparc64", "wasm",
+})
+#: Go toolchain tags satisfied up to the version the task images build with.
+_GO_VERSION = (1, 25)
+#: Build tags satisfied by default in the task container.
+_SATISFIED_TAGS = frozenset({"unix", "cgo", "gc"})
+#: Build tags never satisfied in the task container.
+_UNSATISFIED_TAGS = frozenset({"gccgo", "boringcrypto"})
 
 
 def build_test_manifest(repo_dir: str | Path, base_commit: str, merge_commit: str) -> dict:
@@ -22,7 +42,10 @@ def build_test_manifest(repo_dir: str | Path, base_commit: str, merge_commit: st
     base_paths = set(_test_paths(repo, base))
     suites = []
     for path in _test_paths(repo, merged):
-        merged_cases = _go_cases(_git(repo, "show", f"{merged}:{path}").decode("utf-8"), path)
+        source = _git(repo, "show", f"{merged}:{path}").decode("utf-8")
+        merged_cases = _go_cases(source, path)
+        constraint = build_constraint(source)
+        accepted = constraint_satisfied(constraint)
         if path in base_paths:
             base_cases = _go_cases(_git(repo, "show", f"{base}:{path}").decode("utf-8"), path)
         else:
@@ -32,7 +55,17 @@ def build_test_manifest(repo_dir: str | Path, base_commit: str, merge_commit: st
                 "id": f"{path}::{name}",
                 "name": name,
                 "golden": name not in base_cases or body != base_cases[name],
-                "status": "accept",
+                "status": "accept" if accepted else "reject",
+                **(
+                    {
+                        "reject_reason": (
+                            "build constraint not satisfied by the test command "
+                            f"(no custom tags): {constraint}"
+                        )
+                    }
+                    if not accepted
+                    else {}
+                ),
             }
             for name, body in sorted(merged_cases.items())
         ]
@@ -55,9 +88,95 @@ def build_test_manifest(repo_dir: str | Path, base_commit: str, merge_commit: st
             "suites": len(suites),
             "cases": len(all_cases),
             "golden_cases": sum(case["golden"] for case in all_cases),
+            "rejected_cases": sum(case["status"] == "reject" for case in all_cases),
         },
         "suites": suites,
     }
+
+
+def build_constraint(source: str) -> str | None:
+    """The build constraint expression of a Go source file, or ``None``."""
+    header = source.split("\npackage ", 1)[0]
+    for line in header.splitlines():
+        match = _GO_BUILD_LINE.match(line)
+        if match:
+            return match.group(1)
+    legacy = [
+        match.group(1)
+        for line in header.splitlines()
+        if (match := _LEGACY_BUILD_LINE.match(line))
+    ]
+    if legacy:
+        return " && ".join(f"({_legacy_expression(line)})" for line in legacy)
+    return None
+
+
+def _legacy_expression(line: str) -> str:
+    groups = [" || ".join(group.split(",")) for group in line.split()]
+    return " && ".join(f"({group})" for group in groups)
+
+
+def constraint_satisfied(expression: str | None) -> bool:
+    """Whether the task container's default build context satisfies a constraint.
+
+    The context is linux/amd64 with the default tags (``cgo``, ``gc``, ``unix``)
+    and no custom tags: the task's test command runs without ``-tags``.
+    """
+    if expression is None:
+        return True
+    tokens = re.findall(r"&&|\|\||[!()]|[^\s!()&|]+", expression)
+    position = 0
+
+    def peek() -> str | None:
+        return tokens[position] if position < len(tokens) else None
+
+    def parse_or() -> bool:
+        nonlocal position
+        value = parse_and()
+        while peek() == "||":
+            position += 1
+            value = parse_and() or value
+        return value
+
+    def parse_and() -> bool:
+        nonlocal position
+        value = parse_unary()
+        while peek() == "&&":
+            position += 1
+            value = parse_unary() and value
+        return value
+
+    def parse_unary() -> bool:
+        nonlocal position
+        token = peek()
+        if token == "!":
+            position += 1
+            return not parse_unary()
+        if token == "(":
+            position += 1
+            value = parse_or()
+            if peek() == ")":
+                position += 1
+            return value
+        position += 1
+        return _tag_satisfied(token or "")
+
+    return parse_or()
+
+
+def _tag_satisfied(tag: str) -> bool:
+    if tag in _GOOS:
+        return tag == "linux"
+    if tag in _GOARCH:
+        return tag == "amd64"
+    if tag in _SATISFIED_TAGS:
+        return True
+    if tag in _UNSATISFIED_TAGS:
+        return False
+    version = re.fullmatch(r"go1\.(\d+)", tag)
+    if version:
+        return (1, int(version.group(1))) <= _GO_VERSION
+    return False
 
 
 def _test_paths(repo: Path, commit: str) -> list[str]:

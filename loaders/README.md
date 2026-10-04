@@ -127,8 +127,11 @@ When `--repo-dir` is supplied, task generation compares the merged commit to
 its first parent and writes `test-manifest.json`. It includes every Go
 `*_test.go` file at the merged commit, with top-level test functions tagged
 `golden: true` only when their function was added or changed by the PR. Every
-case starts with `status: "accept"`; a future counting policy may change a
-case to `reject` without changing its golden classification.
+case starts with `status: "accept"`, except cases in files whose `//go:build`
+constraint the test command does not satisfy (the command runs without custom
+tags; the context is linux/amd64 with `cgo`/`gc`/`unix`): those carry
+`status: "reject"` with a reason, and the verifier excludes them from the
+reward denominator. Golden classification is independent of the status.
 
 ```json
 {
@@ -217,7 +220,7 @@ tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
 | `tests/verifier-config.json` | the PR id, the test command, the test patterns, and the removal regexes compiled from them by the canonical doublestar matcher |
 | `tests/verifier.py` | the standard-library verifier, copied from `tracebench_corpus/verifier.py` |
 | `tests/repo-request.json` | the payload's request, shipped unchanged for provenance |
-| `tests/test.sh` | runs `python3 /tests/verifier.py run`: removes the pre-PR test files, overlays the golden suite, runs the test command, writes `/logs/verifier/reward.txt` (`passed / total`) and `/logs/verifier/test-results.json`. A crashed verifier writes reward 0 |
+| `tests/test.sh` | runs `python3 /tests/verifier.py run`: removes the pre-PR test files, overlays the golden suite, runs the test command, writes `/logs/verifier/reward.txt` (`passed / accepted cases`; rejected cases are excluded) and `/logs/verifier/test-results.json`. A crashed verifier writes reward 0 |
 | `solution/` | the payload's `solution/` (oracle patch and generated `solve.sh`) when `oracle` has run; otherwise a placeholder `solve.sh` that exits non-zero |
 
 Without `oracle` output the oracle is an explicit placeholder: such a skeleton

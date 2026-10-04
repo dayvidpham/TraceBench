@@ -168,7 +168,13 @@ def manifest_cases(manifest: dict[str, Any]) -> list[dict[str, Any]]:
             path, _, name = case_id.rpartition("::")
             directory = os.path.dirname(path) or "."
             cases.append(
-                {"id": case_id, "package_dir": directory, "name": name, "golden": bool(case.get("golden"))}
+                {
+                    "id": case_id,
+                    "package_dir": directory,
+                    "name": name,
+                    "golden": bool(case.get("golden")),
+                    "status": case.get("status", "accept"),
+                }
             )
     return cases
 
@@ -227,6 +233,11 @@ def grade(
         reasons.append(
             f"test manifest lists {len(cases)} cases but summary.cases is {total}; regenerate the manifest"
         )
+    scored = [case for case in cases if case["status"] != "reject"]
+    rejected = [case for case in cases if case["status"] == "reject"]
+    if usable and not scored:
+        reasons.append("test manifest rejects every case; the task has no gradeable tests")
+    total = len(scored) if usable else 0
 
     parsed = parse_go_test_json(stream) if stream is not None else ParsedStream()
     if parsed.error:
@@ -236,6 +247,9 @@ def grade(
 
     entries = []
     for case in cases:
+        if case["status"] == "reject":
+            entries.append({**case, "outcome": "reject"})
+            continue
         outcome = "missing"
         if module is not None:
             import_path = import_path_of(case["package_dir"], module)
@@ -264,6 +278,8 @@ def grade(
         "failed": counts["fail"],
         "skipped": counts["skip"],
         "missing": counts["missing"],
+        "rejected_cases": len(rejected),
+        "rejected_test_ids": [entry["id"] for entry in entries if entry["outcome"] == "reject"],
         "golden_flagged": sum(entry["golden"] for entry in entries),
         "golden_flagged_passed": sum(entry["golden"] and entry["outcome"] == "pass" for entry in entries),
         "failed_test_ids": [entry["id"] for entry in entries if entry["outcome"] == "fail"],

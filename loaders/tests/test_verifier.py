@@ -67,6 +67,7 @@ def test_subtests_never_counted() -> None:
 REPORT_KEYS = {
     "schema_version", "pr", "base_commit", "merge_commit", "manifest_schema_version", "test_command",
     "exit_code", "duration_sec", "total_cases", "passed", "failed", "skipped", "missing",
+    "rejected_cases", "rejected_test_ids",
     "golden_flagged", "golden_flagged_passed", "failed_test_ids", "reward", "fail_closed_reasons", "entries",
 }
 
@@ -93,8 +94,33 @@ def test_report_schema_fields() -> None:
     assert report["failed_test_ids"] == ["pkg/sub/b_test.go::TestB"]
     assert report["entries"][1] == {
         "id": "pkg/sub/b_test.go::TestB", "package_dir": "pkg/sub", "name": "TestB",
-        "golden": True, "outcome": "fail",
+        "golden": True, "status": "accept", "outcome": "fail",
     }
+
+
+def test_rejected_cases_are_excluded_from_the_reward() -> None:
+    accepted, rejected = CASES["manifest_cases"]
+    manifest = fixture_manifest([
+        {**accepted, "status": "accept"},
+        {**rejected, "status": "reject"},
+    ])
+    reward, report = grade(manifest, (STREAMS / "pass.jsonl").read_text(), CASES["module"])
+    assert reward == 1.0
+    assert report["total_cases"] == 1
+    assert report["rejected_cases"] == 1
+    assert report["rejected_test_ids"] == [rejected["id"]]
+    outcomes = {entry["id"]: entry["outcome"] for entry in report["entries"]}
+    assert outcomes[accepted["id"]] == "pass"
+    assert outcomes[rejected["id"]] == "reject"
+
+
+def test_manifest_rejecting_every_case_fails_closed() -> None:
+    manifest = fixture_manifest([
+        {**case, "status": "reject"} for case in CASES["manifest_cases"]
+    ])
+    reward, report = grade(manifest, (STREAMS / "pass.jsonl").read_text(), CASES["module"])
+    assert reward == 0.0
+    assert any("rejects every case" in reason for reason in report["fail_closed_reasons"])
 
 
 def test_missing_manifest_fails_closed() -> None:
