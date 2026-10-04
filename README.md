@@ -97,6 +97,19 @@ Sessions whose raw source is OpenCode's monolithic database are exported per
 entry from the Peasant full-content capture, and the manifests flag missing or
 partial transcripts.
 
+The published corpus lives at
+[huggingface.co/datasets/dayvidpham/TraceBench](https://huggingface.co/datasets/dayvidpham/TraceBench);
+the viewer's `session_pr_traces` table is the session-to-PR mapping
+(`pr`, `session_id`, `method`, `relation`, `split`). Consumers pull it with:
+
+```bash
+go run ./cmd/tracebench-sample fetch --dest data/tracebench
+```
+
+`fetch` downloads `metadata.jsonl`, the indexes, and every transcript, and
+verifies each transcript's SHA3-256 against its metadata `contentHash`
+(`--no-verify` to skip, `--revision` to pin a revision).
+
 ## Verification status
 
 * Test logic: buggy code fails 6/7 grading tests, oracle-fixed code passes 7/7.

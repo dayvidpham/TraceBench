@@ -22,6 +22,7 @@ import (
 	"github.com/dayvidpham/TraceBench/internal/collector"
 	"github.com/dayvidpham/TraceBench/internal/corpus"
 	"github.com/dayvidpham/TraceBench/internal/dump"
+	"github.com/dayvidpham/TraceBench/internal/fetch"
 	"github.com/dayvidpham/TraceBench/internal/peasantstore"
 	"github.com/dayvidpham/TraceBench/internal/prindex"
 	"github.com/dayvidpham/TraceBench/internal/sampler"
@@ -51,6 +52,8 @@ func run(args []string) error {
 		return runAll(args[1:])
 	case "dump":
 		return runDump(args[1:])
+	case "fetch":
+		return runFetch(args[1:])
 	case "help", "-h", "--help":
 		usage()
 		return nil
@@ -68,6 +71,7 @@ Usage:
   tracebench-sample sample [flags]   select splits and collect transcripts
   tracebench-sample run    [flags]   index then sample in one pass
   tracebench-sample dump   [flags]   write a flat publishable dump
+  tracebench-sample fetch  [flags]   download the published corpus from HuggingFace
 
 Common flags:
   --db PATH             Peasant SQLite database
@@ -98,11 +102,21 @@ Dump flags:
   --push-contract-version VER  transcript envelope contract (default "0.1.1")
   --allow-missing              keep going when a transcript cannot be produced
 
+Fetch flags:
+  --repo OWNER/NAME            HuggingFace dataset repository (default "dayvidpham/TraceBench")
+  --revision REV               dataset revision (default "main")
+  --dest DIR                   destination directory (default "hf")
+  --concurrency N              parallel transcript downloads (default 8)
+  --endpoint URL               HuggingFace endpoint (default "https://huggingface.co")
+  --token TOKEN                access token (defaults to HF_TOKEN)
+  --no-verify                  skip content hash verification
+
 Examples:
   tracebench-sample index
   tracebench-sample sample --train 30 --val 10 --test 9
   tracebench-sample dump
   tracebench-sample dump --source village-pull
+  tracebench-sample fetch --dest data/tracebench
   tracebench-sample run --out corpus
 `)
 }
@@ -311,6 +325,7 @@ func dumpLocal(ctx context.Context, cfg config, opts dump.Options, dumpDir strin
 				SessionID: transcript.SessionID,
 				Method:    string(transcript.Method),
 				Relation:  transcript.Relation,
+				Split:     string(pr.Split),
 			})
 			sessionSet[transcript.SessionID] = true
 		}
@@ -465,6 +480,61 @@ func xdgPaths() redact.XDGPaths {
 		ConfigHome: pick("XDG_CONFIG_HOME", ".config"),
 		StateHome:  pick("XDG_STATE_HOME", ".local/state"),
 	}
+}
+
+type fetchFlags struct {
+	repo        string
+	revision    string
+	endpoint    string
+	token       string
+	dest        string
+	concurrency int
+	noVerify    bool
+}
+
+func (f *fetchFlags) register(fs *flag.FlagSet) {
+	fs.StringVar(&f.repo, "repo", "dayvidpham/TraceBench", "HuggingFace dataset repository")
+	fs.StringVar(&f.revision, "revision", "main", "dataset revision (branch, tag, or commit)")
+	fs.StringVar(&f.endpoint, "endpoint", "https://huggingface.co", "HuggingFace endpoint")
+	fs.StringVar(&f.token, "token", "", "access token (defaults to HF_TOKEN)")
+	fs.StringVar(&f.dest, "dest", "hf", "destination directory")
+	fs.IntVar(&f.concurrency, "concurrency", 8, "parallel transcript downloads")
+	fs.BoolVar(&f.noVerify, "no-verify", false, "skip content hash verification")
+}
+
+func runFetch(args []string) error {
+	flags := fetchFlags{}
+	fs := flag.NewFlagSet("fetch", flag.ContinueOnError)
+	flags.register(fs)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	token := flags.token
+	if token == "" {
+		token = os.Getenv("HF_TOKEN")
+	}
+	if token == "" {
+		token = os.Getenv("HUGGING_FACE_HUB_TOKEN")
+	}
+	result, err := fetch.Fetch(ctx, fetch.Options{
+		Repo:        flags.repo,
+		Revision:    flags.revision,
+		Endpoint:    flags.endpoint,
+		Token:       token,
+		Dir:         flags.dest,
+		Concurrency: flags.concurrency,
+		Verify:      !flags.noVerify,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("fetched %s@%s: %d sessions, %d traces, %d verified, %.1f MiB into %s\n",
+		flags.repo, flags.revision, result.Sessions, result.Traces, result.Verified,
+		float64(result.Bytes)/(1<<20), flags.dest)
+	return nil
 }
 
 func cachedCommitPRs(indexDir string) map[string][]string {

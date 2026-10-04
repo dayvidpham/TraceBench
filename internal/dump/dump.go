@@ -74,6 +74,7 @@ type TraceRecord struct {
 	SessionID string `json:"session_id"`
 	Method    string `json:"method"`
 	Relation  string `json:"relation,omitempty"`
+	Split     string `json:"split,omitempty"`
 }
 
 // FailedSession records a session that could not be dumped.
