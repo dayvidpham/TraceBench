@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from .target_config import _parse_spec
+from .verifier import DEFAULT_TEST_COMMAND
 
 _SPEC_KEYS = {"match", "framework", "test_command", "build_command"}
 
@@ -37,7 +38,7 @@ class RepositorySpec:
         }
 
 
-_GO_TEST = "go test -json -count=1 ./..."
+_GO_TEST = DEFAULT_TEST_COMMAND
 _GO_BUILD = "go build ./..."
 
 #: The shipped Go/Peasant default.
