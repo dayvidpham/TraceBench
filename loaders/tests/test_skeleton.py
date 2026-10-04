@@ -274,3 +274,20 @@ def test_skeleton_renders_the_full_body(tmp_path, long_body_dump, standard_index
     goal = instruction.split("## Goal")[1]
     assert f"<pull_request_body>\n{body}\n</pull_request_body>" in goal
     assert "truncated" not in instruction
+
+
+def test_skeleton_cuts_bot_footers_from_the_body(tmp_path, standard_dump, standard_index) -> None:
+    payload = make_payload(tmp_path, standard_dump, standard_index)
+    pr = json.loads((payload / "pr.json").read_text())
+    pr["body"] = (
+        "Real intent text.\n\n"
+        "<!-- codesmith:footer -->\n"
+        '<a href="https://example.test">noise</a>\n'
+        "<!-- /codesmith:footer -->"
+    )
+    (payload / "pr.json").write_text(json.dumps(pr))
+    build_skeleton(payload, tmp_path / "task")
+    instruction = (tmp_path / "task" / "instruction.md").read_text()
+    assert "Real intent text." in instruction
+    assert "codesmith" not in instruction
+    assert "<pull_request_body>\nReal intent text.\n</pull_request_body>" in instruction
