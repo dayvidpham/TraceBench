@@ -96,9 +96,7 @@ func FetchMergedPRs(ctx context.Context, ghBin, repo string) ([]corpus.PullReque
 		if err != nil {
 			return nil, err
 		}
-		if err := attachIssues(prs, issues); err != nil {
-			return nil, err
-		}
+		attachIssues(prs, issues)
 	}
 	return prs, nil
 }
@@ -171,10 +169,10 @@ func linkedIssue(r ghIssue) corpus.LinkedIssue {
 }
 
 // attachIssues links every pull request whose head branch names an issue to
-// the fetched issue record. A named issue the fetch did not return fails
-// closed, so a truncated or inconsistent listing cannot silently drop the
-// context.
-func attachIssues(prs []corpus.PullRequest, issues map[int]corpus.LinkedIssue) error {
+// the fetched issue record. A number the fetch did not return names something
+// other than an issue (for example another pull request, or a deleted issue),
+// so that pull request stays unlinked instead of failing the index.
+func attachIssues(prs []corpus.PullRequest, issues map[int]corpus.LinkedIssue) {
 	for i := range prs {
 		number, ok := corpus.IssueFromHeadRef(prs[i].HeadRef)
 		if !ok {
@@ -182,15 +180,11 @@ func attachIssues(prs []corpus.PullRequest, issues map[int]corpus.LinkedIssue) e
 		}
 		issue, ok := issues[number]
 		if !ok {
-			return fmt.Errorf(
-				"pull request %s names issue %d in head ref %q, but the issue fetch did not return it",
-				prs[i].ID(), number, prs[i].HeadRef,
-			)
+			continue
 		}
 		link := issue
 		prs[i].Issue = &link
 	}
-	return nil
 }
 
 // LinkInput carries the evidence used to link sessions to pull requests.

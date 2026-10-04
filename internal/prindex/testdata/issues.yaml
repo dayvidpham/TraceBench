@@ -1,8 +1,9 @@
 # Linked-issue mapping for merged pull requests. Each scenario builds corpus
 # pull requests from `prs` and fetched issue records from `issues`, then
 # asserts the head-branch linking rule: "peasant-337--..." attaches issue
-# 337, a branch without an issue number stays unlinked, and a named issue the
-# fetch missed fails closed. `error` holds the substring the failure must name.
+# 337, a branch without an issue number stays unlinked, and a number the
+# issue fetch did not return (another pull request, a deleted issue) stays
+# unlinked instead of failing the index.
 scenarios:
   - name: links_the_branch_issue
     issues:
@@ -46,9 +47,15 @@ scenarios:
         issue_number: 140
         issue_body: "Copy intent."
 
-  - name: named_issue_missing_from_the_fetch_fails_closed
-    issues: []
+  - name: number_that_is_not_an_issue_stays_unlinked
+    issues:
+      - number: 140
+        title: privacy copy
+        body: "Copy intent."
+        url: "https://github.com/peasant-labs/peasant/issues/140"
     prs:
-      - number: 351
-        head_ref: "peasant-999--fix--missing-issue"
-    error: "names issue 999"
+      - number: 20
+        head_ref: "peasant-18--fix--release-workflow-startup"
+    expect:
+      - pr_number: 20
+        issue_number: 0
