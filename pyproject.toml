@@ -26,4 +26,4 @@ members = ["loaders"]
 tracebench-corpus = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["loaders/tests"]
+testpaths = ["loaders/tests", "reporting/tests"]

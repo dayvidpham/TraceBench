@@ -1,0 +1,19 @@
+{
+  "task_name": "tracebench/peasant-pr-0343",
+  "trial_name": "peasant-pr-0343__model01",
+  "agent_result": {
+    "n_input_tokens": 10000,
+    "n_cache_tokens": 2000,
+    "n_output_tokens": 1500,
+    "cost_usd": 0.05
+  },
+  "agent_execution": {
+    "started_at": "2026-10-04T16:28:59.433346Z",
+    "finished_at": "2026-10-04T16:29:09.188951Z"
+  },
+  "verifier": {
+    "started_at": "2026-10-04T16:30:29.433346Z",
+    "finished_at": "2026-10-04T16:35:26.909312Z"
+  },
+  "exception_info": null
+}
