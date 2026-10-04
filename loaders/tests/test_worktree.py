@@ -178,7 +178,26 @@ def test_pre_existing_empty_dest_is_replaced(tmp_path, repo, snapshot_bin):
     assert sorted(p.name for p in (payload / "repo").iterdir()) == ["a.txt"]
 
 
+def test_dest_symlink_to_empty_dir_fails_closed(tmp_path, repo, snapshot_bin):
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    target = tmp_path / "empty-target"
+    target.mkdir()
+    (payload / "repo").symlink_to(target)
+    with pytest.raises(WorktreeError, match="cannot replace the empty destination") as err:
+        materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+    assert repo["pre"] in str(err.value)
+
+
 def test_snapshot_binary_not_executable_fails_closed(tmp_path, repo):
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    fake = tmp_path / "non-exec-snapshot"
+    fake.write_text("#!/bin/sh\nexit 0\n")
+    fake.chmod(0o644)
+    with pytest.raises(WorktreeError, match="cannot run the snapshot tool"):
+        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
+
+
+def test_snapshot_binary_missing_fails_closed(tmp_path, repo):
     payload = _payload(tmp_path, tree_commit=repo["pre"])
     with pytest.raises(WorktreeError, match="cannot run the snapshot tool"):
         materialize_worktree(repo["path"], payload, snapshot_bin=tmp_path / "missing-bin")
