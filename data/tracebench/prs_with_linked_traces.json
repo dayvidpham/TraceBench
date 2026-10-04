@@ -1,0 +1,4838 @@
+{
+  "total_pull_requests": 49,
+  "categories": {
+    "linked": {
+      "count": 34,
+      "pull_requests": [
+        {
+          "id": "peasant-labs/peasant#73",
+          "title": "feat(tui): component kit + settings framework, kickstart rebuilt on them",
+          "url": "https://github.com/peasant-labs/peasant/pull/73",
+          "split": "train",
+          "linked_trace_count": 31,
+          "linked_traces": [
+            {
+              "session_id": "19029add-02fd-4877-8af8-c79a0370c201",
+              "method": "exact"
+            },
+            {
+              "session_id": "22e0d9b1-c7f8-486a-abb7-a4374c8d1569",
+              "method": "exact"
+            },
+            {
+              "session_id": "260dee9e-e938-4fd1-9a28-5d45a15cb569",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "3259febc-9c43-412f-8af0-71f7b7c3bc0f",
+              "method": "exact"
+            },
+            {
+              "session_id": "335bccbc-715f-4a09-babd-36dc83124267",
+              "method": "exact"
+            },
+            {
+              "session_id": "5cccec45-f736-4492-817e-de668b9d5b3b",
+              "method": "exact"
+            },
+            {
+              "session_id": "61769e34-4983-4b48-9183-8677a03e5ab7",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "6764098f-04a2-40d7-92c5-b26fdb4574f9",
+              "method": "exact"
+            },
+            {
+              "session_id": "6e9f694f-8085-4846-91a9-2c2b9a6306e9",
+              "method": "exact"
+            },
+            {
+              "session_id": "6ecfeab1-b872-48f8-9bce-c49975ac5ef4",
+              "method": "exact"
+            },
+            {
+              "session_id": "71d85c6e-12d8-4eee-b2fa-f196bdf104f4",
+              "method": "exact"
+            },
+            {
+              "session_id": "76d49199-6562-4509-a011-e1cab991866d",
+              "method": "exact"
+            },
+            {
+              "session_id": "77e37423-3d4b-45b0-98e4-0e5dfb24991d",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "7e75ad30-ed3c-4ae0-a0be-5162a928688e",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "881a293d-5799-41c1-a9ed-78da3ce28b87",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "94a27589-1e28-4e96-96ee-44a23658f18c",
+              "method": "exact"
+            },
+            {
+              "session_id": "a01072de-bb91-4e22-a842-9aa69d3c1ae9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a00e2e81fbc7af6b6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a04814d3bf646f0d3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a16dee0580588beab",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4c63ed1bbf3767d7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4ea6f6581067491e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a585810662b9dc420",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a78623407e6fb9fca",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac573bda6ce35980d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac596d4eafbc97629",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ada4a7eb13599b54f",
+              "method": "exact"
+            },
+            {
+              "session_id": "b8326a00-f5cd-4016-b8a5-b54ab7dcae58",
+              "method": "exact"
+            },
+            {
+              "session_id": "bddfc8fb-952e-4819-a55e-8f5069bb7388",
+              "method": "exact"
+            },
+            {
+              "session_id": "edfde600-6551-41ac-a71c-8c9c98a37130",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "f58c3d8b-8bb0-4322-b572-4c9e5f3c220c",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#145",
+          "title": "fix(tui): clarify kickstart privacy step copy and git-remote example",
+          "url": "https://github.com/peasant-labs/peasant/pull/145",
+          "split": "train",
+          "linked_trace_count": 1,
+          "linked_traces": [
+            {
+              "session_id": "75c58155-42d6-4891-ae9c-bd8718ab2bfb",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#146",
+          "title": "fix(tui): clarify kickstart selection step advance, keys, and folding (#139)",
+          "url": "https://github.com/peasant-labs/peasant/pull/146",
+          "split": "train",
+          "linked_trace_count": 2,
+          "linked_traces": [
+            {
+              "session_id": "32a2b70b-90e4-460e-9d4a-76e421fa7a94",
+              "method": "exact"
+            },
+            {
+              "session_id": "e32feec7-cacc-4bb2-8a3d-7dce3e2969f2",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#150",
+          "title": "fix(tui): group kickstart final review into headed sections with a continue cue",
+          "url": "https://github.com/peasant-labs/peasant/pull/150",
+          "split": "val",
+          "linked_trace_count": 2,
+          "linked_traces": [
+            {
+              "session_id": "504b2d73-a279-4f91-9c9f-83b9972027b0",
+              "method": "exact"
+            },
+            {
+              "session_id": "9815cfeb-d03f-4dee-a5a9-232c67ce8c3d",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#157",
+          "title": "feat(ingest): select canonical OpenCode projections",
+          "url": "https://github.com/peasant-labs/peasant/pull/157",
+          "split": "train",
+          "linked_trace_count": 25,
+          "linked_traces": [
+            {
+              "session_id": "agent-a05c2d9bbe434ac77",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a075e7dae19e3485f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0b34cc8ba584bb90",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0f61e5294ee2e591",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a200eaea9ec0d9588",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2bf807f14b409761",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a31733376598c2192",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4c50e4b7e60b3a22",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4ca2abd1041928c7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5447ec1ed4c4a9c5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a59d078d4a2b80200",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6e837cc098f05ae7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a83762b5e71db79cc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a918db7798fa012e7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9ec5d7198274a378",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa0b7c60f9dcfe5b3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa100baa4d08d03b9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab121eda092ee8fd9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab405819b5cf81b30",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab6489199f5ade24d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abcafb0f395c3c7cd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac068928bb0fa9c27",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac77c99b0c19245f9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad081a54817eee53c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad9f782b5a0deb3cc",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#176",
+          "title": "fix(title): derive the generated title from the first real user turn",
+          "url": "https://github.com/peasant-labs/peasant/pull/176",
+          "split": "test",
+          "linked_trace_count": 5,
+          "linked_traces": [
+            {
+              "session_id": "agent-a12d78c382bca0c42",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a69e055b834221d73",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6cf3cf2b34b799e0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abedee73a52d3059c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af2f427f8e1d817f2",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#310",
+          "title": "fix(ingest): restore OpenCode v2 session ingestion",
+          "url": "https://github.com/peasant-labs/peasant/pull/310",
+          "split": "test",
+          "linked_trace_count": 3,
+          "linked_traces": [
+            {
+              "session_id": "ses_f8c3c3cb5ffe4JPwHxmAxlVR8r",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8c3c3cd6ffetKGyQHBjTeFB0n",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8c3c3ce3ffe5OpdZxSsKf7SWZ",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#315",
+          "title": "feat(push): add stage profiling and redaction metrics",
+          "url": "https://github.com/peasant-labs/peasant/pull/315",
+          "split": "test",
+          "linked_trace_count": 11,
+          "linked_traces": [
+            {
+              "session_id": "ses_f8272cbacffe7xLMSmA5qHUZVy",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8e53b93fffeOadYWKW4T4K9VZ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8e8e6823ffe4CbFRUHlL3CSLV",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8f43ae71ffegkpjHv0raa9zd4",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8f583afaffe9ALArBf77KHi6i",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8f583b2affe0B4z51RKaSmsE1",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8f583b51ffeiOiG24809wvydY",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8f79a7a3ffeuAXUHI9jU0Il3I",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8f94f9f0ffeBdrZSliuZTtPhS",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8f94fa24ffeWd2gxMVt9oFXga",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8f94fa71ffeKdTpN7L45p5XLx",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#316",
+          "title": "fix(harvest): cancel ingest and share kickstart progress",
+          "url": "https://github.com/peasant-labs/peasant/pull/316",
+          "split": "train",
+          "linked_trace_count": 61,
+          "linked_traces": [
+            {
+              "session_id": "ses_f85fc1285ffdvpS7VkTK1aMOBD",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f85fc1285ffeQb4xOCeKIIyc5D",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f85fc12b5ffeboNw2xKwHZi7CK",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8608a7d9ffexWXykdtVereVMa",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8608a956ffe1tLAscRCqZnSTA",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f867ec6ebffeziyH3FE0HhCqzG",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f867ec710ffeQEFtOqvD8rU3KO",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f867ec773ffeSOVKVz3WUfvg5T",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f868b1ee8ffeRmRTRi732jl7l5",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f868e88bcffex2p46XpqWkb100",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f868e892bffeRp6IBMSz7ntJZi",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f868e89dcffeXm9ng3v5wfR76F",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f869626dbffeF0t4O6RrlMIv4L",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f869626dcffd8AtwlMq6p4yXMp",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f869626dcffeQnN9i51Gts6aVf",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8697172bffeEHmt5B2klESpn7",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8697175effeHfvko6UClc2ijL",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f869717cbffe5a1pxtPfHueMDi",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f869d660bffeiApP8SCcMmlI0f",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86a8303affecA9oA0NpBynBnJ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86acbcdaffe2PKHtHwZm7Dniz",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86acbd27ffepiQgtojyXmvCZm",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86bb43cfffe2LGugChGJ6h5Bu",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86c5a10cffewvGjAJRXHodou5",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86c5a18fffeXk2q0JadoJLL7C",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86c5a2a8ffessqUR7PXVUZjoJ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86f1423dffeOn9dynTtC5Dyn7",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86f142a4ffeKAd8vp2QB0GtW4",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86f14361ffeuWe8wcya7EI1lV",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f87019265ffeOU7grXUC0qGA1i",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f87523963ffeV49uWa940P25Uk",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f875365f0ffefgRXak4hhZqPCg",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f87552e7cffeQWXYVABhtBDpXy",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f875cdd59ffeh50d7rxMi5a1Do",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8765e0fbffeo7sV0kNyMRUsm2",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f87766e8dffeY8c1TF9B1ZvCL1",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f87785198ffeWdWkUGHeLixlD1",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f877aeeb2ffeW839JKpbM5E0NC",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f877fdbeeffeCMxskIzJMwwLU0",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8791a025ffeA7TEpwX797r2ch",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8791a118ffePyKN1o7UsGdFgn",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a10ad22ffexCgyRiY1WSQDLi",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a10ad8cffeyoL7G20mc60afb",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a10ae11ffeumkroVmrG7lu6z",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a19406fffelAKf1syLhIIeDO",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a194104ffe0ydG128oBbBWWr",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a1beb12ffe04yTF5P7qYfCxw",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a1beb3dffeiaHJjaehCZjmEo",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a1beb82ffesiCuECrR8EJtrO",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3d57fbffeHWhwDlrlFzzQuF",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3d581bffePiuu1ELQm3wSrl",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3d587affeUNZFIvJTWQfC0t",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a43b853ffeglzrTkbhcjf9qh",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a43b9f1ffeHf5nSlkjKRwU3z",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a43bae4ffeT5TvzijuGLjEVB",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a594938ffdBQsIbeuRL1KbC3",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a594938ffec4acrM5im3CP4J",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a594939ffeZJdmfC1Boe6tDi",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a60acbfffec9z0hAlDE1Z4lK",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a7582aeffeoPHLVeQzUsX9ju",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a758418ffez82fc5ggUFevPr",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#329",
+          "title": "feat: add Pi Coding Agent session support",
+          "url": "https://github.com/peasant-labs/peasant/pull/329",
+          "split": "train",
+          "linked_trace_count": 138,
+          "linked_traces": [
+            {
+              "session_id": "ses_f7caf82f0ffe2a4uEVLlaafbOu",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7cb2567bfferyqS3mlAXEstQX",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7cc4f8f9ffeCoPeDUcUDJD3fv",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7e2e3eb0ffeLK8KH5aU386yzM",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7e32c1beffeZ8T4AboJ0wDYJp",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7e32c1bfffeCW9k3PC7zjNYr7",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7e32c218ffe6O2oX56DzpXmKK",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7edcc6afffeWmGhvYwUeId0T1",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ef711d1ffeAHMbbwVamFcFjq",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f9b21e0ffeubirjY64XPPh3b",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f9b2268ffeX1vw0747EqfYkM",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f9b2269ffeVQB3w7ATuD7CC3",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7fe4f407ffeGsUHz9IEuDphhi",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7fe4f42dffef6ZqZvhtbWEnBn",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7fe4f465ffeAKq8w8HPFxk1eb",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80257c25ffepOOponPUXRZTrj",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80257ce3fferX7HOUsXb2qvMw",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80257d79ffeQNs4nfnBQP4x1t",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f802f02eaffezsRPPeXmyXgb0J",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8033ccbfffeu8Sz53pS0NhXIG",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8033cd3fffeAfZKAGLrsNC1rN",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8033cd84ffebzK7g31fiDrkN0",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f804e0fabffeaLo7PyKJ4apPTH",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f804e0fc5ffeVGkb1japH6ts7H",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f804e1061ffeMdoY45S61fo2T9",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f806e2845ffeFUrGaWXhTV6XP6",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f806e2891ffevElL8k2EBlzi8S",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f806e2917ffeQP0yXRwEUCsll6",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80ac0a37ffeRoD8hjuWssD6H7",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80dc25ffffdUCpWN7NOLGoLXM",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80dc25ffffeEXTJ1f1mVfM7La",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80dc2600ffesVv1RSs8Se68do",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80e2ecf1ffekudNR67ZRqpIeo",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80e6b18dffeJre7oL2332HjxM",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80e6b18effe1pn5ai2kKwZ44c",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80e6b18fffel62H4y1jHs4bWc",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80eb2138ffe7EL0uiXYZLm58k",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81b70df4ffe6Xd6gmBxfiWY4b",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81b70e02ffebFjdvgCCxifJMV",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81b70e2effearkwC6BkGrf8aK",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81be04c4ffdE4i9Li0OKflXg5",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81be04c4ffe9wjhZhV8uOm5tP",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81e30a50ffdLh2LQ1lbnqYhBb",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81e30a50ffeoPfgsE69lCjR3V",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81e30a79ffe87M42H9NEGG7Uq",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81f99bd0ffdTBI6V6CuUgp6oG",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81f99bd0ffew97xnoinY43LaZ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81f99c4cffeKEoxsCeP15XHSn",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8229a4f0ffe145llIMG15Hgm3",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8264dea1ffeRQZKuOwlYnGyXe",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8264dea2ffdqqy0Q1ZqA5gl3R",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8264dea2ffeZy0TN0Lp0VOlSA",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f858633d7ffeaH2C6m39Ig7Gsb",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f860123e2ffeOZ5xDCkW7Nw6mA",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86012408ffeqUEY3dlgjdhLUJ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f869ce86effeHe60C2gCgDju9g",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f869ce91effeOay8EbwWRORzSO",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f869ce951ffeA4ZDYLuIOXuuhz",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86a8ff62ffemCkCLTtdpVZIo5",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86ac115fffePNBdJ0RyGjM5sK",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86ac1185ffeygQQywh4svtADb",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86ac1212ffeGBPI4SYTnfXYaY",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86acffe3ffe9GMV9gJO7sz2Ih",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86b1e5f3ffeOd5b1xASwQpqqk",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86b1e5f8ffehlYuQsAvg1Oxyw",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86b1e635ffeYYblMJvRjMiPIV",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86b87f25ffeguZpgmfXtt22R1",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86ef5b57ffe3uef9P0ZkYUXGP",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f86fbc536ffebbcBBio7fvBTOc",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f87273e92ffeCeWFr4RXNUYHYo",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f87273e93ffef7BpWspOfaiD1q",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f87273ec1ffeG106HMID74VJ4w",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f877e9431ffevxc4FZ8fHLwWo5",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8791cfbaffeY1M0IQASry50IW",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8791d00affeVWc2n183qvGHS1",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8791d06fffeYqtqUNkdfp34fL",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f89e722c9ffeq5pjTyk6MjFciD",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f89e722caffeJRfgYE2nbGwOAf",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f89e72304ffeAsMGtnThxUqq00",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a0f2763ffeRYF3ee3j0waMkK",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a0f2777ffeXFtHFK06pRZiEC",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a0f2780ffeeqc4Nxo24O2sid",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3015bdffeQv8mUU7jz7zoNS",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3015beffeWNdJPjj0Kq6dgx",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3015bfffePMK3XEjNcl4eSQ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3c0309ffeuDMGtzU2P3oYUe",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3c0315ffeFMLe19dEsYIwCg",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a3c0339ffeN86yCEl061hA1K",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a4be635ffee3kT7cWNwSRI3O",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a4ef1c5ffegO2ykEZ1dmiCbK",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8a4f1800ffeiyoqeKE2IRyC2g",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ae2bf6cffenx3T3cXqsO1G13",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ae2bf6dffdPXHced8Gj35VIl",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ae2bf6dffe3MVcV782376BKb",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ae84408ffdpOyrXD26SnwdGD",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ae84408ffejb70paWqEEeNu3",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ae8444fffeZOmBhKUmrPH5hM",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8af22d02ffetFA84KncFMI37u",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8af22d0dffeqofPR8wIZc6VEY",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8af22d16fferL6B4WKVeUQzmK",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b0557e3ffetL4i4R5XbEeHYq",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b0557eaffekgfjcz43LMnBz3",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b0557ebffegHUVLTbV8dYhFy",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b0b3fd2ffefm4hIFgqTuSFt0",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b0b4016ffeG2WHsciJRzA59t",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b0b404dffe4Zn5SvsyptobNN",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b181f09ffe5jnC1r0Hu2oJYx",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b181f0effew7dTQJwkqZNyef",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b181f2cffeMY4EfXaNa6dyhx",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b266dc7ffeVhHFWwCvjYdohf",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b266e18ffeozXAsXdpAyHTJh",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b266f76ffeyOAIbX8dU3i4Sp",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8b2f7904ffe1EBcgqyft6hooX",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8c48c241ffeUlfOWqEf4v06ec",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8c9982f8ffeteNIy2Qu7lJeMw",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8c9eb0deffe3LedhgN1pyhrth",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8c9eb119ffeM9Tq0pYPCsUPDu",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8c9eb1d2ffep194LiiigOWOqB",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ca9b00effebn5wCKM2ldCfQh",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ca9b00fffejNBZQif91X7RLG",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ca9b018ffetAYdkTl2yEfbxy",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cb60707ffeJ8VtXl0loaKKiO",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cbfac36ffeE9P2PhpxKW8RDE",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cbfac3cffeO8xEU2aUaFQZNg",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cbfac6bffe8jMrIl1fq2Bx8p",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cc7b727ffejCDq74yIVqLAXw",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cd63b6bffeY6dTgr1bDDrmFO",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8ce8267afferUQjaIEQBDHulf",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf06112ffeaEMdbaD0DvFRDj",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf3155effec9DvzMNdAc8Hxm",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf31575ffdFe2uG0w45w3qpG",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf31575ffeHBGv8ViQPHnE6T",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf315a0ffe1SkHRjjax9Ow72",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf315b2ffeAZ5KH38bVF7u6U",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf315d2ffeUcFMWbvDr93khQ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf315e5ffeAWDB1em1WE4LKF",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf3161affeYFnNYWfL9R3pz1",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8cf31652ffeGklqkIoGco0AKe",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#331",
+          "title": "fix(ingest): capture active sessions with tracked project attribution",
+          "url": "https://github.com/peasant-labs/peasant/pull/331",
+          "split": "val",
+          "linked_trace_count": 21,
+          "linked_traces": [
+            {
+              "session_id": "ses_f8068c23bffe2h84Y5mUeqNeB1",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8068c2f6ffeO1216Th35edJ61",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8068c3c2ffebyoVZQGDc5Cr87",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f807f3f49ffewaEMvg7usJKBHc",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f808182a5ffekqAmc3rHSBZ75u",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f808bc176ffe3JCkRhDZfW3FhY",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80a2ef3bffeaJwwbFblIQvsU7",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80a2ef3cffe39VBmQ7C6P8Noz",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80a2efaeffe25hrthFJcfOF9y",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80c8b639ffe07jDooY9pRls8z",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80ce7316ffeScoBe2RMXxn78J",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80ce7317ffenCN3zJQ26gj9qY",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80ce7395ffeajWg2NF4e6ctWz",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80feefb6ffecVO2BGmQAo7hbX",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81055775ffeizbUJ7UnjQ91vh",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81055776ffeLfNRiiXy0fTvfH",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f810557d4ffenzXqthR3L70LoG",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f811ade8bffeGDL6oag3m5gWSn",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8163a2d3ffeqOa6mk4HEJakAz",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8163a2d4ffePflnamrK0qe033",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8163a2d5ffeTuCX8x1mhMAwsf",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#334",
+          "title": "revert(ingest): preserve historical commit admission",
+          "url": "https://github.com/peasant-labs/peasant/pull/334",
+          "split": "train",
+          "linked_trace_count": 10,
+          "linked_traces": [
+            {
+              "session_id": "ses_f803a8880ffeYGI5wTTAgizJOh",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f803a8881ffevwvi0233nIEllg",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f803a8882ffe5F9TWCbPjI4TN2",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f804b1f79ffezbkJR1gDfMGX7C",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f804b1f7affe6o6r0GWyZod5F5",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f804b2005ffeIgUiX61NgRRyuL",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8080070cffecMRIc5uZgAdPQi",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80944303ffeEXYpq5nyXwmYHV",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80944336ffe6UH6W61MkRq3tg",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80944369ffe68COTVTBNnd3YF",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#337",
+          "title": "fix: publish session metadata directly from SQLite",
+          "url": "https://github.com/peasant-labs/peasant/pull/337",
+          "split": "test",
+          "linked_trace_count": 16,
+          "linked_traces": [
+            {
+              "session_id": "ses_f7f6062baffec3V2vb7J58tStU",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f61a5aaffeq0jk9jqW3s4PeM",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f98087affeCc1cTXlyYu991u",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7fea6ac0ffeT6d5lEhnbGcydS",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f803c0079ffeUKM6PfqQ3f4VFU",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f805e56f5ffe711QqUSoJLwKpx",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f807caf1cffeBIvqGJeVUUSDFU",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80e682adffevBAaUOgMAC5vWh",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80faf978ffemEWZ25X6yHQGQh",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80faf979ffe49ueTCoTPR6rpk",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80fafa4fffeLZr8eS41OTR6Kq",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f81150a5affeldLhQvrop7gm0H",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f811af01affeqLldH45i2LfCoL",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f811af09dffeu3LuxaVgXUPdCI",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f811af0bffferMl8666t8OV4Q9",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f819180feffe84E6qWtbWbY6o6",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#338",
+          "title": "fix(transcript): persist and publish complete recorded content",
+          "url": "https://github.com/peasant-labs/peasant/pull/338",
+          "split": "train",
+          "linked_trace_count": 47,
+          "linked_traces": [
+            {
+              "session_id": "ses_f7ec522a1ffeLaXejyV7jNrb2L",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ec522daffegm0EGdsVc2ojHS",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ec52314ffeeDWmJmL3ADL3pn",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ed946f5ffdUQ4Zfg21RPPbou",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ed946f5ffe6FVKzPtdbiNpvL",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ed94738ffeM7w6EXuY4gjUpi",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ee98329ffe0H90yhFg5dFMgm",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ee9832affdS3TJFWzFGcKlQq",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ee9832affeAHDP7uPou82Xya",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7efa32c1ffeOGT7txGa6QJqtd",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f02366affesjEtgfMpxeIKpi",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f0fba38ffd3vwmeUiUaRx73u",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f0fba38ffeQEpOWGwiIOOocT",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f0fba39ffeB33yMBJZ2X5n8G",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f3436b9ffe7uDAeQlLtOE3V7",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f3436f6ffeLwRzgtBhvzRRjJ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f343739ffer2lfIbIC55j7yG",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f623f96ffe4qn6dySvLL7KkX",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f62400fffetfVUFoSP8waLwF",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f624085ffezTXA6YhOo04me8",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f68c2d9ffeVQB6Vt1GX9x6mP",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f68c317ffeK4NgjurDeFt6pa",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f68c32effeCVtaonV2Sz4tDq",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f7713ddffeMjIilguXmSfI5j",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f8620b3ffe9IJXkDRwh6AUvA",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f86ce98ffe2cyjokO6D1X85B",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f92868affe2WHqigOo4ftsga",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f802b7935ffeqS0zVYsiWQzZ9E",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f802d3120ffeNKeCSC3Z7NaokC",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80415285ffehrCKzfKwFjL1jF",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80415286ffeYWG2UbjXB65EaH",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8041529affe4Lho213cv5DrlO",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f804d4e84ffehYqAKEst6cu9ke",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f805dd950fferoOVPibPbODa7w",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80634778ffe34f1B5PyJwKIra",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80634779ffemBgE6GDdvq6uNq",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f806347f6ffexU2X5KQWXDYeXs",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f8074868fffeeIVGoE9yv743LJ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f807b788fffe44nBl1oM9HVdEH",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f807b78edffe5IqIfrv0PEaydW",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f807b796fffeGUbzbzToUTAL1A",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f808bbf36ffeLrS33KBVhWGdlu",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f809e74d9ffecgLs1V7873Lmpa",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80d0c76affe6UBMccqN38kgxh",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80d0c979ffehxIbzi2c1DfUL6",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80e41a54ffedLwKNyIlYBjzB5",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f80ed1a0cffetuymLYBViX3znw",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#343",
+          "title": "feat: per-harness harvesting versions and freshness",
+          "url": "https://github.com/peasant-labs/peasant/pull/343",
+          "split": "train",
+          "linked_trace_count": 34,
+          "linked_traces": [
+            {
+              "session_id": "073957da-a6ba-4e16-99f2-f31ab8648ae6",
+              "method": "exact"
+            },
+            {
+              "session_id": "0bbda5f2-d5df-4ff8-83ea-66de2c2d7169",
+              "method": "exact"
+            },
+            {
+              "session_id": "0c535cb8-a07f-4cca-b733-f167ec9c5ef4",
+              "method": "exact"
+            },
+            {
+              "session_id": "172ce03d-d1ad-4085-8f24-3dd7353c4469",
+              "method": "exact"
+            },
+            {
+              "session_id": "1dc48fb0-e704-4167-8cd5-2286de483978",
+              "method": "exact"
+            },
+            {
+              "session_id": "244d4516-3b59-4e62-9c1b-cb0fd26431de",
+              "method": "exact"
+            },
+            {
+              "session_id": "377b5e69-a5a1-4123-ab2d-59dd04b385fe",
+              "method": "exact"
+            },
+            {
+              "session_id": "4be0afa1-aab3-4621-b488-a671eab62d6d",
+              "method": "exact"
+            },
+            {
+              "session_id": "6563db74-aa58-446a-864f-c258156be081",
+              "method": "exact"
+            },
+            {
+              "session_id": "67a5be38-4cb6-405d-9b3d-d76f025e562c",
+              "method": "exact"
+            },
+            {
+              "session_id": "6ae03714-09eb-4910-bc26-f1942eb119c5",
+              "method": "exact"
+            },
+            {
+              "session_id": "6d57634e-576b-4ae9-8910-5d0b44dbebd3",
+              "method": "exact"
+            },
+            {
+              "session_id": "77ffea3c-8fb3-450a-934d-cf18f365e0cb",
+              "method": "exact"
+            },
+            {
+              "session_id": "7e493aae-c078-484e-9ed7-ae8544eae2fe",
+              "method": "exact"
+            },
+            {
+              "session_id": "8bd295cc-c89a-418d-856d-9c22214a6520",
+              "method": "exact"
+            },
+            {
+              "session_id": "8ff70073-1857-4529-8f4c-baf0624fcdf9",
+              "method": "exact"
+            },
+            {
+              "session_id": "900a8fae-388a-4372-9afc-5e7a20f88e20",
+              "method": "exact"
+            },
+            {
+              "session_id": "a0df75a2-bfde-480f-a680-32bd73b68530",
+              "method": "exact"
+            },
+            {
+              "session_id": "a67b1a20-2f46-4fa7-8b75-252badbf2cba",
+              "method": "exact"
+            },
+            {
+              "session_id": "a6a295a6-d31b-4243-a972-9dbfb4722999",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0052e2cefe186d9e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1c14840815b9042e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3392d24c9e4f501e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a37a4ac21eebc03b6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a40b8b9ca793eac55",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a58972be388f7d706",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afccebc53e4c1b4e7",
+              "method": "exact"
+            },
+            {
+              "session_id": "b6ef1f1c-109c-4f54-9d96-bc3fbc77bc8b",
+              "method": "exact"
+            },
+            {
+              "session_id": "b7c37ab9-1b8c-4e77-a8dc-5c73ded36553",
+              "method": "exact"
+            },
+            {
+              "session_id": "b8adf0db-986d-458c-ba88-c93ad40e126d",
+              "method": "exact"
+            },
+            {
+              "session_id": "cf9f50f6-98f7-4238-9509-592cd9cca9c9",
+              "method": "exact"
+            },
+            {
+              "session_id": "eaa66ac9-13ca-4430-9bd3-c76459afb50d",
+              "method": "exact"
+            },
+            {
+              "session_id": "ee99907a-0e66-4a11-a930-852dfb2b087b",
+              "method": "exact"
+            },
+            {
+              "session_id": "fcaea817-7d4c-4724-9212-26db29b42f9c",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#344",
+          "title": "refactor(push): make publication validation explicit",
+          "url": "https://github.com/peasant-labs/peasant/pull/344",
+          "split": "train",
+          "linked_trace_count": 3,
+          "linked_traces": [
+            {
+              "session_id": "ses_f7ef7f7f2ffewZ2evXklhwEwzY",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7ef7f7f3ffed2ervGqfxkFQeo",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f7f06d03fffed6GICy5v9Rn12B",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#347",
+          "title": "fix(e2e): reap orphaned test containers",
+          "url": "https://github.com/peasant-labs/peasant/pull/347",
+          "split": "train",
+          "linked_trace_count": 3,
+          "linked_traces": [
+            {
+              "session_id": "ses_f7caf82f0ffe2a4uEVLlaafbOu",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "ses_f7cb2567bfferyqS3mlAXEstQX",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "ses_f7cc4f8f9ffeCoPeDUcUDJD3fv",
+              "method": "next_merge"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#528",
+          "title": "refactor(test): wait on signals and deadlines instead of fixed sleeps",
+          "url": "https://github.com/peasant-labs/peasant/pull/528",
+          "split": "val",
+          "linked_trace_count": 3,
+          "linked_traces": [
+            {
+              "session_id": "ses_f0de2c849ffenuK0vy3CmAMgsX",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f0e3124a6ffeWsyRkpjNSqToKZ",
+              "method": "exact"
+            },
+            {
+              "session_id": "ses_f0e3124a7ffer6CVOuV3M4Z3Qi",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#21",
+          "title": "fix(redact): reduce false positives, add --unselected prune, harden push consent",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/21",
+          "split": "train",
+          "linked_trace_count": 107,
+          "linked_traces": [
+            {
+              "session_id": "0cfa8d51-4ab1-4590-8b4d-7b8358a939b8",
+              "method": "exact"
+            },
+            {
+              "session_id": "12472fa7-890d-4195-9fb9-b7944b24b727",
+              "method": "exact"
+            },
+            {
+              "session_id": "1504e350-29af-498e-9bd0-2fd38cb42442",
+              "method": "exact"
+            },
+            {
+              "session_id": "39fff511-6be8-42cb-bc26-5604062de515",
+              "method": "exact"
+            },
+            {
+              "session_id": "4bf21f5b-0c23-4179-bd9d-8ec7fc9555eb",
+              "method": "exact"
+            },
+            {
+              "session_id": "733061c3-fd37-4b6a-b386-c85d50c45805",
+              "method": "exact"
+            },
+            {
+              "session_id": "7fc34757-d606-4ec6-8778-aa5435ebdd67",
+              "method": "exact"
+            },
+            {
+              "session_id": "a25f585e-e935-4a63-b38e-0cda25b99189",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a04f6d0783f93eed5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0538dbcc8133fb2b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a06544f5052b00fc5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a06c9ed6683744080",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0c6e883eb63994d6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0fb8dc6c13e7caf3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a10b8de9d8010f615",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a10e66754e7d54a34",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a11f761ea8653685f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a125d65ea5f0b0269",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a15dc5db2922de7c3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a164a580cf559d45a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1739dd0bd4bb5d36",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1bc4352c0ed47964",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a219131176ba1f52b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2753d0712a287114",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a278db41542ef3fde",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2d351ebcf9613dee",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2dc1f51e7d376392",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a33c68c46931eae1a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a37fb2e5d91000941",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a391065f8af302e70",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a39a70e63c2a0d584",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3be70cf0b8f5a698",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3f883ae21ab3dc12",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a404abff8ff48a2e1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a41bb208e8245f85e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4267ccb22f90b3c7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a443e141ad0a54052",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a454dcb7ccc1e33bf",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a47324a38e04821d1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4a1d294e0ef5220a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4a7848713187adb4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4b140e299b384c16",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4ba5df4c55f9c5e9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4db1f3d2c8075245",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4ef85c1cf5e06e23",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a50f4c96bfeba8bff",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a54735dd360a483a5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a54d0d71c65a8e418",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5552a402049d3021",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5595658ab473214d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a56ca11cee4ff677a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a56f9737c4542843a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5ae350b5357cd113",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5c58161a18c7c8ee",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5f71a4bee52dbb53",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6824d47671562e65",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6a5bbae361c6d1fc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6dbd8234cf27ecc7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a700307abc8079241",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a74f9b564b403a9d6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a770fd922396e30b1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7af0a01c06307244",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7cc90d73ba1cc6ec",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a83b2d460d46164f5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a84066dcf7743a942",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a877c342239e59db9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8c2d56e838764548",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8e1b8decd24b1db5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8fb4d78c9971274d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a94e59052450598f0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9985d894c81427b3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa1315ab4d35efc29",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa3596d47904bd779",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa6110a15bcedcf8c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa67d8b811f5afd3e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab4f75448159117f8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab75a9c82ed8ab73e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab8df51ac9aab7fea",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab99212700c82fb3c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abad8cb2575ef1d63",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abda6bc796676531f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abed864af80153df5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acef33866eb4d0e2a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad0e6018c0900baa6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad1bb05ebdf6fa4ba",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad66f32a39fbd0c9e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ada983575c78a6ab2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-adac1bcd763911c5e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-add729d297b2505fd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae08910e35ad006f2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae5c6809147e36200",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aed42a1d4c93b29e4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aee1332fa009c5bb7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aee8c3e4a705213da",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aef45cfa93e9ae9e7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af18a8de1870dc996",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af283fcea6766c8a1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af397d830b966fba3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af441f38d40e9a349",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af4844c653fbbd8dc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af7409c220de13578",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afa142c865618edd0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afaf4dae7410fcaa6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afe98377c98cdd746",
+              "method": "exact"
+            },
+            {
+              "session_id": "cd9a0a06-b804-49df-97e8-5237d56a3002",
+              "method": "exact"
+            },
+            {
+              "session_id": "dc2b40c6-a549-49fe-9d14-b5b5ed50de41",
+              "method": "exact"
+            },
+            {
+              "session_id": "e2b85fb3-54ec-408c-bb1b-afc440ef7491",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#26",
+          "title": "fix: session viewer project grouping and turn role misclassification",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/26",
+          "split": "train",
+          "linked_trace_count": 25,
+          "linked_traces": [
+            {
+              "session_id": "agent-a12b7cda5c32ebed0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1a3b767c7502f4ef",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3533cf588440c11e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3b368f83ca23b852",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3b3ff99138f90567",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3ef9fc754dfe7518",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a40808920b0939a15",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a50e3b774d19dcfb3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5451104d0a5dd868",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5751a368967dfbf7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a58d1b0bdf6b4a3c8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a597540592b13f928",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5d74d3743b03e02a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6012af3cd353cfe5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a608b2a18cef80402",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8ad11c39a617af4d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa2ee9333f51822c5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab38bc661d1311892",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac7ff0a52bf3dc8b2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acdeb053bfe10e248",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad6ec23e182cf581f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aee32cfeac3c18457",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aef9458d10df53203",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af13f7a01eec3bfe2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afade925ce828d698",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#33",
+          "title": "fix(redact): reduce false positives + grouped redaction sidebar UI",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/33",
+          "split": "train",
+          "linked_trace_count": 25,
+          "linked_traces": [
+            {
+              "session_id": "agent-a017fd2ca91906ab1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a15ec04b3ff75ee25",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a204805663e28d639",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2d87470efafb00ea",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a33e5bcbc45997cf3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a350b4a43a7909250",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a39b36c4f1048fcc8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a431f58fcf9d09a3c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a54ec11c805df12db",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5d299bc9cf674714",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5da60449e0cb913e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a80f15d4f2b251dd9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8b2fca6a825c69ee",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9208028bb69b364c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a94897e50ce34b774",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa2b8f19aeb8de23e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aaa20d77cba53e38d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab44f205e7200ed5b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab67a69b051878b21",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac824faad3f8814b6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acaea38c2a3f4b957",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad69ddbf78f2bd8f5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af17a1cf3d473be5c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afe5e74cdb18d21e1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aff4710eafef1447a",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#35",
+          "title": "feat: add peasant sessions context + list subcommands",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/35",
+          "split": "train",
+          "linked_trace_count": 15,
+          "linked_traces": [
+            {
+              "session_id": "agent-a16168d77d66e14f5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4eee72e4426537be",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6cb2a366ef842a5a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a728ab5993f403336",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7c21f3774599671e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7d7d3aea5287f985",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8c51fc9ef0fb64ba",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa3bfcffb9bdb644c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa79124349c7544c4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abdace0af582701d1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac070296ad3ba8ce5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac25f8513098c685c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae0e63a7b1dc254b8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae8bf8d3673aebe71",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af8cb77812a7e49f2",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#39",
+          "title": "refactor: adopt peasant-labs/bestiary \u2014 Harness types, models CLI, wire-value + config migration",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/39",
+          "split": "train",
+          "linked_trace_count": 10,
+          "linked_traces": [
+            {
+              "session_id": "agent-a38ac6022aa2b6ee5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3c92937234d3d78c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3fe8f1c1e62de6e3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a45a3e85c5267da09",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a638ba2e8e9d1eaf1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8e082879398f5563",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a948ed0a01d10aac7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa3039f6b313358ad",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-accc02293efe7638d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af98b868a2a6ceab0",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#52",
+          "title": "Merge feat/research-annotation-infra \u2192 develop: bestiary harness migration + frontend wiring + experimental shelving + docs",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/52",
+          "split": "train",
+          "linked_trace_count": 375,
+          "linked_traces": [
+            {
+              "session_id": "agent-a006ac97779c21412",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a008af3be11f8ac18",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a013cd689083ad815",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0183394c0959b732",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a01b41ea22d8413ab",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a01dae0ed7b9010ee",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a023d91aa829a1000",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a026cf561e959898c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a04d3b1b77dbf7de7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a079ad5dfd8a36fd6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a07f02f42da37a062",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a087f76203bfc60a9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a08a5f15400637925",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a08c7503fe11ce1ea",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a08fffbfb7c10e9d0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0c06e9e6d40b13f4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0c94b27d2523cd26",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0d6fabd88ffea19f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0f1c0b18e2f2dd4d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a0fe1a858525ddd2f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1036719b8187b6dd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a10a48b847ff65193",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a10f8d83f6e27cc83",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a119e5db3db6f088a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1204e93efb85ac3d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a12442073dcf31eb8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a125a437e024ee195",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1371eaadd8aa1766",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a13c56114c24c4612",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a13fab72f77ba22be",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a14290541f7c630af",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a15e0d39b1e7f9de7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1658008908d38c5d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a167cce67da118655",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a16a2261a3106b5e9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a16d4281209c1cd82",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1760587bcd6521e5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a17855bcb50e4dae8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a17cd1f1e8307e6f5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a180cef445d1303e8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1814f70589a774e1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a18c8cf7b9a142b8d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a191c83c61d4aa107",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1a2298ac4585a7fd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1ac00395734f57ca",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1b00c72f09a972b2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1b87bb66b87352ae",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1be0c2088dfa7c3f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1cc650c0622370f0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1d7360f27796d9cc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1edff89bc979aaed",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1f00c8c7fc4c6b29",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1f1dd1ebcc20fa5e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1f4e3650d8d48d09",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a20101080a1d5b54a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a213c351316073342",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a21b60c40a670b0dd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a24f2a0e5e8598308",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2549f49a83e466b2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a256cc40cf5c5cdaa",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a26632a20724662b1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a26c18241e23a5bf7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a26e2ea15fe1579fd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a27dc9c0d3345925e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a27f21056609e627e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2815fd108a1e29da",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a28323f2bb2858951",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a28856379805fbf0f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a28bcfa35137e44e0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a28ff63bbcfc311b0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a29369aac7edd6fc4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2a7cf48456b45938",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2adaf958e47afa6c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2c0628985741ec68",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2cf65af370a5f65e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2dd37358ec1462db",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2f4752ae834de246",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a2f93c33b8bce3e8d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a307c64684f6d02c4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a31e8ab00762a2bc2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a32f2a94905d555fa",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a338d65b0a938dc5e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a33d7530e700895c0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a346a94200e341e9c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a34b0de4b2ffd753b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a34becd96c9c8accd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a355a6b564fb832cc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a355b28bcaedae3b2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a362d0770aa4fd990",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3649b5170d864e31",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3710f1b966ad26ed",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a372c5051a56cfa93",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a37528adc0f189254",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a382a4ed89ffcca54",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a398976afa087fc65",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a39d26519d78586c2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3ac3f5eb87fad601",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3bfe39344c955d06",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3ca1912961e839f2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3ead61de641a6083",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3fb42f920be42a3d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4007bbb328a6bfbe",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a401e3597fad06cbc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a423fd9a4ccaf26c5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a42813a58118ae862",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a42a700931cf55e68",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a446a8cd099881da4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4487d00be4bfd89d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a45aed00aa8f6174c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a45f3d49575515c5f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a46faa5075a6e88d4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a478f145b0217319e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4842846f5e0dd250",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4b513cd4e21b6fa0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4b74cb42e42a0b89",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4bf317976232adcc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4c0601a5ed60cd61",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4c7b3e2da029ff89",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4d14367bd45fdf16",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a4edbbc59607d04d5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a501ace4410ad602c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a529f77bb276f9415",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5451db0b77af02a2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a54d575fb095b2db4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a54fb6e4f29595fbd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a56a8c5830c2ea71f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a57a9cac3dbd8a2d8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5884738b0d0cbb43",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a592211077c926288",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5c21cf32ce5f3cca",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5ca2fb1d2cb08675",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5d91c65a8b4a18ac",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5e0be2a20d241497",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5e2d21ae817fd2a6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5ea5e015a445c07f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a5fb0f97b975a71c5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a601136f0b3d0e717",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a607a322eca7535fb",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a60c90142e32a3a8c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a61b45c578900ba2d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a61ea11afcf021370",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a620d4c3ec61828a3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6294c14ce4a164fe",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a66113d969599fb00",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6611e0daf998c1a2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a668c3da6f16807a3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a66ac8b30953702b2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a67485cb27cae8b77",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a675867543f8cd193",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a67935921c3598ff4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a687069b61a93bbfd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a68bc89c0f4082107",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a695826b7a310d2dc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a69856640a660596e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6a67768f5c74d9bf",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6ad4fd6d503fdb06",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6b49f1fafac9aa63",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6bfe805acf60c499",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6cfb2d277a21f261",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6d056eec1c18dfef",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6d7b967d6b7a33d1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6dd19e0b385b73e6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6de2c381e4ee85ac",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a6f32b68d50999c1c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7086cdf54cd89b7a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a709b758ec93ff3a5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a71c97c70b31b453c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a71e57ead75bf7a76",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a74b4c222c23fc6f1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7520c6f44d74009e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a752df8c5c8f92718",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a77172219e9fd6899",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a77414f98e4ef70c5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a77b1561eeeb576d7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a77f28c835d7565ed",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a78b737e8fc76db85",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7a0d646259944cdc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7a5818473cfb6770",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7a59c61a215f6407",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7a5aa3ee3f18440b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7be38b92a34e7582",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7c172334b8f9c70b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7cefe74295eeb615",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7d00646beefe0465",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7d2138de56635578",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7d4f7a6081f155d6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7d5b367d1902cbfa",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7e1f747895178012",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7eb2911696d7c681",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7eb8151753c2a4e9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7f7e5ab252bad406",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a7f886814533debf3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8187f611205f6726",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a82198bd19dd8e427",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a82dd13ad2d6bc71e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a83134867945bb33e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a837fa8b159be74bd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a838c894094e7df23",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a83f3efd0a67a66c5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a845abee21d0e8ef9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a85f0a7677fe2a19e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a882e9d0f6cee303c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a896d732b2766b3ec",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8a088d28eab2386a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8a281127cdcecbfa",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8ae7591d4c15d97e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8b5dc0a2404286d4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8bf28dbe354b9b2d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8c7cd3fdff6d20cd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8cb6e70764730ed8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8d040f1e32b2b536",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8f35640a8eb636ad",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8fa8ecc236fa5d66",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8fe32540a9dc82a8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a90ea5a7118a87b6f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a910e91b3a7203774",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a91bfbb2e5ec94a47",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a91f63054863f40a7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a925ef65c3ec4fc87",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a93e0af01a3f919b8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a943b1e810bcc6dcf",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a94420dbce030cd9d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a94effc139f5373c8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a950d0310584fc2da",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a95e0c9a39e425339",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a96fd2b804a8cea2a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a97160d38be032210",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9746a3bbdc1daf72",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a97e2dbf4acbf3435",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9823cbd32c94c6bc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a985f66c3d7a0c567",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a987f64fa4e525620",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a99323f16e2c22719",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a99431cc82d1efa74",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9bb10a654a404637",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9bd9300be279383f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9c911574e2878b25",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9dc8b5a8d078dbf8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9e2cfdd4d34feb19",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9fcd4e5b52c0063e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa092f8bf4e5bc31d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa1199601f21e10e0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa11ae27bbc788193",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa15c429171420985",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa2bdf7510c71939e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa2cadcc2955a75c6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa33ba9874f5caebd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa3756d0272ea3fe6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa48ef6755c0f9c82",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa56bcbfa6aa22baa",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa602efd1e69ab6c0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa7a9d000987f212c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa8694319140e2307",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa91067dcb7f60c2b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aaab5c83034b66cee",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aaaba8ac8eb6ed110",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aab1480f083ecfb8c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aab8e41e9ac31187f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aab926505fc5e4e26",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aac78dce0838c1cc6",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aaccf28fbd445cbfa",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aacfcacaea3649949",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aad2dfb35e9487a21",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aae1d41f50446d243",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aae584feaa0126a22",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab003b56b87d0eb6d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab10b204f100c8863",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab179338be01fbdea",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab1ca91491dfa4ad4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab4056adbf22ce659",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab4404e839799722b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab4e93a28da1ede1e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab5a8dd6f269524e4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab763a0b2da9188ad",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab7a06315aa998b27",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab83251daf54b6cc1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ab975ab27387bed52",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abb2eeab321658214",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abce7494eba752da2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abd3121ddb1403126",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abd3f539851003b3f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abdd760b975e54788",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abe98ccd8085acbfe",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abf4c1376e3b1fab5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abfa9d8c83a9c7d11",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac09bcd3778769f60",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac09cf6e32301f95f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac15dad1d6d7443f1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac1c1ac4737b39ea2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac238555154631518",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac268a1eb3d480ab4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac2c3b2e1d59ae817",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac2c493259e2d5ef7",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac50699f4a89a4363",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac5d2b239f7c25c28",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac605a106b0c2f2de",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac6eab5e3fa91fdd5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac74dd128aa7c5350",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac774fd5f507333fd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac789512b8f3227bd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac80f80a3be445b5d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac83ee79a8cb5dc77",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac982bb33ee95b082",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aca221982b5ca597f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acb4fe7f2895ec43a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acc6d4d1737832cb3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acd224cd275402036",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acd65997289036a2d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acd9028e495ea21f1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ace7fa756d9031100",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ace9c2cd1eabc66fa",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acee73e4302f4fa36",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad13b2eaa672883d9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad1bc1269d189c5d4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad2132b6a64a63914",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad2310d166f209a55",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad36fcab85ff47c0e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad54017a7cfbcf68a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad5dc185ae582c6d3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad65e1d9f9b4947ec",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad7a7812bdd4ca492",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad87d61abe77d48f2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad9cdd0f469ef0ce3",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ada7621b71c718f98",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ada817ffc6953944e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ade5a222a3b4ee7ae",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae11a3a2f39dc125b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae208f84e33ff2b3e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae217dabadd4dfc7c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae220116ac718176a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae2c9bcfaa2f2137a",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae3c2047d6b6d6d9d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae3f883cd63272e85",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae42655ea18af9a1b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae53d6f6c00771496",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae5f49778ea76fe2d",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae65f011eb78dbf3c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae6d0ae06e6860993",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae6d89e40e4e3d2f8",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae6f685b23de31716",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae87788f284b75940",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae89853f3905fb106",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ae948fa932d540a9f",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aea6125ec13b0fc09",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aea8b82b7e7a3d995",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aeae4f60f1308213b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aeaf25b09f448b610",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aeb47d9ba530879a4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aebd6b2b0df338c43",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aec627423ff6d0408",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aecb8b97d5b3c0dce",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aed0e0326d668af53",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aed5d31382b4eafb1",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aeeaab7426f1e4569",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aef4259f93ca48b74",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af0e4ef9605576527",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af3351e82e9d0702b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af35ef06003d74a44",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af480779704411a20",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af589692289dffb5b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af80b7014b25a3b88",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af85156933e8f23ad",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af920c5ba57f03f4b",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-af9634f88205b5e06",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afa68a7cb12244c31",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afc24a75e73664ff4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afd223f3517f3a682",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afd68d56f598bd3e5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afd8c14d826843adc",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afd9aeb8af1504be4",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afdfde147f9ba9eaa",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afea1914fcafc6441",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-afeb5f2d104f3de22",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aff159889e02245c5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aff88adca1aa97673",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#94",
+          "title": "feat(release): CI/CD binary release pipeline + multi-distro packaging (apt/AUR/nix/brew)",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/94",
+          "split": "val",
+          "linked_trace_count": 2,
+          "linked_traces": [
+            {
+              "session_id": "019ebe2e-5eee-76b1-b44d-58ba1e318575",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ec144-e9b3-72e0-b473-2c080bf9345b",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#95",
+          "title": "test(e2e): codex push regression gate \u2014 mixed-provider fixture, 400 unknown-harness case, derived --source-provider help",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/95",
+          "split": "train",
+          "linked_trace_count": 3,
+          "linked_traces": [
+            {
+              "session_id": "019ebb1a-3d0f-7c82-83c5-e85493fb2331",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ebb1a-3d2e-7f02-a2f0-9c7652c57ff5",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ebb1a-3d4c-7173-8257-82563371a329",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#96",
+          "title": "feat: peasant village pull \u2014 auth-gated transcript + annotation pull from Village (GH #81)",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/96",
+          "split": "train",
+          "linked_trace_count": 18,
+          "linked_traces": [
+            {
+              "session_id": "agent-a0a6af5b698e41630",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a1a0c6c35675643c0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a24e7ec6bba9e14eb",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a26ffc8cdd22bd7cd",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a3a5032601e909543",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a43009af79515c707",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a80aa371dc9ad18c9",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a851476d2b96117bb",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8d76dd75cf347066",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a97411564bfcf45ab",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a99d02883915ee2f2",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a9bd2732cbb731f0c",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aa8c0481abf39597e",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aba22254bb8939373",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-abbd0657da70d08b0",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ac13df2885bcd3d11",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-acfa3f1d00ff5e081",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad7b0f74716c7f61b",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#119",
+          "title": "fix(e2e): peasant\u2194village divergence \u2014 cursor no-model gate + harness 422 re-pin (rc1)",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/119",
+          "split": "train",
+          "linked_trace_count": 36,
+          "linked_traces": [
+            {
+              "session_id": "019eca9d-d99f-7c20-8b65-f9c1159657c9",
+              "method": "exact"
+            },
+            {
+              "session_id": "019eca9d-f42f-75a1-a78f-c10d10c7de79",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa1-cfff-7a71-9f29-1ded93d6827c",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa1-e0d7-7433-80ad-e26dfc52697e",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa1-eff1-72c3-8396-1e4e1e241f93",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa3-406e-78d1-927a-1d63e88c8dca",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa3-548f-74e3-848e-95f810aa485b",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa3-642e-70f3-83ab-c6889a6ced3a",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa5-4cfd-7482-9945-9b6c15dca518",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa5-5b50-7b12-89be-5f7102af419b",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecab6-1a7c-7190-8a2a-efc24cf8a250",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecab6-7517-7741-8959-7293bd7f5c5d",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecab6-8b77-76b2-8818-fd61b29ad409",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecabe-8e02-7f02-b0e0-bb7d20d43c4f",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecabe-a451-7f40-a32c-202abbd00919",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecabe-bf9c-7902-9371-953ca608ea07",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecac4-c476-7343-8bc1-aef96544ae62",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecac4-c49f-7981-a719-ebf9de4edc19",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecac4-c4c6-7730-9b6b-7159ef7f12ad",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaca-9262-7083-9267-60c1b7d56759",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaca-9282-7e60-ba6f-3c4d9641e99f",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaca-92a4-79c2-b9d3-e7ad062291b1",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecad0-9df0-7b63-95d8-954be7440722",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecad0-9e13-7b51-bc33-8bc5f5020c6e",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecad0-9e39-7ea2-ae5e-fed23c5a9bf8",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecc20-fe52-7bd3-9d4b-ec47bb16d57c",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecc20-fe7b-71d3-840d-9df077ca9242",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecc20-fe9e-7ae1-ae1f-24f8116d57d2",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd50-87d4-7bc1-8687-dd5b22a0c7c3",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd50-87f4-7373-a08d-f0e7b54a0a74",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd50-8815-71c0-b9f3-25a863d8d48c",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd54-2cc1-7ae1-836b-c07ceddeb4ad",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd54-2ce2-7b30-8906-5a5a5ea8377a",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd54-2d05-75a3-a9dc-8a1d908e6c3c",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecdbc-5124-72d2-a810-9a483939d3eb",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecdc1-3855-7480-ba43-ea7450fbedf0",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#123",
+          "title": "fix(e2e): eliminate harness flakiness on reused CI runners (rc1 blocker)",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/123",
+          "split": "test",
+          "linked_trace_count": 36,
+          "linked_traces": [
+            {
+              "session_id": "019eca9d-d99f-7c20-8b65-f9c1159657c9",
+              "method": "exact"
+            },
+            {
+              "session_id": "019eca9d-f42f-75a1-a78f-c10d10c7de79",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa1-cfff-7a71-9f29-1ded93d6827c",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa1-e0d7-7433-80ad-e26dfc52697e",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa1-eff1-72c3-8396-1e4e1e241f93",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa3-406e-78d1-927a-1d63e88c8dca",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa3-548f-74e3-848e-95f810aa485b",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa3-642e-70f3-83ab-c6889a6ced3a",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa5-4cfd-7482-9945-9b6c15dca518",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaa5-5b50-7b12-89be-5f7102af419b",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecab6-1a7c-7190-8a2a-efc24cf8a250",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecab6-7517-7741-8959-7293bd7f5c5d",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecab6-8b77-76b2-8818-fd61b29ad409",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecabe-8e02-7f02-b0e0-bb7d20d43c4f",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecabe-a451-7f40-a32c-202abbd00919",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecabe-bf9c-7902-9371-953ca608ea07",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecac4-c476-7343-8bc1-aef96544ae62",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecac4-c49f-7981-a719-ebf9de4edc19",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecac4-c4c6-7730-9b6b-7159ef7f12ad",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaca-9262-7083-9267-60c1b7d56759",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaca-9282-7e60-ba6f-3c4d9641e99f",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecaca-92a4-79c2-b9d3-e7ad062291b1",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecad0-9df0-7b63-95d8-954be7440722",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecad0-9e13-7b51-bc33-8bc5f5020c6e",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecad0-9e39-7ea2-ae5e-fed23c5a9bf8",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecc20-fe52-7bd3-9d4b-ec47bb16d57c",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecc20-fe7b-71d3-840d-9df077ca9242",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecc20-fe9e-7ae1-ae1f-24f8116d57d2",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd50-87d4-7bc1-8687-dd5b22a0c7c3",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd50-87f4-7373-a08d-f0e7b54a0a74",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd50-8815-71c0-b9f3-25a863d8d48c",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd54-2cc1-7ae1-836b-c07ceddeb4ad",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd54-2ce2-7b30-8906-5a5a5ea8377a",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecd54-2d05-75a3-a9dc-8a1d908e6c3c",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecdbc-5124-72d2-a810-9a483939d3eb",
+              "method": "exact"
+            },
+            {
+              "session_id": "019ecdc1-3855-7480-ba43-ea7450fbedf0",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#149",
+          "title": "feat(web)!: adopt the fairtrade design system across every surface",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/149",
+          "split": "train",
+          "linked_trace_count": 4,
+          "linked_traces": [
+            {
+              "session_id": "agent-a4186bf0f2c592e58",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-a8df719bcefb97319",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-aebeaf8416d53b4cc",
+              "method": "exact"
+            },
+            {
+              "session_id": "d83139a6-bef0-4cd7-ac8a-fb6b5f043c7b",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#158",
+          "title": "feat(release-guard): dedup into schema + rewire to the shared tool [peasant#113]",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/158",
+          "split": "train",
+          "linked_trace_count": 2,
+          "linked_traces": [
+            {
+              "session_id": "64233693-2119-4369-886d-26cec9da070a",
+              "method": "exact"
+            },
+            {
+              "session_id": "9b9a88d2-c5d2-47e8-bbbf-f49ada7dd618",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#161",
+          "title": "test(e2e): seed shared/public transcripts via the authenticated village API; owner-attribute the legacy seed",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/161",
+          "split": "train",
+          "linked_trace_count": 5,
+          "linked_traces": [
+            {
+              "session_id": "4505d239-73c3-49f4-a275-3574067e0812",
+              "method": "exact"
+            },
+            {
+              "session_id": "67e0b073-796d-4492-aa78-21d144e9c7ab",
+              "method": "exact"
+            },
+            {
+              "session_id": "6f45fd63-f3f9-415a-bf17-a68544c253b5",
+              "method": "exact"
+            },
+            {
+              "session_id": "agent-ad6524a8059430b13",
+              "method": "exact"
+            },
+            {
+              "session_id": "f634abc5-de40-4502-8c1c-75090a42453c",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#204",
+          "title": "feat(village): opt-in per-repository Git hooks for village upload",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/204",
+          "split": "val",
+          "linked_trace_count": 3,
+          "linked_traces": [
+            {
+              "session_id": "07f6fa85-6aa2-44cd-9ed3-e1b251a9f525",
+              "method": "exact"
+            },
+            {
+              "session_id": "7dbd1909-9353-4714-9a42-7a4449171e47",
+              "method": "exact"
+            },
+            {
+              "session_id": "de7d93c3-5dcc-4f05-8139-2341ec98b45d",
+              "method": "exact"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#235",
+          "title": "feat(kickstart): ship project-first Village onboarding",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/235",
+          "split": "val",
+          "linked_trace_count": 13,
+          "linked_traces": [
+            {
+              "session_id": "07f6fa85-6aa2-44cd-9ed3-e1b251a9f525",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "2fd53211-397a-4bf8-a958-8c3d7a0cb178",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "5edcef6a-40fd-4661-965e-d7a366ff41c2",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "760d4628-626a-4e9c-aa6a-f8976a12e2e2",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "7dbd1909-9353-4714-9a42-7a4449171e47",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "83efaf87-fad6-4e00-9f1a-fcc696532b37",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "8728ebea-8659-47c6-9449-6c6ccdf9b81a",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "950c1b02-22f0-498a-8202-5d2bbc572cd1",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "9dbff350-a3d3-4e68-861c-2be2b6b6b341",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "de7d93c3-5dcc-4f05-8139-2341ec98b45d",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "df3190a0-e037-4c68-a8c6-3f214143b294",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "e08c197b-343d-46b4-9d2c-458eebd5540a",
+              "method": "next_merge"
+            },
+            {
+              "session_id": "e75f91e7-5df0-4eff-b95f-c18f50d29193",
+              "method": "next_merge"
+            }
+          ]
+        }
+      ]
+    },
+    "context_only": {
+      "count": 4,
+      "pull_requests": [
+        {
+          "id": "peasant-labs/peasant#194",
+          "title": "feat(origin): classify who drove a session; hide agent sessions from discovery; declare origin on the wire",
+          "url": "https://github.com/peasant-labs/peasant/pull/194",
+          "split": "train",
+          "context_trace_count": 2,
+          "context_traces": [
+            {
+              "session_id": "a5df67e7-05b4-4a99-8e77-8afe4982c166",
+              "method": "context",
+              "relation": "ancestor"
+            },
+            {
+              "session_id": "e66bdec1-d0bb-4be8-b894-6f60de9a6db9",
+              "method": "context",
+              "relation": "ancestor"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#260",
+          "title": "fix(ingest): classify an injected OpenCode task result as a system entry",
+          "url": "https://github.com/peasant-labs/peasant/pull/260",
+          "split": "train",
+          "context_trace_count": 2,
+          "context_traces": [
+            {
+              "session_id": "066410b3-1c33-4ca2-a8b3-2bc18484812b",
+              "method": "context",
+              "relation": "ancestor"
+            },
+            {
+              "session_id": "c3d10cd2-8c71-4041-abdc-6a731eb9b166",
+              "method": "context",
+              "relation": "ancestor"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#366",
+          "title": "build(release): ship THIRD_PARTY_NOTICES + CI license guard",
+          "url": "https://github.com/peasant-labs/peasant/pull/366",
+          "split": "train",
+          "context_trace_count": 1,
+          "context_traces": [
+            {
+              "session_id": "9aec3ccd-622c-46ee-b346-92d6e20fd2a5",
+              "method": "context",
+              "relation": "ancestor"
+            }
+          ]
+        },
+        {
+          "id": "peasant-labs/peasant#426",
+          "title": "feat: activate native repair and mount grouped browse and share",
+          "url": "https://github.com/peasant-labs/peasant/pull/426",
+          "split": "test",
+          "context_trace_count": 1,
+          "context_traces": [
+            {
+              "session_id": "ses_f8209a4c9ffevq17gtyOTrjQMJ",
+              "method": "context",
+              "relation": "ancestor"
+            }
+          ]
+        }
+      ]
+    },
+    "no_traces": {
+      "count": 11,
+      "pull_requests": [
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#34",
+          "title": "fix(web/share): improved share checkbox visibility",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/34",
+          "split": "val"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#56",
+          "title": "fix(push): push-to-village wire+content contract \u2014 harness changeover, migrate-on-read, versioned contract, negotiation gate, compat-CI [HOLD]",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/56",
+          "split": "train"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#59",
+          "title": "feat(push): honor branch-level selection config (push + annotations)",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/59",
+          "split": "test"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#65",
+          "title": "fix(push): selection-aware wizard + --non-interactive/--yes + --quiet/--verbose",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/65",
+          "split": "val"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#68",
+          "title": "fix(push): publish-contract fixes \u2014 always-send salted project.hash, subagent paths, empty-model hold, error table (GH #66)",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/68",
+          "split": "test"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#76",
+          "title": "ci: add peasant test workflow (make check on PRs + develop)",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/76",
+          "split": "train"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#86",
+          "title": "fix(test-perf): small test staging arena (#88) \u2014 removes the -race OOM at its source; revert the CI split",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/86",
+          "split": "train"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#89",
+          "title": "feat(ingest): add Cursor transcript ingestion",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/89",
+          "split": "val"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#137",
+          "title": "test(e2e): GET /content renders via SessionDetailPayload, not legacy fallback (GH #54 Level-1)",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/137",
+          "split": "val"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#160",
+          "title": "docs, ci(e2e): complete the schema-module swap \u2014 retire in-tree references, governance-aware e2e seeds, village ref bump",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/160",
+          "split": "test"
+        },
+        {
+          "id": "peasant-labs/peasant-prerelease-archive#209",
+          "title": "fix(web): make Strike sessions readable in the local web app",
+          "url": "https://github.com/peasant-labs/peasant-prerelease-archive/pull/209",
+          "split": "train"
+        }
+      ]
+    }
+  }
+}
