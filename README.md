@@ -265,8 +265,7 @@ Command flags:
 * `--spec FILE` selects a repository adaptation spec (the test and build
   command per repository). Without it, the shipped Go/Peasant default applies.
 * `--run-id ID` names the run. Without it, pass `--target-configs SPEC
-  --target-config NAME`, and the run id is derived from the target
-  configuration and the pull request list.
+  --target-config NAME`, and the run gets a generated UUIDv7.
 * `--force` rebuilds payload and task directories that already exist.
 
 Outputs under `--dest`:

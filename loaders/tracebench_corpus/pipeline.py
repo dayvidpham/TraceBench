@@ -16,7 +16,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
+import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -30,7 +33,7 @@ from .target_config import TargetConfiguration
 from .task import TaskBuilder
 from .worktree import materialize_worktree
 
-#: Attempts per task in the emitted job config (repeats are pooled by run id).
+#: Attempts per task in the emitted job config (repeats are separate runs; group them by cell).
 N_ATTEMPTS = 3
 #: Environment variable that carries the run id into agents and the verifier.
 RUN_ID_ENV = "TRACEBENCH_RUN_ID"
@@ -149,21 +152,34 @@ def read_pr_list(entries: list[str]) -> list[str]:
 
 
 def task_set_revision(pr_ids: list[str], pr_index: dict[str, dict[str, Any]]) -> str:
-    """Stable revision of a task set: the ordered PR ids with their merge commits."""
+    """Stable revision of a task set: the ordered PR ids with their merge commits.
+
+    Repeats of one cell are grouped by this revision and the configuration; run
+    ids are unique per run.
+    """
     lines = [f"{pr_id}@{(pr_index.get(pr_id) or {}).get('merge_commit') or ''}" for pr_id in pr_ids]
     return hashlib.sha256("\n".join(lines).encode()).hexdigest()
 
 
-def derive_run_id(config: TargetConfiguration, revision: str, label: str | None = None) -> str:
-    """``<label>-<first 12 hex of sha256(harness|model|thinking|revision)>``.
+def new_run_id(label: str | None = None) -> str:
+    """A unique run id: a UUIDv7, optionally prefixed by ``label``.
 
-    A provider prefix (``anthropic/claude-sonnet-5``) stays part of the model
-    name, so the provider is covered without a separate term.
-    The label defaults to ``tracebench-<configuration name>``.
+    UUIDv7 is time-ordered, so run directories sort by start time. Repeats of
+    one cell are separate runs; group them by the configuration and the task
+    set instead of the run id.
     """
-    key = "|".join([config.harness or "", config.model or "", config.thinking or "", revision])
-    digest = hashlib.sha256(key.encode()).hexdigest()[:12]
-    return f"{label or f'tracebench-{config.name}'}-{digest}"
+    value = str(_uuid7())
+    return f"{label}-{value}" if label else value
+
+
+def _uuid7() -> uuid.UUID:
+    """A UUIDv7 (RFC 9562): a 48-bit millisecond timestamp and random bits."""
+    milliseconds = int(time.time() * 1000) & ((1 << 48) - 1)
+    rand_a = int.from_bytes(os.urandom(2), "big") & 0x0FFF
+    rand_b = int.from_bytes(os.urandom(8), "big") & ((1 << 62) - 1)
+    return uuid.UUID(
+        int=(milliseconds << 80) | (0x7 << 76) | (rand_a << 64) | (0x2 << 62) | rand_b
+    )
 
 
 def job_agent(config: TargetConfiguration | None) -> dict[str, Any]:
@@ -345,9 +361,9 @@ def run_pipeline(
         if target_config is None:
             raise PipelineError(
                 "pipeline: no run id; pass --run-id, or --target-configs with --target-config "
-                "so the run id is derived from the target configuration"
+                "and the run gets a generated UUIDv7"
             )
-        run_id = derive_run_id(target_config, task_set_revision(pr_ids, pr_index), run_label)
+        run_id = new_run_id(run_label)
     # Validate the agent and format now so a bad argument fails before building.
     job_agent(target_config)
     job_config_format = resolve_job_config_format(job_config_format)
