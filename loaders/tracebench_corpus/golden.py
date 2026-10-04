@@ -20,6 +20,7 @@ MANIFEST_NAME = "manifest.json"
 _GIT_BINARY = "git"
 _SYMLINK_MODE = "120000"
 _BLOB = "blob"
+_EXECUTABLE_MODE = "100755"
 
 
 class GoldenSuiteError(ValueError):
@@ -29,7 +30,8 @@ class GoldenSuiteError(ValueError):
 def glob_to_regex(pattern: str) -> re.Pattern[str]:
     """Compile a doublestar glob, relative to the repository root.
 
-    ``*`` and ``?`` never cross ``/``; ``**/`` matches zero or more leading
+    ``*`` and ``?`` never cross ``/``; a ``**`` that is not a whole path
+    segment behaves like ``*``; a leading ``**/`` matches zero or more leading
     directories; a trailing ``/**`` matches everything beneath a directory;
     ``[...]`` is a character class.
     """
@@ -44,7 +46,12 @@ def glob_to_regex(pattern: str) -> re.Pattern[str]:
                 out.append("(?:.*/)?")
                 i += 3
                 continue
-            out.append(".*")
+            if at_segment_start and i + 2 == n:
+                out.append(".*")
+                i += 2
+                continue
+            # A ``**`` inside a segment is an ordinary ``*``: it never crosses ``/``.
+            out.append("[^/]*")
             i += 2
             continue
         if char == "*":
@@ -92,14 +99,20 @@ def materialize_golden_tests(
     dest = Path(dest)
     compiled = [glob_to_regex(pattern) for pattern in patterns]
     selected: list[str] = []
+    modes: dict[str, str] = {}
     for mode, kind, path in _ls_tree(repo_dir, merge_commit):
         if kind != _BLOB or mode == _SYMLINK_MODE:
             continue
-        if path == MANIFEST_NAME:
-            # Would collide with the manifest written below.
-            continue
         if any(regex.match(path) for regex in compiled):
+            if path == MANIFEST_NAME:
+                raise GoldenSuiteError(
+                    f"golden suite for pull request {pr_id or '<unknown>'}: the test file "
+                    f"{path!r} at merge commit {merge_commit} collides with the golden "
+                    f"suite manifest {dest / MANIFEST_NAME}. Narrow the test patterns in "
+                    "repo-request.json so they exclude the root-level manifest.json."
+                )
             selected.append(path)
+            modes[path] = mode
     selected.sort()
     if not selected:
         raise GoldenSuiteError(
@@ -120,6 +133,8 @@ def materialize_golden_tests(
             )
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(_git_bytes(repo_dir, "show", f"{merge_commit}:{path}"))
+        if modes[path] == _EXECUTABLE_MODE:
+            target.chmod(0o755)
     (dest / MANIFEST_NAME).write_text(
         json.dumps(
             {"commit": merge_commit, "patterns": patterns, "paths": selected}, indent=2

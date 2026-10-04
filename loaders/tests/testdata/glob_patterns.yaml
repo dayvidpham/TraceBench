@@ -16,6 +16,9 @@ required_names:
   - non-test-source
   - non-ascii-path
   - default-patterns-skip-readme
+  - mid-segment-doublestar-is-star
+  - mid-segment-doublestar-does-not-cross-slash
+  - unclosed-bracket-is-literal
 
 cases:
   - name: go-test-root
@@ -78,6 +81,18 @@ cases:
     patterns: default
     path: README.md
     match: false
+  - name: mid-segment-doublestar-is-star
+    patterns: ["pkg/a**_test.go"]
+    path: pkg/abc_test.go
+    match: true
+  - name: mid-segment-doublestar-does-not-cross-slash
+    patterns: ["pkg/a**_test.go"]
+    path: pkg/a/b_test.go
+    match: false
+  - name: unclosed-bracket-is-literal
+    patterns: ["pkg/a[b_test.go"]
+    path: pkg/a[b_test.go
+    match: true
 
 # Fixture repository for extraction: files at the pre-PR commit, then the PR's
 # changes. `expected` is the exact golden suite at the merge commit.
@@ -99,6 +114,8 @@ extraction:
     delete:
       - deleted_test.go
     binary: pkg/testdata/blob.bin
+    executable:
+      - pkg/testdata/run.sh
     symlink:
       link_test.go: keep_test.go
   expected:
@@ -106,6 +123,7 @@ extraction:
     - keep_test.go
     - new/name_test.go
     - "pkg/testdata/blob.bin"
+    - pkg/testdata/run.sh
     - pkg/testdata/case.yaml
     - "pkg/ünï \"q\"\tx/odd_test.go"
     - web/src/App.test.tsx

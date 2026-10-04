@@ -63,6 +63,34 @@ DEFAULT_TEST_PATTERNS = (
     "**/*.spec.jsx",
 )
 
+def payload_test_patterns(payload: str | Path) -> list[str]:
+    """The test patterns of a payload: ``repo-request.json`` when present.
+
+    Falls back to :data:`DEFAULT_TEST_PATTERNS` when the payload has no
+    ``repo-request.json`` or it lists no patterns. Raises :class:`ValueError`
+    naming the file when it is corrupt.
+    """
+    request = Path(payload) / "repo-request.json"
+    if not request.is_file():
+        return list(DEFAULT_TEST_PATTERNS)
+    try:
+        data = json.loads(request.read_text())
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise ValueError(
+            f"cannot read test patterns: {request} is not valid JSON ({exc}). "
+            "Regenerate the payload with `tracebench-corpus task ... --force`."
+        ) from exc
+    patterns = data.get("test_patterns") if isinstance(data, dict) else None
+    if patterns is None or patterns == []:
+        return list(DEFAULT_TEST_PATTERNS)
+    if not isinstance(patterns, list) or not all(isinstance(p, str) for p in patterns):
+        raise ValueError(
+            f"cannot read test patterns: {request} field test_patterns must be a list of "
+            f"strings, got {patterns!r}. Fix the field or regenerate the payload."
+        )
+    return list(patterns)
+
+
 #: Entries this tool owns inside a payload or task directory. ``--force``
 #: clears exactly these; caller-authored files elsewhere are never touched.
 GENERATED_ENTRIES = (
@@ -190,7 +218,8 @@ class TaskBuilder:
         golden_tests: list[str] | None = None
         if self.materialize_tests:
             golden_tests = materialize_golden_tests(
-                self.repo_dir, merge_commit, DEFAULT_TEST_PATTERNS, dest / "tests", pr_id=pr_id
+                self.repo_dir, merge_commit, payload_test_patterns(dest), dest / "tests",
+                pr_id=pr_id,
             )
         cutoff_ms = _iso_to_ms(cutoff_time)
         family = repo_family(pr["repo"])

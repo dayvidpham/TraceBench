@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from .golden import MANIFEST_NAME
-from .task import GENERATED_ENTRIES, clear_generated
+from .task import GENERATED_ENTRIES, clear_generated, payload_test_patterns
 
 #: Tool-owned entries inside a generated task directory. ``--force`` clears
 #: exactly these.
@@ -129,7 +129,7 @@ def build_skeleton(
     if manifest.is_file():
         (dest / "tests" / "test-manifest.json").write_bytes(manifest.read_bytes())
 
-    patterns = _test_patterns(payload)
+    patterns = payload_test_patterns(payload)
     _write_script(dest / "tests" / "test.sh", _test_sh(patterns))
     if (payload / "solution" / "solve.sh").is_file():
         _copy_tree(payload / "solution", dest / "solution")
@@ -141,20 +141,6 @@ def build_skeleton(
         json.dumps({"pr": pr, "summary": summary}, indent=2) + "\n"
     )
     return Skeleton(pr_id=pr_id, task_name=task_name, path=dest, golden_tests=golden_tests)
-
-
-def _test_patterns(payload: Path) -> list[str]:
-    request = payload / "repo-request.json"
-    if request.is_file():
-        try:
-            patterns = json.loads(request.read_text()).get("test_patterns")
-        except json.JSONDecodeError:
-            patterns = None
-        if isinstance(patterns, list) and patterns:
-            return [str(pattern) for pattern in patterns]
-    from .task import DEFAULT_TEST_PATTERNS
-
-    return list(DEFAULT_TEST_PATTERNS)
 
 
 def _copy_tree(source: Path, dest: Path, exclude: frozenset[str] | set[str] = frozenset()) -> int:
