@@ -1,0 +1,40 @@
+schema_version = "1.4"
+artifacts = []
+
+[task]
+name = "tracebench/peasant-344"
+version = "0.1.0"
+description = "Feasibility: peasant#344 publication-validation refactor (121 lines, Go, fail-to-pass on sync_publication_test.go)."
+keywords = ["peasant", "go", "feasibility", "fail-to-pass"]
+
+[[task.authors]]
+name = "TraceBench"
+
+[metadata]
+category = "programming"
+difficulty_explanation = "Small refactor (6 files, +99/-22): split LoadReadyPublicationInput into load-only + explicit ValidatePublicationInput, wire into 3 callers. Proves PR-to-task pipeline with offline verifier."
+tags = ["peasant", "go", "push", "publication-validation"]
+
+[agent]
+timeout_sec = 600.0
+# Agent gets zero network during the run: no fetching the PR diff,
+# no module downloads. Everything needed is baked into the image.
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 600.0
+# Verifier runs in its own locked-down phase outside the agent container:
+# only pass/fail via reward.txt, no test source exfiltrated to the agent.
+network_mode = "no-network"
+
+[environment]
+# Baseline is public so image build (git clone + go mod download) works.
+# [agent]/[verifier] overrides above lock it down for run/verify.
+network_mode = "public"
+build_timeout_sec = 1200.0
+os = "linux"
+mcp_servers = []
+
+[environment.env]
+
+[solution.env]
