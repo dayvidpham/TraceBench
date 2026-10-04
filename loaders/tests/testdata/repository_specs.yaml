@@ -3,6 +3,19 @@
 # first_match_spec: two entries for one repository would be rejected, so the
 #   first-match rule is proven on the in-memory list in the test.
 # invalid_specs: each case names the error fragment it must raise.
+# required_names: every invalid case; deleting one fails the presence test.
+required_names:
+  - empty-list
+  - missing-list
+  - not-a-mapping
+  - unknown-key
+  - duplicate-match
+  - missing-match
+  - missing-test-command
+  - missing-build-command
+  - blank-test-command
+  - missing-framework
+  - malformed-yaml
 valid_spec: |
   repositories:
     - match: peasant-labs/peasant
@@ -62,3 +75,6 @@ invalid_specs:
   - name: missing-framework
     spec: "repositories:\n  - {match: a/b, test_command: t, build_command: b}\n"
     error: "needs a non-empty string 'framework'"
+  - name: malformed-yaml
+    spec: "repositories: [\n"
+    error: "cannot decode"
