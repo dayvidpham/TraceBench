@@ -341,7 +341,7 @@ tasks:
 agents:
   - name: oracle                   # or the configuration's harness
     model_name: null               # or the configuration's model
-    kwargs: {}                     # {reasoning_effort: <thinking>} when set
+    kwargs: {}                     # {variant|reasoning_effort: <thinking>} when set
     env: {TRACEBENCH_RUN_ID: <run id>}
 verifier:
   env: {TRACEBENCH_RUN_ID: <run id>}
@@ -368,6 +368,7 @@ harbor run -c build/run-1/job-config.yaml
 | `task.py` | payload assembly: develop boundary, prior traces, session cuts, `repo-request.json`, destination hygiene |
 | `golden.py` | golden suite: files at `merge_commit` matching the test patterns, `tests/manifest.json`; owns the canonical doublestar matcher (`glob_to_regex`) |
 | `test_manifest.py` | case catalog: top-level Go test cases at `merge_commit`, PR-changed cases flagged `golden` |
+| `blobs.py` | batched git object reads: one `git cat-file --batch` process per commit for the golden suite and the case catalog |
 | `worktree.py` | secure worktree: packs the ancestry of `tree_commit` into a fresh repo; asserts HEAD, tree, source-equal count, not shallow, no remotes, fix absent, clean `fsck` |
 | `oracle.py` | oracle: merge diff, `solve.sh`, equivalence check, the `task.json` `oracle` block |
 | `repository_spec.py` | repository adaptation spec: test and build command per repository |
@@ -512,7 +513,8 @@ toolchain.
 `--target-configs SPEC --target-config NAME` selects the harness, model, and
 thinking level (see [Target configurations](#target-configurations)). In the
 pipeline, the configuration fills `agents[0]` of the job config (`name` =
-harness, `model_name` = model, `kwargs.reasoning_effort` = thinking) and
+harness, `model_name` = model, the harness's thinking kwarg = thinking:
+`variant` for OpenCode, `reasoning_effort` otherwise) and
 derives the run id; without one, the job config uses the `oracle` agent and
 `--run-id` is required. A configuration used for a job config must name a
 harness.

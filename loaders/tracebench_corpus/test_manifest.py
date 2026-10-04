@@ -6,6 +6,7 @@ import re
 import subprocess
 from pathlib import Path
 
+from .blobs import read_blobs
 
 _TEST_FUNCTION = re.compile(r"(?m)^func\s+((?:Test|Fuzz)[A-Z0-9_]\w*|Example\w*)\s*\(")
 _GO_BUILD_LINE = re.compile(r"^\s*//go:build\s+(.+?)\s*$")
@@ -40,14 +41,17 @@ def build_test_manifest(repo_dir: str | Path, base_commit: str, merge_commit: st
     base = _git(repo, "rev-parse", "--verify", f"{base_commit}^{{commit}}").decode().strip()
     merged = _git(repo, "rev-parse", "--verify", f"{merge_commit}^{{commit}}").decode().strip()
     base_paths = set(_test_paths(repo, base))
+    merged_paths = _test_paths(repo, merged)
+    base_blobs = read_blobs(repo, base, sorted(base_paths))
+    merged_blobs = read_blobs(repo, merged, merged_paths)
     suites = []
-    for path in _test_paths(repo, merged):
-        source = _git(repo, "show", f"{merged}:{path}").decode("utf-8")
+    for path in merged_paths:
+        source = merged_blobs[path].decode("utf-8")
         merged_cases = _go_cases(source, path)
         constraint = build_constraint(source)
         accepted = constraint_satisfied(constraint)
         if path in base_paths:
-            base_cases = _go_cases(_git(repo, "show", f"{base}:{path}").decode("utf-8"), path)
+            base_cases = _go_cases(base_blobs[path].decode("utf-8"), path)
         else:
             base_cases = {}
         cases = [

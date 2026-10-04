@@ -226,7 +226,7 @@ flowchart TB
 | `job_name` | The run id: `--run-id`, or a generated UUIDv7 prefixed by `--run-label`. |
 | `n_attempts` | `3`. Repeats are separate runs; group them by cell. |
 | `tasks` | One `{path, source}` per task that was built; `source` is the run id. |
-| `agents` | One agent: the configuration's harness, model, and `reasoning_effort`, or `oracle`; `env.TRACEBENCH_RUN_ID`. |
+| `agents` | One agent: the configuration's harness, model, and thinking kwarg (`variant` for OpenCode, `reasoning_effort` otherwise), or `oracle`; `env.TRACEBENCH_RUN_ID`. |
 | `verifier.env` | `TRACEBENCH_RUN_ID`. |
 
 ## Components
@@ -337,6 +337,7 @@ oracle). The verifier is copied into each task and runs inside the sandbox.
 | task builder | `tracebench_corpus/task.py` | Boundary and cutoff resolution, prior-trace selection, session cuts, repo-request, destination hygiene. |
 | golden suite | `tracebench_corpus/golden.py` | Test files at `merge_commit` matching the test patterns; `tests/manifest.json`; the canonical doublestar matcher. |
 | case catalog | `tracebench_corpus/test_manifest.py` | Top-level Go test cases at `merge_commit`; PR-changed cases flagged `golden`. |
+| git blobs | `tracebench_corpus/blobs.py` | Batched object reads shared by the golden suite and the case catalog: one `git cat-file --batch` process per commit. |
 | secure worktree | `tracebench_corpus/worktree.py` | Packs the ancestors of `tree_commit` into a fresh repo; asserts HEAD, tree, source-equal commit count, not shallow, no remotes, fix absent, clean `fsck`. |
 | oracle | `tracebench_corpus/oracle.py` | Merge diff, `solve.sh`, equivalence check against `merge_commit^{tree}`, the `task.json` oracle block. |
 | repository adaptation spec | `tracebench_corpus/repository_spec.py` | Test and build command per repository; first match wins; Go/Peasant default. |
@@ -766,7 +767,8 @@ sequenceDiagram
 
 Entry: `loaders/tracebench_corpus/cli.py` (`_pipeline`). Driver:
 `loaders/tracebench_corpus/pipeline.py` (`run_pipeline`, `build_task`). Steps: `task.py`,
-`golden.py`, `test_manifest.py`, `worktree.py`, `oracle.py`, `skeleton.py`. Commands:
+`golden.py`, `test_manifest.py`, `blobs.py` (shared batched git reads), `worktree.py`,
+`oracle.py`, `skeleton.py`. Commands:
 `repository_spec.py`.
 
 ```mermaid
