@@ -59,17 +59,12 @@ uv tool install harbor
 You also need docker-compose v2 on the PATH. Harbor's podman provider calls `docker compose`.
 
 Our runner is `tracebench-corpus pipeline`: it turns a list of merged pull requests into runnable
-Harbor tasks plus one Harbor job config, and `harbor run` executes the job. Two jobs are ready to
-run:
+Harbor tasks plus one Harbor job config, and `harbor run` executes the job:
 
 ```bash
 # Before any Harbor run, re-tag the shared images (Harbor's teardown removes the image a task
 # references; the :keep aliases hold them):
 scripts/ensure-task-images.sh
-
-# The hand-built feasibility task (tasks/peasant-344): the oracle applies solution/oracle.patch
-# and the verifier runs the fail-to-pass tests. Expect reward 1.0.
-harbor run -p tasks/peasant-344 -a oracle -e podman
 
 # Our three-PR generated job (peasant-labs/peasant#344, peasant-labs/peasant#406, peasant-labs/peasant#527): build it, then run the job config.
 # The corpus dump and index live under corpus/ (see Corpus sampling).
@@ -92,7 +87,7 @@ set). To smoke-test a real agent, network is needed ONLY on the host for the mod
 sandbox itself stays offline during the run:
 
 ```bash
-harbor run -p tasks/peasant-344 -a claude-code -m anthropic/claude-haiku-4-5 -e podman
+harbor run -p build/mvp/tasks/peasant-pr-0344 -a claude-code -m anthropic/claude-haiku-4-5 -e podman
 ```
 
 For the full proof-of-concept runbook — dependencies, image setup with the `:keep` re-tag step,
@@ -168,7 +163,6 @@ loader flags (`--prs`, `--repo-dir`, `--index`, `--dest`, `--run-id`) are in
 
 | Task | What it tests | Difficulty |
 | - | - | - |
-| `tracebench/peasant-344` | Feasibility: implement peasant#344's publication-validation refactor against the pre-PR repo (sealed oracle, fail-to-pass verifier) | Small: 6 files, +99/−22 |
 | `tracebench/trace-propagation` | Fix W3C `traceparent` propagation across two services (trace-id, sampled flag, tracestate) | Medium: 3 files to read, reproduce, fix 1 function |
 | `tracebench/peasant-smoke` | Containerized Peasant codebase builds + fast unit tests pass (issue #1) | Smoke: no bug fix, proves image-origin and host cleanliness |
 
@@ -297,8 +291,7 @@ Verify with Harbor:
 scripts/ensure-task-images.sh
 
 # The oracle applies solution/oracle.patch, then the verifier runs; generated tasks score
-# around 0.998 (the residual is the documented calibration set); the hand-built
-# tasks/peasant-344 MVP scores 1.0.
+# around 0.998 (the residual is the documented calibration set).
 harbor run -p build/run-1/tasks/peasant-pr-0343 -a oracle -e podman
 
 # Run every task of the run under the job config (-k 1 for a fast smoke; the config

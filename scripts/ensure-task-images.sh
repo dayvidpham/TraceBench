@@ -23,5 +23,3 @@ retag() {
 
 retag tracebench/peasant-base:keep tracebench/peasant-base:latest
 retag tracebench/task-runtime:keep tracebench/task-runtime:latest
-# The hand-built feasibility task pins the snapshot tag.
-retag tracebench/peasant-base:keep tracebench/peasant-base:838a6dd0a73524db6ae96a931c224ff66090aa70
