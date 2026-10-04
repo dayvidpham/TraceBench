@@ -30,7 +30,8 @@ func TestCollectCopiesTranscriptsAndRecordsMissing(t *testing.T) {
 
 	pr := corpus.PullRequest{
 		Repo: corpus.RepoSlug("peasant-labs/peasant"), Number: 343,
-		Title: "feat: thing", HeadRef: "peasant-343--feat--thing",
+		Title: "feat: thing", Body: "Intent text for the change.",
+		HeadRef:  "peasant-343--feat--thing",
 		MergedAt: time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC),
 	}
 	bundles := []Bundle{
@@ -71,6 +72,9 @@ func TestCollectCopiesTranscriptsAndRecordsMissing(t *testing.T) {
 	record := manifest.PRs[0]
 	if record.ID != "peasant-labs/peasant#343" || record.Sessions != 2 {
 		t.Fatalf("record %+v", record)
+	}
+	if record.Body != "Intent text for the change." {
+		t.Fatalf("record body %q", record.Body)
 	}
 
 	var copied Transcript

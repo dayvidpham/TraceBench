@@ -1,0 +1,24 @@
+scenarios:
+  - name: body_present
+    repo: peasant-labs/peasant
+    payload: '{"number":11,"title":"feat: thing","body":"Intent text for the change.","url":"https://github.com/peasant-labs/peasant/pull/11","author":{"login":"alice"},"createdAt":"2026-08-01T00:00:00Z","mergedAt":"2026-08-10T00:00:00Z","additions":10,"deletions":2,"changedFiles":3,"headRefName":"peasant-5--feat--thing","headRefOid":"abc123","baseRefName":"main","mergeCommit":{"oid":"merge11"}}'
+    expect_body: "Intent text for the change."
+    expect_id: "peasant-labs/peasant#11"
+
+  - name: body_multiline_markdown
+    repo: peasant-labs/peasant
+    payload: '{"number":12,"title":"fix: edge","body":"## Problem\n\nFixes the edge.\n\n- one\n- two","url":"https://github.com/peasant-labs/peasant/pull/12","author":{"login":"bob"},"createdAt":"2026-08-02T00:00:00Z","mergedAt":"2026-08-11T00:00:00Z","additions":4,"deletions":4,"changedFiles":1,"headRefName":"peasant-6--fix--edge","headRefOid":"def456","baseRefName":"main","mergeCommit":{"oid":"merge12"}}'
+    expect_body: "## Problem\n\nFixes the edge.\n\n- one\n- two"
+    expect_id: "peasant-labs/peasant#12"
+
+  - name: body_empty
+    repo: peasant-labs/peasant
+    payload: '{"number":13,"title":"chore: tidy","body":"","url":"https://github.com/peasant-labs/peasant/pull/13","author":null,"createdAt":"2026-08-03T00:00:00Z","mergedAt":"2026-08-12T00:00:00Z","additions":0,"deletions":0,"changedFiles":0,"headRefName":"peasant-7--chore--tidy","headRefOid":"","baseRefName":"main","mergeCommit":null}'
+    expect_body: ""
+    expect_id: "peasant-labs/peasant#13"
+
+  - name: body_absent
+    repo: peasant-labs/peasant
+    payload: '{"number":14,"title":"docs: readme","url":"https://github.com/peasant-labs/peasant/pull/14","author":{"login":"carol"},"createdAt":"2026-08-04T00:00:00Z","mergedAt":"2026-08-13T00:00:00Z","additions":1,"deletions":1,"changedFiles":1,"headRefName":"peasant-8--docs--readme","headRefOid":"ghi789","baseRefName":"main","mergeCommit":{"oid":"merge14"}}'
+    expect_body: ""
+    expect_id: "peasant-labs/peasant#14"

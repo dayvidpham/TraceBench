@@ -48,12 +48,15 @@ type Options struct {
 	Now                 func() time.Time
 }
 
-// PRRecord is one sampled pull request in the flat dump index.
+// PRRecord is one sampled pull request in the flat dump index. Body is
+// the already-public pull request description and stays raw; see
+// corpus.PullRequest for the redaction rationale.
 type PRRecord struct {
 	ID             string    `json:"id"`
 	Repo           string    `json:"repo"`
 	Number         int       `json:"number"`
 	Title          string    `json:"title"`
+	Body           string    `json:"body,omitempty"`
 	URL            string    `json:"url"`
 	Author         string    `json:"author,omitempty"`
 	HeadRef        string    `json:"head_ref"`

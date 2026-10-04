@@ -20,11 +20,17 @@ func (r RepoSlug) DirName() string {
 	return strings.ReplaceAll(string(r), "/", "--")
 }
 
-// PullRequest is one merged GitHub pull request.
+// PullRequest is one merged GitHub pull request. Body carries the pull
+// request description as published on GitHub; it stays raw (no redaction
+// pipeline) because it is already-public repository metadata, like Title
+// and URL. The redact engine covers private session transcripts and
+// metadata only. Older index and dump records without a body decode to an
+// empty Body.
 type PullRequest struct {
 	Repo         RepoSlug  `json:"repo"`
 	Number       int       `json:"number"`
 	Title        string    `json:"title"`
+	Body         string    `json:"body,omitempty"`
 	URL          string    `json:"url"`
 	Author       string    `json:"author,omitempty"`
 	HeadRef      string    `json:"head_ref"`

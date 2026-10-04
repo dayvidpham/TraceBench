@@ -199,6 +199,9 @@ class TaskBuilder:
             "repo": record["repo"],
             "number": record["number"],
             "title": record.get("title"),
+            # Older index records carry no body; a missing body loads as
+            # None so they stay readable.
+            "body": record.get("body"),
             "url": record.get("url"),
             "author": record.get("author"),
             "head_ref": record.get("head_ref"),

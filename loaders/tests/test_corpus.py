@@ -108,3 +108,34 @@ def test_cli_list_bundle_and_bundle_all(standard_dump, tmp_path, capsys) -> None
 def test_cli_requires_a_source(capsys) -> None:
     assert main(["list"]) == 2
     assert "pass path=" in capsys.readouterr().err
+
+
+def test_pr_body_round_trips_when_present(write_dump, tmp_path) -> None:
+    from conftest import standard_records
+
+    pull_requests, traces, metadata_records, transcripts = standard_records()
+    pull_requests[0]["body"] = "Intent text for the change."
+    root = write_dump(
+        tmp_path / "dump",
+        pull_requests=pull_requests,
+        traces=traces,
+        metadata_records=metadata_records,
+        transcripts=transcripts,
+    )
+    corpus = Corpus(root)
+    assert corpus.pull_requests[f"{ARCHIVE}#10"]["body"] == "Intent text for the change."
+    bundle = corpus.pr_bundle(f"{ARCHIVE}#10")
+    assert bundle.pr["body"] == "Intent text for the change."
+
+    dest = corpus.materialize(f"{ARCHIVE}#10", tmp_path / "out" / "pr-0010")
+    mini = Corpus(dest)
+    assert mini.pull_requests[f"{ARCHIVE}#10"]["body"] == "Intent text for the change."
+
+
+def test_pr_body_absent_loads_as_null(standard_dump) -> None:
+    corpus = Corpus(standard_dump)
+    assert corpus.prs(), "expected the standard dump to carry pull requests"
+    for pr in corpus.prs():
+        assert pr.get("body") is None
+    bundle = corpus.pr_bundle(f"{ARCHIVE}#10")
+    assert bundle.pr.get("body") is None

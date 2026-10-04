@@ -235,7 +235,8 @@ func TestWriterRedactsAndWritesDump(t *testing.T) {
 	if err := writer.Add(artifact, payload); err != nil {
 		t.Fatal(err)
 	}
-	if err := writer.SetIndexes([]PRRecord{{ID: "peasant-labs/peasant#1", Split: "train"}},
+	if err := writer.SetIndexes([]PRRecord{{ID: "peasant-labs/peasant#1", Split: "train",
+		Title: "feat: thing", Body: "Intent text for the change."}},
 		[]TraceRecord{
 			{PR: "peasant-labs/peasant#1", SessionID: artifact.ID, Method: "exact", Relation: "linked"},
 			{PR: "peasant-labs/peasant#1", SessionID: "99999999-9999-9999-9999-999999999999", Method: "exact"},
@@ -259,6 +260,9 @@ func TestWriterRedactsAndWritesDump(t *testing.T) {
 	}
 	if prRecord.DumpedSessions != 1 {
 		t.Fatalf("dumped sessions %d", prRecord.DumpedSessions)
+	}
+	if prRecord.Body != "Intent text for the change." {
+		t.Fatalf("dumped body %q", prRecord.Body)
 	}
 	if manifest.RedactionLevel != string(redact.Standard) || manifest.RedactionRuleSetVersion == "" {
 		t.Fatalf("manifest redaction %+v", manifest)
