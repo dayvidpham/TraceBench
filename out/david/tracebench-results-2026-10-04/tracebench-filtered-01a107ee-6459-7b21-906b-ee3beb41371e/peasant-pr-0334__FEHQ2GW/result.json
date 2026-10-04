@@ -1,0 +1,138 @@
+{
+    "id": "4e38df29-b80b-4c02-9a3e-610dc1df895a",
+    "task_name": "tracebench/peasant-pr-0334",
+    "trial_name": "peasant-pr-0334__FEHQ2GW",
+    "trial_uri": "file:///home/minttea/codebases/dayvidpham/TraceBench/jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e/peasant-pr-0334__FEHQ2GW",
+    "task_id": {
+        "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0334"
+    },
+    "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+    "task_checksum": "05840f47570cc6cd70f96ad1c86f3e54bd7a667b0da8755fdb1f3485c5ec29fe",
+    "config": {
+        "task": {
+            "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0334",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        "trial_name": "peasant-pr-0334__FEHQ2GW",
+        "trials_dir": "jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "opencode",
+            "import_path": null,
+            "model_name": "opencode-go/deepseek-v4.1-flash",
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [
+                "opencode.ai",
+                "models.dev"
+            ],
+            "kwargs": {
+                "version": "1.18.34",
+                "variant": "high"
+            },
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+                "OPENCODE_API_KEY": "${OPENCODE_API_KEY}"
+            },
+            "mcp_servers": []
+        },
+        "user_agent": null,
+        "environment": {
+            "type": "podman",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+            },
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "extra_instructions": [],
+        "job_id": "37fa700a-5bcf-45e7-857e-bf50b1e07e5c",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "opencode",
+        "version": "1.18.34",
+        "model_info": {
+            "name": "deepseek-v4.1-flash",
+            "provider": "opencode-go"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 13010496,
+        "n_cache_tokens": 12806144,
+        "n_output_tokens": 18221,
+        "cost_usd": 0.116910432,
+        "model_usage": {
+            "opencode-go/deepseek-v4.1-flash": {
+                "n_input_tokens": 13010496,
+                "n_cache_tokens": 12806144,
+                "n_output_tokens": 18221,
+                "cost_usd": 0.116910432
+            }
+        },
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.997755690926579
+        }
+    },
+    "verifier_environment_mode": "shared",
+    "exception_info": null,
+    "started_at": "2026-10-04T17:51:59.317465Z",
+    "finished_at": "2026-10-04T18:25:44.052564Z",
+    "environment_setup": {
+        "started_at": "2026-10-04T17:51:59.458294Z",
+        "finished_at": "2026-10-04T17:52:01.121360Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-10-04T17:52:19.604398Z",
+        "finished_at": "2026-10-04T17:52:29.702810Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-10-04T17:52:29.702882Z",
+        "finished_at": "2026-10-04T18:22:04.696791Z"
+    },
+    "verifier": {
+        "started_at": "2026-10-04T18:22:05.748389Z",
+        "finished_at": "2026-10-04T18:25:29.525545Z"
+    },
+    "step_results": null
+}

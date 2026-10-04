@@ -1,0 +1,45 @@
+{
+    "id": "353f77b7-23bd-4b73-b992-dc9fa103be21",
+    "started_at": "2026-10-04T11:06:21.906394",
+    "updated_at": "2026-10-04T11:29:59.964611",
+    "finished_at": "2026-10-04T11:29:59.964611",
+    "n_total_trials": 1,
+    "stats": {
+        "n_completed_trials": 1,
+        "n_errored_trials": 0,
+        "n_running_trials": 0,
+        "n_pending_trials": 0,
+        "n_cancelled_trials": 0,
+        "n_retries": 0,
+        "evals": {
+            "opencode__deepseek-v4.1-flash__tracebench-fast-344": {
+                "n_trials": 1,
+                "n_errors": 0,
+                "metrics": [
+                    {
+                        "mean": 0.9974497927956647
+                    },
+                    {
+                        "min": 0.9974497927956647
+                    },
+                    {
+                        "max": 0.9974497927956647
+                    }
+                ],
+                "pass_at_k": {},
+                "reward_stats": {
+                    "reward": {
+                        "0.9974497927956647": [
+                            "peasant-pr-0344__Vz9Barv"
+                        ]
+                    }
+                },
+                "exception_stats": {}
+            }
+        },
+        "n_input_tokens": 8025210,
+        "n_cache_tokens": 7901696,
+        "n_output_tokens": 15118,
+        "cost_usd": 0.072717588
+    }
+}

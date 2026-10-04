@@ -1,0 +1,138 @@
+{
+    "id": "52904776-8dbe-4553-a342-21ec5ba09ca4",
+    "task_name": "tracebench/peasant-pr-0146",
+    "trial_name": "peasant-pr-0146__RzFBMvn",
+    "trial_uri": "file:///home/minttea/codebases/dayvidpham/TraceBench/jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e/peasant-pr-0146__RzFBMvn",
+    "task_id": {
+        "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0146"
+    },
+    "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+    "task_checksum": "6bbbfacb783490e65ed43cd86c2284371c17a05219c8c069fbbf011b542179a3",
+    "config": {
+        "task": {
+            "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0146",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        "trial_name": "peasant-pr-0146__RzFBMvn",
+        "trials_dir": "jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "opencode",
+            "import_path": null,
+            "model_name": "opencode-go/deepseek-v4.1-flash",
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [
+                "opencode.ai",
+                "models.dev"
+            ],
+            "kwargs": {
+                "version": "1.18.34",
+                "variant": "high"
+            },
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+                "OPENCODE_API_KEY": "${OPENCODE_API_KEY}"
+            },
+            "mcp_servers": []
+        },
+        "user_agent": null,
+        "environment": {
+            "type": "podman",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+            },
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "extra_instructions": [],
+        "job_id": "37fa700a-5bcf-45e7-857e-bf50b1e07e5c",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "opencode",
+        "version": "1.18.34",
+        "model_info": {
+            "name": "deepseek-v4.1-flash",
+            "provider": "opencode-go"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 34619016,
+        "n_cache_tokens": 33876480,
+        "n_output_tokens": 27900,
+        "cost_usd": 0.28384223999999986,
+        "model_usage": {
+            "opencode-go/deepseek-v4.1-flash": {
+                "n_input_tokens": 34619016,
+                "n_cache_tokens": 33876480,
+                "n_output_tokens": 27900,
+                "cost_usd": 0.28384223999999986
+            }
+        },
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.9949385394070861
+        }
+    },
+    "verifier_environment_mode": "shared",
+    "exception_info": null,
+    "started_at": "2026-10-04T18:01:16.274932Z",
+    "finished_at": "2026-10-04T18:36:25.635164Z",
+    "environment_setup": {
+        "started_at": "2026-10-04T18:01:16.348158Z",
+        "finished_at": "2026-10-04T18:01:17.962712Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-10-04T18:01:35.007362Z",
+        "finished_at": "2026-10-04T18:01:44.854724Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-10-04T18:01:44.854806Z",
+        "finished_at": "2026-10-04T18:34:33.689251Z"
+    },
+    "verifier": {
+        "started_at": "2026-10-04T18:34:34.539855Z",
+        "finished_at": "2026-10-04T18:36:12.899187Z"
+    },
+    "step_results": null
+}
