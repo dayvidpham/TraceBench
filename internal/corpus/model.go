@@ -27,21 +27,34 @@ func (r RepoSlug) DirName() string {
 // metadata only. Older index and dump records without a body decode to an
 // empty Body.
 type PullRequest struct {
-	Repo         RepoSlug  `json:"repo"`
-	Number       int       `json:"number"`
-	Title        string    `json:"title"`
-	Body         string    `json:"body,omitempty"`
-	URL          string    `json:"url"`
-	Author       string    `json:"author,omitempty"`
-	HeadRef      string    `json:"head_ref"`
-	HeadOID      string    `json:"head_oid,omitempty"`
-	BaseRef      string    `json:"base_ref,omitempty"`
-	MergeCommit  string    `json:"merge_commit,omitempty"`
-	CreatedAt    time.Time `json:"created_at"`
-	MergedAt     time.Time `json:"merged_at"`
-	Additions    int       `json:"additions"`
-	Deletions    int       `json:"deletions"`
-	ChangedFiles int       `json:"changed_files"`
+	Repo         RepoSlug     `json:"repo"`
+	Number       int          `json:"number"`
+	Title        string       `json:"title"`
+	Body         string       `json:"body,omitempty"`
+	URL          string       `json:"url"`
+	Author       string       `json:"author,omitempty"`
+	HeadRef      string       `json:"head_ref"`
+	HeadOID      string       `json:"head_oid,omitempty"`
+	BaseRef      string       `json:"base_ref,omitempty"`
+	MergeCommit  string       `json:"merge_commit,omitempty"`
+	Issue        *LinkedIssue `json:"issue,omitempty"`
+	CreatedAt    time.Time    `json:"created_at"`
+	MergedAt     time.Time    `json:"merged_at"`
+	Additions    int          `json:"additions"`
+	Deletions    int          `json:"deletions"`
+	ChangedFiles int          `json:"changed_files"`
+}
+
+// LinkedIssue is the GitHub issue named by a pull request's head branch, for
+// example "peasant-337--..." names issue 337. Body is the already-public
+// issue description and stays raw for the same reason as PullRequest.Body.
+// A pull request whose branch names no issue, and records written before the
+// field existed, decode to a nil Issue.
+type LinkedIssue struct {
+	Number int    `json:"number"`
+	Title  string `json:"title,omitempty"`
+	Body   string `json:"body,omitempty"`
+	URL    string `json:"url,omitempty"`
 }
 
 // ID returns the stable "owner/name#number" identifier.

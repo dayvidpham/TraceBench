@@ -50,25 +50,27 @@ type Options struct {
 
 // PRRecord is one sampled pull request in the flat dump index. Body is
 // the already-public pull request description and stays raw; see
-// corpus.PullRequest for the redaction rationale.
+// corpus.PullRequest for the redaction rationale. Issue is the issue named
+// by the head branch, when there is one, and stays raw the same way.
 type PRRecord struct {
-	ID             string    `json:"id"`
-	Repo           string    `json:"repo"`
-	Number         int       `json:"number"`
-	Title          string    `json:"title"`
-	Body           string    `json:"body,omitempty"`
-	URL            string    `json:"url"`
-	Author         string    `json:"author,omitempty"`
-	HeadRef        string    `json:"head_ref"`
-	MergedAt       time.Time `json:"merged_at"`
-	Additions      int       `json:"additions"`
-	Deletions      int       `json:"deletions"`
-	LinesChanged   int       `json:"lines_changed"`
-	Split          string    `json:"split"`
-	Group          string    `json:"group,omitempty"`
-	LinkedSessions int       `json:"linked_sessions"`
-	TotalSessions  int       `json:"total_sessions"`
-	DumpedSessions int       `json:"dumped_sessions"`
+	ID             string              `json:"id"`
+	Repo           string              `json:"repo"`
+	Number         int                 `json:"number"`
+	Title          string              `json:"title"`
+	Body           string              `json:"body,omitempty"`
+	Issue          *corpus.LinkedIssue `json:"issue,omitempty"`
+	URL            string              `json:"url"`
+	Author         string              `json:"author,omitempty"`
+	HeadRef        string              `json:"head_ref"`
+	MergedAt       time.Time           `json:"merged_at"`
+	Additions      int                 `json:"additions"`
+	Deletions      int                 `json:"deletions"`
+	LinesChanged   int                 `json:"lines_changed"`
+	Split          string              `json:"split"`
+	Group          string              `json:"group,omitempty"`
+	LinkedSessions int                 `json:"linked_sessions"`
+	TotalSessions  int                 `json:"total_sessions"`
+	DumpedSessions int                 `json:"dumped_sessions"`
 }
 
 // TraceRecord links one pull request to one session.

@@ -475,3 +475,26 @@ def test_payload_manifest_notes_body_redaction(standard_dump, standard_index, tm
     manifest = json.loads((payload.path / "prior-traces" / "manifest.json").read_text())
     assert "raw" in manifest["body_redaction"]
     assert "transcript" in manifest["body_redaction"]
+
+
+def test_unsampled_index_issue_flows_into_pr_json(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    index = dict(standard_index)
+    index[f"{LIVE}#23"] = {"repo": LIVE, "number": 23, "merge_commit": "c23",
+                           "merged_at": "2026-09-05T00:00:00Z",
+                           "issue": {"number": 19, "title": "the issue",
+                                     "body": "Issue intent text.", "url": "u"}}
+    payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#23", tmp_path / "task")
+    pr = json.loads((payload.path / "pr.json").read_text())
+    assert pr["issue"]["number"] == 19
+    assert pr["issue"]["body"] == "Issue intent text."
+
+
+def test_unsampled_index_without_issue_loads_as_null(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    index = dict(standard_index)
+    index[f"{LIVE}#23"] = {"repo": LIVE, "number": 23, "merge_commit": "c23",
+                           "merged_at": "2026-09-05T00:00:00Z"}
+    payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#23", tmp_path / "task")
+    pr = json.loads((payload.path / "pr.json").read_text())
+    assert pr.get("issue") is None

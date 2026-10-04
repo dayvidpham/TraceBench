@@ -202,6 +202,9 @@ class TaskBuilder:
             # Older index records carry no body; a missing body loads as
             # None so they stay readable.
             "body": record.get("body"),
+            # Older index records carry no linked issue; a missing issue
+            # loads as None so they stay readable.
+            "issue": record.get("issue"),
             "url": record.get("url"),
             "author": record.get("author"),
             "head_ref": record.get("head_ref"),

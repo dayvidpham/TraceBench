@@ -83,7 +83,7 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
 
 | path | contents |
 |---|---|
-| `pr.json` | the pull request, enriched from `--index` (`merge_commit`, `head_oid`, `base_ref`, `body`); the body is the already-public PR description and stays raw (see `body_redaction` in the manifest) |
+| `pr.json` | the pull request, enriched from `--index` (`merge_commit`, `head_oid`, `base_ref`, `body`, and the branch-named `issue` when the record carries them); the body and issue are already-public metadata and stay raw (see `body_redaction` in the manifest) |
 | `prior-traces/` | `traces.jsonl`, `metadata.jsonl`, `transcripts/`, and `manifest.json` for the prior context (below) |
 | `repo/` | the working tree at the pre-PR state (`tree_commit`); materialized by `worktree.materialize_worktree`, which verifies the result against `tree_commit^{tree}` |
 | `tests/` | with `--materialize-tests` (requires `--repo-dir`), every file at `merge_commit` matching the payload's test patterns, read from the git object database (executable bits kept, symlinks skipped); empty otherwise. Zero matches, or a root-level `manifest.json` colliding with the manifest, fail closed |

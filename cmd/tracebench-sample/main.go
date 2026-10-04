@@ -330,7 +330,8 @@ func dumpLocal(ctx context.Context, cfg config, opts dump.Options, dumpDir strin
 			sessionSet[transcript.SessionID] = true
 		}
 		prs = append(prs, dump.PRRecord{
-			ID: pr.ID, Repo: pr.Repo, Number: pr.Number, Title: pr.Title, Body: pr.Body, URL: pr.URL,
+			ID: pr.ID, Repo: pr.Repo, Number: pr.Number, Title: pr.Title, Body: pr.Body,
+			Issue: pr.Issue, URL: pr.URL,
 			Author: pr.Author, HeadRef: pr.HeadRef, MergedAt: pr.MergedAt,
 			Additions: pr.Additions, Deletions: pr.Deletions, LinesChanged: pr.LinesChanged,
 			Split: string(pr.Split), Group: pr.Group,
