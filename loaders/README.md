@@ -459,10 +459,12 @@ there is no `reward.json`.
 `test-results.json` carries `schema_version`, `pr`, `base_commit`,
 `merge_commit`, `manifest_schema_version`, `test_command`, `exit_code`,
 `duration_sec`, the counts (`total_cases`, `passed`, `failed`, `skipped`,
-`missing`, `golden_flagged`, `golden_flagged_passed`), `reward` (equal to
-`reward.txt`), `fail_closed_reasons`, `failed_test_ids` (outcome `fail` only),
-and `entries` (`id`, `package_dir`, `name`, `golden`, `outcome` in the closed
-set `pass`, `fail`, `skip`, `missing`). Harbor downloads it to
+`missing`, `rejected_cases`, `golden_flagged`, `golden_flagged_passed`),
+`reward` (equal to `reward.txt`), `fail_closed_reasons`, `failed_test_ids`
+(outcome `fail` only), `rejected_test_ids`, and `entries` (`id`,
+`package_dir`, `name`, `golden`, `status`, `outcome` in the closed set
+`pass`, `fail`, `skip`, `missing`, `reject`). Rejected cases are excluded from
+`total_cases` and the reward. Harbor downloads it to
 `<trial-dir>/verifier/test-results.json`. The `golden` flag is diagnostic; the
 reward does not use it.
 

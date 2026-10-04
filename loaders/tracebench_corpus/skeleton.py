@@ -366,7 +366,7 @@ if ! python3 "$TESTS_DIR/verifier.py" run \\
   echo "tracebench: verifier.py crashed; reward 0 (see the traceback above)" >&2
   echo 0 > "$LOG_DIR/reward.txt"
   if [ ! -f "$LOG_DIR/test-results.json" ]; then
-    echo '{{"schema_version": 1, "reward": 0, "fail_closed_reasons": ["verifier.py crashed before writing a report"]}}' \\
+    echo '{{"schema_version": {verifier.REPORT_SCHEMA_VERSION}, "reward": 0, "fail_closed_reasons": ["verifier.py crashed before writing a report"]}}' \\
       > "$LOG_DIR/test-results.json"
   fi
 fi
