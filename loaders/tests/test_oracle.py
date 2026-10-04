@@ -311,6 +311,45 @@ def test_cli_payload_without_task_json_exits_2(pr_repo, tmp_path, capsys):
     assert not (payload / "solution").exists()
 
 
+def test_cli_non_object_task_json_exits_2(pr_repo, tmp_path, capsys):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    (payload / "task.json").write_text("[]")
+    assert main(["oracle", PR_ID, "--repo-dir", str(repo), "--payload", str(payload)]) == 2
+    err = capsys.readouterr().err
+    assert "task.json must hold a JSON object" in err
+    assert "Traceback" not in err
+    assert not (payload / "solution").exists()
+
+
+def test_write_oracle_without_task_json_raises(pr_repo, tmp_path):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    oracle = build_oracle(repo, tree_commit, merge_commit, None)
+    (payload / "task.json").unlink()
+    with pytest.raises(ValueError, match="task.json"):
+        oracle_module.write_oracle(payload, oracle)
+    assert not (payload / "solution").exists()
+
+
+def test_write_oracle_non_object_task_json_raises(pr_repo, tmp_path):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    oracle = build_oracle(repo, tree_commit, merge_commit, None)
+    (payload / "task.json").write_text("[]")
+    with pytest.raises(ValueError, match="task.json must hold a JSON object"):
+        oracle_module.write_oracle(payload, oracle)
+    assert not (payload / "solution").exists()
+
+
+def test_payload_request_without_task_json_raises(pr_repo, tmp_path):
+    _, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    (payload / "task.json").unlink()
+    with pytest.raises(ValueError, match="task.json"):
+        oracle_module.payload_request(payload)
+
+
 def test_cli_pr_mismatch_with_payload_exits_2(pr_repo, tmp_path, capsys):
     repo, tree_commit, merge_commit = pr_repo
     payload = _payload(tmp_path, tree_commit, merge_commit)
