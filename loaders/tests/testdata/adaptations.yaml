@@ -1,0 +1,21 @@
+# Adaptation matrix a task can target. The product and the tests share this
+# spec through load_adaptations(): TaskBuilder keeps only prior sessions whose
+# metadata matches the selected axes, and records the adaptation in the
+# payload. Thinking levels are a closed set: none, low, medium, high, xhigh.
+adaptations:
+  - name: claude-code-sonnet-high
+    harness: claude-code
+    model: claude-sonnet-4-6
+    thinking: high
+  - name: claude-code-sonnet-none
+    harness: claude-code
+    model: claude-sonnet-4-6
+    thinking: none
+  - name: opencode-gpt-medium
+    harness: opencode
+    model: gpt-5.2-codex
+    thinking: medium
+  - name: codex-gpt-none
+    harness: codex
+    model: gpt-5.2
+    thinking: none

@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 
+from .adaptation import Adaptation, find_adaptation, load_adaptations
 from .corpus import Corpus, load_corpus
 from .skeleton import build_skeleton
 from .task import TaskBuilder, load_pr_index
@@ -44,14 +45,46 @@ def main(argv: list[str] | None = None) -> int:
     task_parser.add_argument(
         "--index",
         default=None,
-        help="corpus/index/merged_prs.json to enrich records with merge commits and created_at",
+        help="corpus/index/merged_prs.json; supplies merge commits and merged dates",
+    )
+    task_parser.add_argument(
+        "--repo-dir",
+        default=None,
+        help="local clone used to resolve the develop boundary by commit ancestry",
+    )
+    task_parser.add_argument(
+        "--adaptations",
+        default=None,
+        help="adaptation spec (YAML or JSON) with harness/model/thinking configurations",
+    )
+    task_parser.add_argument(
+        "--adaptation",
+        default=None,
+        help="adaptation name from --adaptations; keeps only matching prior sessions",
+    )
+    task_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="rebuild tool-owned entries in a non-empty destination",
     )
     skeleton_parser = commands.add_parser("skeleton", help="generate a Harbor task skeleton")
     skeleton_parser.add_argument("--payload", required=True, help="task payload directory")
     skeleton_parser.add_argument("--dest", required=True, help="destination task directory")
     skeleton_parser.add_argument("--org", default="tracebench", help="Harbor task namespace")
-    skeleton_parser.add_argument("--base-image", default="ubuntu:24.04", help="environment base image")
+    skeleton_parser.add_argument(
+        "--base-image",
+        default="tracebench/peasant-base:latest",
+        help="shared base image referenced by task.toml",
+    )
+    skeleton_parser.add_argument(
+        "--workdir", default="/workdir", help="container workdir for uploaded task data"
+    )
     skeleton_parser.add_argument("--task-version", default="1.0.0", help="task version")
+    skeleton_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="rebuild tool-owned entries in a non-empty destination",
+    )
 
     args = parser.parse_args(argv)
     if args.command == "skeleton":
@@ -72,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "bundle":
         return _bundle(corpus, args.pr, Path(args.dest))
     if args.command == "task":
-        return _task(corpus, args.pr, Path(args.dest), args.index)
+        return _task(corpus, args)
     return _bundle_all(corpus, Path(args.dest), args.split)
 
 
@@ -105,19 +138,31 @@ def _bundle_all(corpus: Corpus, dest: Path, split: str | None) -> int:
     return 0
 
 
-def _task(corpus: Corpus, pr_id: str, dest: Path, index_path: str | None) -> int:
-    index = load_pr_index(index_path) if index_path else None
-    builder = TaskBuilder(corpus, pr_index=index)
+def _task(corpus: Corpus, args: argparse.Namespace) -> int:
     try:
-        payload = builder.build(pr_id, dest)
-    except KeyError as exc:
+        index = load_pr_index(args.index) if args.index else None
+        adaptation = None
+        if args.adaptation or args.adaptations:
+            if not (args.adaptation and args.adaptations):
+                raise ValueError("--adaptation and --adaptations must be used together")
+            adaptation = find_adaptation(load_adaptations(args.adaptations), args.adaptation)
+        builder = TaskBuilder(corpus, pr_index=index, repo_dir=args.repo_dir)
+        payload = builder.build(args.pr, Path(args.dest), force=args.force, adaptation=adaptation)
+    except (KeyError, ValueError, OSError) as exc:
         print(f"tracebench-corpus: {exc}", file=sys.stderr)
         return 2
     print(
         f"wrote {payload.path}: {payload.prior_traces} prior traces from "
-        f"{payload.prior_pull_requests} pull requests ({payload.prior_sessions} sessions); "
-        "repo/ and tests/ await the repository tooling"
+        f"{payload.prior_pull_requests} pull requests ({payload.prior_sessions} sessions, "
+        f"cutoff basis {payload.cutoff_basis} at {payload.cutoff_time})"
     )
+    if payload.adaptation:
+        print(f"  adapted to {payload.adaptation}; {payload.excluded_by_adaptation} sessions filtered out")
+    if payload.sessions_past_cutoff or payload.missing_sessions:
+        print(
+            f"  excluded {payload.sessions_past_cutoff} sessions past the cutoff; "
+            f"{payload.missing_sessions} sessions lack a transcript or metadata"
+        )
     return 0
 
 
@@ -128,7 +173,9 @@ def _skeleton(args: argparse.Namespace) -> int:
             args.dest,
             org=args.org,
             base_image=args.base_image,
+            workdir=args.workdir,
             task_version=args.task_version,
+            force=args.force,
         )
     except (ValueError, OSError) as exc:
         print(f"tracebench-corpus: {exc}", file=sys.stderr)
