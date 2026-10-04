@@ -319,7 +319,16 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
         "## Goal",
         "",
     ]
-    body = (pr.get("body") or "").strip()
+    raw_body = pr.get("body")
+    if raw_body is None:
+        body = ""
+    elif not isinstance(raw_body, str):
+        raise ValueError(
+            f"task payload pr.json field `body` must be a string, got "
+            f"{type(raw_body).__name__}; regenerate the payload"
+        )
+    else:
+        body = raw_body.strip()
     if body:
         lines.append(_truncate_body(body))
         lines.append("")

@@ -245,6 +245,20 @@ def test_skeleton_keeps_todo_without_body(tmp_path, standard_dump, standard_inde
     assert "Implement the change the pull request made." in instruction
     assert "## TODO(task author)" in instruction
 
+    pr["body"] = "  \n "
+    (payload / "pr.json").write_text(json.dumps(pr))
+    build_skeleton(payload, tmp_path / "blank-task", force=True)
+    assert "## TODO(task author)" in (tmp_path / "blank-task" / "instruction.md").read_text()
+
+
+def test_skeleton_rejects_non_string_body(tmp_path, standard_dump, standard_index) -> None:
+    payload = make_payload(tmp_path, standard_dump, standard_index)
+    pr = json.loads((payload / "pr.json").read_text())
+    pr["body"] = 123
+    (payload / "pr.json").write_text(json.dumps(pr))
+    with pytest.raises(ValueError, match="field `body`"):
+        build_skeleton(payload, tmp_path / "task")
+
 
 def test_skeleton_truncates_overlong_body(tmp_path, long_body_dump, standard_index) -> None:
     payload = tmp_path / "payload"
