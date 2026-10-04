@@ -89,8 +89,9 @@ flowchart TB
 TraceBench is a set of command-line tools plus files, not a service. `tracebench-sample` (Go)
 builds the corpus; `tracebench-corpus` (Python) turns corpus entries into task payloads and
 runnable Harbor tasks, and its `pipeline` command writes a Harbor job config per run;
-`snapshot` (Go, its own module) materializes repository trees and git history at a cutoff, and
-the loader drives it to write each task's secure worktree. Everything runs on the developer's
+`snapshot` (Go, its own module) materializes repository trees and git history at a cutoff; it is
+a standalone tool. The loader writes each task's secure worktree itself (`git pack-objects`
+over the ancestry of `tree_commit`). Everything runs on the developer's
 workstation.
 
 Elements:
@@ -123,7 +124,6 @@ Relationships:
 | tracebench-corpus | HuggingFace Hub | downloads the dump when no local copy exists | huggingface_hub |
 | tracebench-corpus | task payload | writes and rebuilds payloads | files |
 | tracebench-corpus | target git repository | resolves the boundary, extracts the golden suite, diffs and verifies the oracle | git CLI |
-| tracebench-corpus | snapshot | materializes the secure worktree in commit mode | exec |
 | tracebench-corpus | Harbor task | writes runnable tasks | files |
 | tracebench-corpus | Harbor job config | writes the job config for a run | files |
 | snapshot | target git repository | reads commits, trees, and archives | git CLI |
@@ -367,7 +367,6 @@ Relationships:
 | task builder | case catalog | writes test-manifest.json | Python call |
 | golden suite | target git repository | runs ls-tree and show at merge_commit | git CLI |
 | pipeline driver | secure worktree | materializes repo/ | Python call |
-| secure worktree | snapshot | runs commit mode with --materialize | exec |
 | pipeline driver | repository adaptation spec | selects the test and build command | Python call |
 | pipeline driver | oracle | builds and writes the oracle | Python call |
 | oracle | target git repository | diffs, applies in a temporary worktree, compares trees | git CLI |
@@ -399,7 +398,6 @@ flowchart TB
   payload[("<b>task payload</b><br/>[Container: JSON, JSONL]")]:::container
   taskdir[("<b>Harbor task</b><br/>[Container: TOML, shell, Python]")]:::container
   jobcfg[("<b>Harbor job config</b><br/>[Container: YAML or JSON]")]:::container
-  snapc["<b>snapshot</b><br/>[Container: Go]"]:::container
 
   dev -->|"runs loader commands<br/>(terminal)"| lcli
   lcli -->|"loads the dump<br/>(Python call)"| cor
@@ -421,7 +419,6 @@ flowchart TB
   gold -->|"reads blobs at merge_commit<br/>(git CLI)"| git
   pipe -->|"selects commands<br/>(Python call)"| spec
   pipe -->|"materializes repo/<br/>(Python call)"| wt
-  wt -->|"commit mode, --materialize<br/>(exec)"| snapc
   pipe -->|"builds the oracle<br/>(Python call)"| orc
   orc -->|"diffs and verifies<br/>(git CLI)"| git
   pipe -->|"writes the task<br/>(Python call)"| skel
@@ -446,10 +443,10 @@ selected commit, collects trace files, and writes a deterministic snapshot: `his
 
 The commit cutoff (`--cutoff-type commit --commit <sha>`) pins the tree of that commit,
 independent of HEAD; it works when the commit is unreachable from HEAD and in a bare clone. Its
-history is the commit's ancestry. The loader's secure worktree uses this mode to fill a payload's
-`repo/` at `tree_commit`, because the `pr` cutoff is a time cut at the pull request start, not
-`merge_commit^`. The loader then asserts that `tree_sha` equals `git rev-parse
-<tree_commit>^{tree}` and fails closed on drift.
+history is the commit's ancestry. The loader's secure worktree does not use this mode: it packs
+the ancestry of `tree_commit` directly (`git pack-objects --revs`), because the `pr` cutoff is a
+time cut at the pull request start, not `merge_commit^`, and the payload ships a real repository
+with `.git`.
 
 | Component | File | Description |
 |---|---|---|
@@ -465,7 +462,6 @@ Relationships:
 | Source | Target | Intent | Technology |
 |---|---|---|---|
 | benchmark engineer | cli | runs snapshot commands | terminal |
-| tracebench-corpus | cli | materializes a secure worktree in commit mode | exec |
 | cli | assembler | builds and writes the snapshot | Go call |
 | assembler | cutoff resolver | resolves the cutoff | Go call |
 | assembler | repo snapshotter | lists history and trees | Go call |
@@ -495,7 +491,6 @@ flowchart TB
   snapout[("<b>snapshot output</b><br/>[Container: JSON, git tree]")]:::container
 
   dev -->|"runs snapshot commands<br/>(terminal)"| scli
-  loader -->|"commit mode, --materialize<br/>(exec)"| scli
   scli -->|"builds the snapshot<br/>(Go call)"| api
   api -->|"resolves the cutoff<br/>(Go call)"| cut
   api -->|"lists history and trees<br/>(Go call)"| repo
@@ -648,7 +643,7 @@ sequenceDiagram
     loader->>loader: selects prior traces, excludes own sessions, cuts at the boundary
     loader->>git: ls-tree and blobs at merge_commit matching the test patterns
     loader->>payload: writes pr.json, prior-traces/, tests/, test-manifest.json, repo-request.json
-    loader->>git: fetch --depth=1 tree_commit into a fresh repo (source read-only)
+    loader->>git: pack-objects --revs tree_commit into a fresh repo (full ancestry, source read-only)
     loader->>loader: asserts HEAD tree == tree_commit^{tree}, source-equal count, not shallow, no remotes, fix absent
     loader->>payload: moves repo/ into the payload
     loader->>git: git diff tree_commit merge_commit, applies in a temporary worktree
@@ -870,7 +865,7 @@ sequenceDiagram
 | `internal/dump` | Dump writer: schema records, redaction, indexes, dump manifest. | `dump` |
 | `internal/fetch` | HuggingFace download and content-hash verification. | `fetch` |
 | `loaders/tracebench_corpus` | Python loader: corpus, bundles, task payloads, golden suite, case catalog, secure worktree, oracle, repository adaptation spec, skeletons, verifier, pipeline driver and job config, target configurations. | task authors, Harbor |
-| `snapshot` | Go module: cutoff resolution (date, PR start, or exact commit), repo tree and history materialization, `tree_sha`, trace collection. | snapshot users, the loader's secure worktree |
+| `snapshot` | Go module: cutoff resolution (date, PR start, or exact commit), repo tree and history materialization, `tree_sha`, trace collection. | snapshot users |
 | `tasks/_base` | Shared base-image Dockerfile with warmed Go caches, and the task-runtime image that strips the clone and build cache. | task image builds |
 | `tasks/<name>` | Harbor task definitions: instruction, task.toml, environment, solution, tests. | `harbor run` |
 | `scripts/verify-issue-*.sh` | Acceptance checks for the containerized codebase and the snapshot API. | developers |

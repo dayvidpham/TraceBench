@@ -85,7 +85,7 @@ def test_report_schema_fields() -> None:
     assert report["duration_sec"] == 1.235
     assert (report["failed"], report["skipped"], report["missing"]) == (1, 0, 0)
     assert report["reward"] == 0.5
-    assert report["schema_version"] == 1
+    assert report["schema_version"] == 2
     assert report["pr"] == "o/r#1"
     assert report["manifest_schema_version"] == 1
     assert report["exit_code"] == 1
@@ -315,7 +315,7 @@ def test_run_crash_writes_minimal_report(tmp_path, monkeypatch) -> None:
     reward, report = read_report(dirs["log_dir"])
     assert reward == 0.0
     assert report == {
-        "schema_version": 1, "reward": 0.0,
+        "schema_version": verifier.REPORT_SCHEMA_VERSION, "reward": 0.0,
         "fail_closed_reasons": ["verifier crashed: RuntimeError: disk on fire"],
     }
 

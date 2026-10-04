@@ -143,9 +143,6 @@ def main(argv: list[str] | None = None) -> int:
         "an error together with --run-id",
     )
     pipeline_parser.add_argument(
-        "--snapshot-bin", default=None, help="built snapshot binary (default: go run ./cmd/snapshot)"
-    )
-    pipeline_parser.add_argument(
         "--job-config-format", choices=("yaml", "json"), default=None,
         help="format of job-config-<run id>.<ext> (default: yaml when PyYAML is installed, "
         "else json); written only when at least one task built",
@@ -333,7 +330,6 @@ def _pipeline(corpus: Corpus, args: argparse.Namespace) -> int:
             target_config=target_config,
             run_id=args.run_id,
             run_label=args.run_label,
-            snapshot_bin=args.snapshot_bin,
             job_config_format=args.job_config_format,
             force=args.force,
         )

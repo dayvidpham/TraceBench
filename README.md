@@ -137,8 +137,8 @@ Prerequisites:
   that contains each pull request's pre-PR commit and merge commit.
 * The merged-PR index, `corpus/index/merged_prs.json` (written by
   `tracebench-sample index`). It supplies each pull request's `merge_commit`.
-* Go on the `PATH` (the pipeline runs the `snapshot` tool with
-  `go run ./cmd/snapshot` unless `--snapshot-bin` names a built binary).
+* `git` on the `PATH` (the loader resolves boundaries, extracts the golden suite, and verifies
+  the oracle with the git CLI).
 
 Commands:
 

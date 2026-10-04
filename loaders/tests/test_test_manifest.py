@@ -106,6 +106,8 @@ def test_build_constraint_parsing() -> None:
     assert build_constraint("package p\n") is None
     assert build_constraint("//go:build e2e\n\npackage p\n") == "e2e"
     assert build_constraint("// +build e2e\n\npackage p\n") == "((e2e))"
+    assert build_constraint("// +build linux,arm64\n\npackage p\n") == "((linux && arm64))"
+    assert build_constraint("// +build windows darwin\n\npackage p\n") == "((windows) || (darwin))"
 
 
 def test_constraint_satisfied_evaluates_the_default_context() -> None:

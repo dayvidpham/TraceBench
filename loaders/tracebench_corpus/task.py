@@ -351,6 +351,7 @@ class TaskBuilder:
             "pr": pr_id,
             "repo": pr["repo"],
             "number": pr["number"],
+            "base_ref": pr.get("base_ref"),
             "merge_commit": merge_commit,
             "tree_commit": boundary_commit,
             "tree_commit_rule": "first parent of merge_commit (the develop commit before the PR)",

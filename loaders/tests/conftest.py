@@ -131,7 +131,8 @@ def standard_index() -> dict[str, dict]:
         f"{ARCHIVE}#10": {"merge_commit": "c10"},
         f"{LIVE}#20": {"merge_commit": "c20"},
         f"{LIVE}#21": {"merge_commit": "c21"},
-        f"{LIVE}#22": {"merge_commit": "c22", "created_at": "2026-08-24T00:00:00Z"},
+        f"{LIVE}#22": {"merge_commit": "c22", "created_at": "2026-08-24T00:00:00Z",
+                       "base_ref": "develop"},
     }
 
 

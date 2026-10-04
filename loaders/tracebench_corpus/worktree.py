@@ -19,9 +19,6 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-# The Go snapshot module (still built by the pipeline CLI tests).
-SNAPSHOT_MODULE = Path(__file__).resolve().parents[2] / "snapshot"
-
 AGENT_GIT_NAME = "TraceBench Agent"
 AGENT_GIT_EMAIL = "agent@tracebench.local"
 
@@ -112,14 +109,13 @@ def _dest_git(dest: Path, commit: str, *args: str,
 def materialize_worktree(
     repo_dir: str | Path,
     payload_dir: str | Path,
-    snapshot_bin: str | Path | None = None,
 ) -> WorktreeResult:
-    """Write ``payload_dir/repo`` as a one-commit repo at ``tree_commit`` and verify it.
+    """Write ``payload_dir/repo`` as the full history truncated at ``tree_commit``.
 
-    ``snapshot_bin`` is accepted for call-site compatibility and is unused: the
-    repository is built with git directly.
+    The repository holds the real ancestry of ``tree_commit`` (real SHAs, no
+    descendants) on the pull request's base branch; see the fail-closed checks
+    below.
     """
-    del snapshot_bin
     repo_dir = Path(repo_dir).resolve()
     payload_dir = Path(payload_dir).resolve()
     request = _request(payload_dir)

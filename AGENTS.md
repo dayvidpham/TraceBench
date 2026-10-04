@@ -60,7 +60,7 @@ Tasks follow the Harbor layout in `README.md` (`tasks/<name>/` with `instruction
 - The Python loader lives in `loaders/tracebench_corpus/`, one module per step: `cli.py`
   (commands), `corpus.py` (dump loading and bundles), `task.py` (payload assembly), `golden.py`
   (golden suite and the canonical doublestar matcher), `test_manifest.py` (case catalog),
-  `worktree.py` (secure worktree through the snapshot tool), `oracle.py` (oracle patch and
+  `worktree.py` (secure worktree: packs the ancestry of `tree_commit` into a fresh repo), `oracle.py` (oracle patch and
   `solve.sh`), `repository_spec.py` (test and build command per repository), `target_config.py`
   (harness, model, thinking), `skeleton.py` (Harbor task directory), `verifier.py` (in-sandbox
   grading, standard library only), and `pipeline.py` (batch driver and Harbor job config). Its
@@ -69,7 +69,8 @@ Tasks follow the Harbor layout in `README.md` (`tasks/<name>/` with `instruction
 ### Task pipeline
 
 `tracebench-corpus pipeline` builds one runnable Harbor task per pull request: payload, golden
-suite, case catalog, secure worktree at `tree_commit` (no `.git`, tree hash asserted), verified
+suite, case catalog, secure worktree at `tree_commit` (real git history truncated at the pre-PR
+commit; local identity; no remotes), verified
 oracle, and the task with its verifier. It writes `<dest>/payloads/`, `<dest>/tasks/`, and
 `<dest>/job-config.yaml` (run id, `n_attempts: 3`, `TRACEBENCH_RUN_ID`). A failed task names
 the failed part and the others still build. Validate a built task with

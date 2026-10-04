@@ -112,8 +112,10 @@ def build_constraint(source: str) -> str | None:
 
 
 def _legacy_expression(line: str) -> str:
-    groups = [" || ".join(group.split(",")) for group in line.split()]
-    return " && ".join(f"({group})" for group in groups)
+    # Legacy syntax: space-separated options are ORed; comma-separated terms
+    # within an option are ANDed.
+    options = [" && ".join(group.split(",")) for group in line.split()]
+    return " || ".join(f"({option})" for option in options)
 
 
 def constraint_satisfied(expression: str | None) -> bool:

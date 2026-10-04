@@ -281,7 +281,7 @@ tracebench-corpus --corpus corpus/dump pipeline \
   --dest build/run-1 \
   [--spec repository_specs.yaml] \
   [--run-id ID | --target-configs SPEC --target-config NAME [--run-label LABEL]] \
-  [--snapshot-bin /path/to/snapshot] [--job-config-format yaml|json] [--force]
+  [--job-config-format yaml|json] [--force]
 ```
 
 | flag | meaning |
@@ -294,7 +294,6 @@ tracebench-corpus --corpus corpus/dump pipeline \
 | `--run-id` | the run id; when absent it is derived from the target configuration |
 | `--target-configs`, `--target-config` | the target configuration; together, or not at all |
 | `--run-label` | label of a derived run id (default `tracebench-<configuration name>`) |
-| `--snapshot-bin` | a built `snapshot` binary (default `go run ./cmd/snapshot` in `snapshot/`) |
 | `--job-config-format` | `yaml` (default when PyYAML is installed) or `json` |
 | `--force` | rebuild existing payload and task directories |
 
@@ -370,7 +369,7 @@ harbor run -c build/run-1/job-config.yaml
 | `task.py` | payload assembly: develop boundary, prior traces, session cuts, `repo-request.json`, destination hygiene |
 | `golden.py` | golden suite: files at `merge_commit` matching the test patterns, `tests/manifest.json`; owns the canonical doublestar matcher (`glob_to_regex`) |
 | `test_manifest.py` | case catalog: top-level Go test cases at `merge_commit`, PR-changed cases flagged `golden` |
-| `worktree.py` | secure worktree: drives the `snapshot` tool in commit mode and verifies `tree_sha` |
+| `worktree.py` | secure worktree: packs the ancestry of `tree_commit` into a fresh repo; asserts HEAD, tree, source-equal count, not shallow, no remotes, fix absent, clean `fsck` |
 | `oracle.py` | oracle: merge diff, `solve.sh`, equivalence check, the `task.json` `oracle` block |
 | `repository_spec.py` | repository adaptation spec: test and build command per repository |
 | `target_config.py` | target configurations: harness, model, thinking level |
@@ -380,7 +379,7 @@ harbor run -c build/run-1/job-config.yaml
 
 ### Secure worktree
 
-`materialize_worktree(repo_dir, payload_dir, snapshot_bin=None)` reads
+`materialize_worktree(repo_dir, payload_dir)` reads
 `tree_commit` from `repo-request.json` (falling back to `merge_commit^`) and
 writes `repo/` as the project's **full real history truncated at the pre-PR
 commit**: every ancestor of `tree_commit` with its real SHA, and nothing at or
@@ -401,8 +400,7 @@ rm -rf repo/.git/logs repo/.git/ORIG_HEAD repo/.git/FETCH_HEAD
 
 A local `user.name`/`user.email` (`TraceBench Agent <agent@tracebench.local>`)
 is set so the agent can commit, and no remote is configured. The source clone
-is only read; its refs and HEAD are unchanged. `snapshot_bin` is accepted for
-call-site compatibility and unused.
+is only read; its refs and HEAD are unchanged.
 
 The worktree fails closed, naming the commit and the failing check, when the
 commit does not exist, the destination is not empty, HEAD is not the real

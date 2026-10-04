@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 #: Version of the ``test-results.json`` layout this module writes.
-REPORT_SCHEMA_VERSION = 1
+REPORT_SCHEMA_VERSION = 2
 #: Manifest ``schema_version`` values this verifier understands.
 SUPPORTED_MANIFEST_SCHEMA_VERSIONS = frozenset({1})
 #: The closed set of per-case outcomes in ``test-results.json``.

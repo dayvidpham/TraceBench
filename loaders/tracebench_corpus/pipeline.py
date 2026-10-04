@@ -254,7 +254,6 @@ def build_task(
     repo_dir: Path,
     specs: list[RepositorySpec] | tuple[RepositorySpec, ...],
     target_config: TargetConfiguration | None = None,
-    snapshot_bin: str | Path | None = None,
     force: bool = False,
 ) -> TaskResult:
     """Build one task; never raises for a per-task failure."""
@@ -286,7 +285,7 @@ def build_task(
             raise ValueError(f"payload {payload_dir} has an empty tests/ golden suite")
 
         part = "environment/repo"
-        materialize_worktree(repo_dir, payload_dir, snapshot_bin=snapshot_bin)
+        materialize_worktree(repo_dir, payload_dir)
 
         part = "solution/oracle.patch"
         request = payload_request(payload_dir)
@@ -328,7 +327,6 @@ def run_pipeline(
     target_config: TargetConfiguration | None = None,
     run_id: str | None = None,
     run_label: str | None = None,
-    snapshot_bin: str | Path | None = None,
     job_config_format: str | None = None,
     force: bool = False,
 ) -> PipelineResult:
@@ -361,7 +359,7 @@ def run_pipeline(
         result.tasks.append(
             build_task(
                 builder, pr_id, dest, repo_dir=repo_dir, specs=specs,
-                target_config=target_config, snapshot_bin=snapshot_bin, force=force,
+                target_config=target_config, force=force,
             )
         )
     built = [task.task_dir for task in result.tasks if task.status == STATUS_OK and task.task_dir]

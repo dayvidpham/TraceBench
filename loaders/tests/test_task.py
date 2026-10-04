@@ -112,6 +112,7 @@ def test_task_payload_layout_and_integration_point(standard_dump, standard_index
 
     request = json.loads((payload.path / "repo-request.json").read_text())
     assert request["pr"] == f"{LIVE}#22"
+    assert request["base_ref"] == "develop"
     assert request["merge_commit"] == "c22"
     assert request["tree_commit"] is None
     assert request["tree_commit_rule"] == "first parent of merge_commit (the develop commit before the PR)"
