@@ -31,6 +31,7 @@ func TestCollectCopiesTranscriptsAndRecordsMissing(t *testing.T) {
 	pr := corpus.PullRequest{
 		Repo: corpus.RepoSlug("peasant-labs/peasant"), Number: 343,
 		Title: "feat: thing", Body: "Intent text for the change.",
+		Issue:    &corpus.LinkedIssue{Number: 337, Title: "issue", Body: "Issue intent text.", URL: "u"},
 		HeadRef:  "peasant-343--feat--thing",
 		MergedAt: time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC),
 	}
@@ -75,6 +76,9 @@ func TestCollectCopiesTranscriptsAndRecordsMissing(t *testing.T) {
 	}
 	if record.Body != "Intent text for the change." {
 		t.Fatalf("record body %q", record.Body)
+	}
+	if record.Issue == nil || record.Issue.Body != "Issue intent text." {
+		t.Fatalf("record issue %+v", record.Issue)
 	}
 
 	var copied Transcript

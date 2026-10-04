@@ -41,6 +41,16 @@ type ghPullRequest struct {
 	} `json:"mergeCommit"`
 }
 
+// ghIssue mirrors the `gh issue list --json` fields used here. Body is the
+// issue description as published on GitHub; it stays raw for the reason
+// documented on corpus.LinkedIssue.
+type ghIssue struct {
+	Number int    `json:"number"`
+	Title  string `json:"title"`
+	Body   string `json:"body"`
+	URL    string `json:"url"`
+}
+
 // FetchMergedPRs lists every merged pull request of repo through the gh CLI.
 func FetchMergedPRs(ctx context.Context, ghBin, repo string) ([]corpus.PullRequest, error) {
 	const limit = 1000
@@ -74,6 +84,22 @@ func FetchMergedPRs(ctx context.Context, ghBin, repo string) ([]corpus.PullReque
 		prs = append(prs, toPullRequest(repo, r))
 	}
 	sort.Slice(prs, func(i, j int) bool { return prs[i].Number < prs[j].Number })
+	needsIssues := false
+	for _, pr := range prs {
+		if _, ok := corpus.IssueFromHeadRef(pr.HeadRef); ok {
+			needsIssues = true
+			break
+		}
+	}
+	if needsIssues {
+		issues, err := fetchIssues(ctx, ghBin, repo)
+		if err != nil {
+			return nil, err
+		}
+		if err := attachIssues(prs, issues); err != nil {
+			return nil, err
+		}
+	}
 	return prs, nil
 }
 
@@ -103,6 +129,68 @@ func toPullRequest(repo string, r ghPullRequest) corpus.PullRequest {
 		pr.MergeCommit = r.MergeCommit.OID
 	}
 	return pr
+}
+
+// fetchIssues lists every issue of repo through the gh CLI and maps it by
+// number. It runs only when a merged pull request's head branch names an
+// issue; the linked issue body is public repository metadata like the pull
+// request body.
+func fetchIssues(ctx context.Context, ghBin, repo string) (map[int]corpus.LinkedIssue, error) {
+	const limit = 1000
+	cmd := exec.CommandContext(ctx, ghBin,
+		"issue", "list", "-R", repo,
+		"--state", "all",
+		"--limit", fmt.Sprint(limit),
+		"--json", strings.Join([]string{"number", "title", "body", "url"}, ","),
+	)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("gh issue list %s: %w: %s", repo, err, strings.TrimSpace(stderr.String()))
+	}
+
+	var raw []ghIssue
+	if err := json.Unmarshal(stdout.Bytes(), &raw); err != nil {
+		return nil, fmt.Errorf("decode gh issue list output for %s: %w", repo, err)
+	}
+	if len(raw) == limit {
+		return nil, fmt.Errorf("repo %s returned %d issues; result may be truncated", repo, limit)
+	}
+
+	issues := make(map[int]corpus.LinkedIssue, len(raw))
+	for _, r := range raw {
+		issues[r.Number] = linkedIssue(r)
+	}
+	return issues, nil
+}
+
+// linkedIssue maps one `gh issue list --json` record to the corpus model.
+func linkedIssue(r ghIssue) corpus.LinkedIssue {
+	return corpus.LinkedIssue{Number: r.Number, Title: r.Title, Body: r.Body, URL: r.URL}
+}
+
+// attachIssues links every pull request whose head branch names an issue to
+// the fetched issue record. A named issue the fetch did not return fails
+// closed, so a truncated or inconsistent listing cannot silently drop the
+// context.
+func attachIssues(prs []corpus.PullRequest, issues map[int]corpus.LinkedIssue) error {
+	for i := range prs {
+		number, ok := corpus.IssueFromHeadRef(prs[i].HeadRef)
+		if !ok {
+			continue
+		}
+		issue, ok := issues[number]
+		if !ok {
+			return fmt.Errorf(
+				"pull request %s names issue %d in head ref %q, but the issue fetch did not return it",
+				prs[i].ID(), number, prs[i].HeadRef,
+			)
+		}
+		link := issue
+		prs[i].Issue = &link
+	}
+	return nil
 }
 
 // LinkInput carries the evidence used to link sessions to pull requests.

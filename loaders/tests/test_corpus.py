@@ -139,3 +139,26 @@ def test_pr_body_absent_loads_as_null(standard_dump) -> None:
         assert pr.get("body") is None
     bundle = corpus.pr_bundle(f"{ARCHIVE}#10")
     assert bundle.pr.get("body") is None
+
+
+def test_linked_issue_round_trips_when_present(write_dump, tmp_path) -> None:
+    from conftest import standard_records
+
+    pull_requests, traces, metadata_records, transcripts = standard_records()
+    pull_requests[0]["issue"] = {"number": 10, "title": "the issue",
+                                 "body": "Issue intent text.", "url": "u"}
+    root = write_dump(
+        tmp_path / "dump",
+        pull_requests=pull_requests,
+        traces=traces,
+        metadata_records=metadata_records,
+        transcripts=transcripts,
+    )
+    corpus = Corpus(root)
+    assert corpus.pull_requests[f"{ARCHIVE}#10"]["issue"]["body"] == "Issue intent text."
+    bundle = corpus.pr_bundle(f"{ARCHIVE}#10")
+    assert bundle.pr["issue"]["body"] == "Issue intent text."
+
+    dest = corpus.materialize(f"{ARCHIVE}#10", tmp_path / "out" / "pr-0010")
+    mini = Corpus(dest)
+    assert mini.pull_requests[f"{ARCHIVE}#10"]["issue"]["body"] == "Issue intent text."

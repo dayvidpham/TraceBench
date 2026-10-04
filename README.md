@@ -189,7 +189,8 @@ Indexes land in `corpus/index/`, the sampled dataset in `corpus/dataset/`, and
 `dump/` holds a flat, publishable dump: `metadata.jsonl` records in
 `schema.UnifiedMetadata`, `transcripts/` envelopes in
 `schema.TranscriptContent` (`session_detail`), plus `pull_requests.jsonl` and
-`traces.jsonl` indexes. Transcripts pass through the `redact` pipeline at the
+`traces.jsonl` indexes. Sampled pull request records carry the published body
+and the issue record named by the head branch. Transcripts pass through the `redact` pipeline at the
 standard level, metadata omits machine-specific paths, and `--pin-prs FILE`
 reproduces a previous sample. The frozen benchmark set is
 `data/tracebench/corpus-set.txt`: newline-delimited PR ids, the sampled corpus

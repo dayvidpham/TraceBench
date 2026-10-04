@@ -91,24 +91,26 @@ type SessionDetail struct {
 
 // PRRecord is one pull request in the dataset manifest. Body is the
 // already-public pull request description and stays raw; see
-// corpus.PullRequest for the redaction rationale.
+// corpus.PullRequest for the redaction rationale. Issue is the issue named
+// by the head branch, when there is one, and stays raw the same way.
 type PRRecord struct {
-	ID           string        `json:"id"`
-	Split        sampler.Split `json:"split"`
-	Repo         string        `json:"repo"`
-	Number       int           `json:"number"`
-	Title        string        `json:"title"`
-	Body         string        `json:"body,omitempty"`
-	URL          string        `json:"url"`
-	Author       string        `json:"author,omitempty"`
-	HeadRef      string        `json:"head_ref"`
-	MergedAt     time.Time     `json:"merged_at"`
-	Additions    int           `json:"additions"`
-	Deletions    int           `json:"deletions"`
-	LinesChanged int           `json:"lines_changed"`
-	Group        string        `json:"group,omitempty"`
-	Sessions     int           `json:"sessions"`
-	Transcripts  []Transcript  `json:"transcripts"`
+	ID           string              `json:"id"`
+	Split        sampler.Split       `json:"split"`
+	Repo         string              `json:"repo"`
+	Number       int                 `json:"number"`
+	Title        string              `json:"title"`
+	Body         string              `json:"body,omitempty"`
+	Issue        *corpus.LinkedIssue `json:"issue,omitempty"`
+	URL          string              `json:"url"`
+	Author       string              `json:"author,omitempty"`
+	HeadRef      string              `json:"head_ref"`
+	MergedAt     time.Time           `json:"merged_at"`
+	Additions    int                 `json:"additions"`
+	Deletions    int                 `json:"deletions"`
+	LinesChanged int                 `json:"lines_changed"`
+	Group        string              `json:"group,omitempty"`
+	Sessions     int                 `json:"sessions"`
+	Transcripts  []Transcript        `json:"transcripts"`
 }
 
 // prFile is the self-contained metadata document written per pull request.
@@ -185,6 +187,7 @@ func Collect(ctx context.Context, datasetDir string, bundles []Bundle, opts Opti
 			Number:       pr.Number,
 			Title:        pr.Title,
 			Body:         pr.Body,
+			Issue:        pr.Issue,
 			URL:          pr.URL,
 			Author:       pr.Author,
 			HeadRef:      pr.HeadRef,

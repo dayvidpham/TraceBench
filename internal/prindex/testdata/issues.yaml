@@ -1,0 +1,54 @@
+# Linked-issue mapping for merged pull requests. Each scenario builds corpus
+# pull requests from `prs` and fetched issue records from `issues`, then
+# asserts the head-branch linking rule: "peasant-337--..." attaches issue
+# 337, a branch without an issue number stays unlinked, and a named issue the
+# fetch missed fails closed. `error` holds the substring the failure must name.
+scenarios:
+  - name: links_the_branch_issue
+    issues:
+      - number: 337
+        title: publication validation
+        body: "Issue intent text."
+        url: "https://github.com/peasant-labs/peasant/issues/337"
+    prs:
+      - number: 344
+        head_ref: "peasant-337--refactor--explicit-publication-validation"
+    expect:
+      - pr_number: 344
+        issue_number: 337
+        issue_body: "Issue intent text."
+
+  - name: branch_without_an_issue_stays_unlinked
+    issues: []
+    prs:
+      - number: 350
+        head_ref: "feature/no-issue-branch"
+    expect:
+      - pr_number: 350
+        issue_number: 0
+
+  - name: several_pull_requests_share_the_issue
+    issues:
+      - number: 140
+        title: privacy copy
+        body: "Copy intent."
+        url: "https://github.com/peasant-labs/peasant/issues/140"
+    prs:
+      - number: 144
+        head_ref: "peasant-140--fix--copy-one"
+      - number: 145
+        head_ref: "peasant-140--fix--copy-two"
+    expect:
+      - pr_number: 144
+        issue_number: 140
+        issue_body: "Copy intent."
+      - pr_number: 145
+        issue_number: 140
+        issue_body: "Copy intent."
+
+  - name: named_issue_missing_from_the_fetch_fails_closed
+    issues: []
+    prs:
+      - number: 351
+        head_ref: "peasant-999--fix--missing-issue"
+    error: "names issue 999"
