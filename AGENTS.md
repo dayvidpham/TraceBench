@@ -75,8 +75,8 @@ oracle, and the task with its verifier. It writes `<dest>/payloads/`, `<dest>/ta
 `<dest>/job-config.yaml` (run id, `n_attempts: 3`, `TRACEBENCH_RUN_ID`). A failed task names
 the failed part and the others still build. Validate a built task with
 `harbor run -p <dest>/tasks/<name> -a oracle -e podman` when Harbor is installed: generated tasks
-score around 0.998 (the residual is the documented calibration set) and the hand-built
-`tasks/peasant-344` MVP scores 1.0. The full runbook — dependencies, image setup with the `:keep`
+score around 0.998 (the residual is the documented calibration set). The full runbook —
+dependencies, image setup with the `:keep`
 re-tag step, and troubleshooting — is [`docs/proof-of-concept.md`](docs/proof-of-concept.md).
 
 To modify it: the test and build command per repository live in the repository adaptation spec
