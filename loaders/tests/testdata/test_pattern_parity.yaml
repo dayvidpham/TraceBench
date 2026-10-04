@@ -1,0 +1,56 @@
+# Parity between the canonical matcher (golden.glob_to_regex) used by the
+# verifier and the retired `find -path` translation the old test.sh used.
+# Every DEFAULT_TEST_PATTERNS entry must match the same representative paths
+# both ways; `required_patterns` guards against silent deletion.
+required_patterns:
+  - "**/*_test.go"
+  - "**/testdata/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.test.js"
+  - "**/*.test.jsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "**/*.spec.js"
+  - "**/*.spec.jsx"
+
+cases:
+  - {pattern: "**/*_test.go", path: "main_test.go", match: true}
+  - {pattern: "**/*_test.go", path: "internal/api/server_test.go", match: true}
+  - {pattern: "**/*_test.go", path: "main.go", match: false}
+  - {pattern: "**/*_test.go", path: "internal/api/server.go", match: false}
+  - {pattern: "**/testdata/**", path: "testdata/a.yaml", match: true}
+  - {pattern: "**/testdata/**", path: "internal/x/testdata/deep/b.json", match: true}
+  - {pattern: "**/testdata/**", path: "internal/x/data.go", match: false}
+  - {pattern: "**/*.test.ts", path: "app.test.ts", match: true}
+  - {pattern: "**/*.test.ts", path: "web/src/ui/app.test.ts", match: true}
+  - {pattern: "**/*.test.ts", path: "web/src/ui/app.test.ts.snap", match: false}
+  - {pattern: "**/*.test.ts", path: "web/src/ui/app.ts", match: false}
+  - {pattern: "**/*.test.tsx", path: "app.test.tsx", match: true}
+  - {pattern: "**/*.test.tsx", path: "web/src/ui/app.test.tsx", match: true}
+  - {pattern: "**/*.test.tsx", path: "web/src/ui/app.test.tsx.snap", match: false}
+  - {pattern: "**/*.test.tsx", path: "web/src/ui/app.ts", match: false}
+  - {pattern: "**/*.test.js", path: "app.test.js", match: true}
+  - {pattern: "**/*.test.js", path: "web/src/ui/app.test.js", match: true}
+  - {pattern: "**/*.test.js", path: "web/src/ui/app.test.js.snap", match: false}
+  - {pattern: "**/*.test.js", path: "web/src/ui/app.ts", match: false}
+  - {pattern: "**/*.test.jsx", path: "app.test.jsx", match: true}
+  - {pattern: "**/*.test.jsx", path: "web/src/ui/app.test.jsx", match: true}
+  - {pattern: "**/*.test.jsx", path: "web/src/ui/app.test.jsx.snap", match: false}
+  - {pattern: "**/*.test.jsx", path: "web/src/ui/app.ts", match: false}
+  - {pattern: "**/*.spec.ts", path: "app.spec.ts", match: true}
+  - {pattern: "**/*.spec.ts", path: "web/src/ui/app.spec.ts", match: true}
+  - {pattern: "**/*.spec.ts", path: "web/src/ui/app.spec.ts.snap", match: false}
+  - {pattern: "**/*.spec.ts", path: "web/src/ui/app.ts", match: false}
+  - {pattern: "**/*.spec.tsx", path: "app.spec.tsx", match: true}
+  - {pattern: "**/*.spec.tsx", path: "web/src/ui/app.spec.tsx", match: true}
+  - {pattern: "**/*.spec.tsx", path: "web/src/ui/app.spec.tsx.snap", match: false}
+  - {pattern: "**/*.spec.tsx", path: "web/src/ui/app.ts", match: false}
+  - {pattern: "**/*.spec.js", path: "app.spec.js", match: true}
+  - {pattern: "**/*.spec.js", path: "web/src/ui/app.spec.js", match: true}
+  - {pattern: "**/*.spec.js", path: "web/src/ui/app.spec.js.snap", match: false}
+  - {pattern: "**/*.spec.js", path: "web/src/ui/app.ts", match: false}
+  - {pattern: "**/*.spec.jsx", path: "app.spec.jsx", match: true}
+  - {pattern: "**/*.spec.jsx", path: "web/src/ui/app.spec.jsx", match: true}
+  - {pattern: "**/*.spec.jsx", path: "web/src/ui/app.spec.jsx.snap", match: false}
+  - {pattern: "**/*.spec.jsx", path: "web/src/ui/app.ts", match: false}

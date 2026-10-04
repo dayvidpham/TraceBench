@@ -1,0 +1,5 @@
+{"Action":"start","Package":"example.com/demo"}
+{"Action":"run","Package":"example.com/demo","Test":"TestA"}
+{"Action":"pass","Package":"example.com/demo","Test":"TestA","Elapsed":0.01}
+panic: not json
+{"Action":"pass","Package":"example.com/demo","Elapsed":0.1}
