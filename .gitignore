@@ -7,3 +7,8 @@ __pycache__/
 
 # Sampled corpus output (regenerable; contains raw transcripts)
 /corpus/
+
+# Python tooling (corpus loader)
+loaders/.venv/
+loaders/.pytest_cache/
+loaders/*.egg-info/

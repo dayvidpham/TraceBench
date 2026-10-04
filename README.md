@@ -110,6 +110,11 @@ go run ./cmd/tracebench-sample fetch --dest data/tracebench
 verifies each transcript's SHA3-256 against its metadata `contentHash`
 (`--no-verify` to skip, `--revision` to pin a revision).
 
+A Python loader for Harbor task environments and verifiers lives in
+[`loaders/`](loaders/README.md): it loads the dump (local or directly from
+HuggingFace), joins traces, PRs, metadata, and transcript turns, and
+materializes self-contained per-PR bundles.
+
 ## Verification status
 
 * Test logic: buggy code fails 6/7 grading tests, oracle-fixed code passes 7/7.
