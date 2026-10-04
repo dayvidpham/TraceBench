@@ -254,3 +254,29 @@ def test_cli_build_command_and_spec_are_exclusive(pr_repo, tmp_path):
             "--build-command", "true", "--spec", "spec.yaml",
         ])
     assert excinfo.value.code == 2
+
+
+def test_cli_spec_supplies_build_command_to_solve_sh(pr_repo, tmp_path):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    spec = Path(__file__).parent / "testdata" / "oracle_spec.yaml"
+    assert main([
+        "oracle", PR_ID, "--repo-dir", str(repo), "--payload", str(payload), "--spec", str(spec),
+    ]) == 0
+    app = _pre_pr_copy(repo, tree_commit, tmp_path / "app")
+
+    result = _run_solve(payload / "solution", app)
+
+    assert result.returncode == 0, result.stderr
+    assert (app / "spec-build-ran").is_file()
+
+
+def test_cli_spec_without_matching_repo_exits_2(pr_repo, tmp_path, capsys):
+    repo, tree_commit, merge_commit = pr_repo
+    payload = _payload(tmp_path, tree_commit, merge_commit)
+    spec = Path(__file__).parent / "testdata" / "oracle_spec.yaml"
+    assert main([
+        "oracle", "other/repo#1", "--repo-dir", str(repo), "--payload", str(payload),
+        "--spec", str(spec),
+    ]) == 2
+    assert "no repository spec matches" in capsys.readouterr().err

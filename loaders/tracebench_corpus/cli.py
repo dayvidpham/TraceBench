@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .corpus import Corpus, load_corpus
 from .oracle import build_oracle, payload_commits, write_oracle
+from .repository_spec import find_repository_spec, load_repository_specs
 from .skeleton import build_skeleton
 from .target_config import find_target_config, load_target_configs
 from .task import TaskBuilder, load_pr_index
@@ -246,18 +247,8 @@ def _test_manifest(args: argparse.Namespace) -> int:
 
 def _spec_build_command(spec_path: str, pr_id: str) -> str | None:
     """Build command for ``pr_id``'s repository from a repository adaptation spec."""
-    try:
-        from . import repository_spec
-    except ImportError as exc:
-        raise ValueError(
-            "--spec requires the repository adaptation spec module "
-            "(tracebench_corpus.repository_spec), which is not installed; "
-            "pass --build-command instead"
-        ) from exc
     repo = pr_id.split("#", 1)[0]
-    specs = repository_spec.load_repository_specs(spec_path)
-    spec = repository_spec.select_repository_spec(specs, repo)
-    return getattr(spec, "build_command", None)
+    return find_repository_spec(load_repository_specs(spec_path), repo).build_command
 
 
 def _oracle(args: argparse.Namespace) -> int:
