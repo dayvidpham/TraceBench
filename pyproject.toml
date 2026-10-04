@@ -8,7 +8,8 @@ license = { text = "CC-BY-SA-4.0" }
 dependencies = ["tracebench-corpus"]
 
 [dependency-groups]
-dev = ["pytest>=8", "PyYAML>=6", "huggingface_hub>=0.30"]
+dev = ["pytest>=8", "PyYAML>=6", "huggingface_hub>=0.30",
+       "harbor==0.23.0; python_version >= '3.12'"]
 
 [tool.uv]
 package = false

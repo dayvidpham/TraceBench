@@ -1,0 +1,61 @@
+# Captured Podman provider-banner shape; the reset shares the container-ID line.
+container_resolution: "\u001b[4m>>>> Executing external compose provider <<<<\n\n\u001b[0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+required_names:
+  - default-variable
+  - override-variable
+  - missing-variable
+  - empty-variable
+  - malformed-variable-name
+  - output-nondisclosure
+  - passthrough-to-opencode
+  - oracle/other-agent-no-auth
+cases:
+  - name: default-variable
+    agents: [opencode]
+    variables: {OPENCODE_API_KEY: tracebench-fake-default-key}
+    expected: tracebench-fake-default-key
+  - name: override-variable
+    agents: [opencode]
+    variable: TRACEBENCH_TEST_KEY
+    variables: {TRACEBENCH_TEST_KEY: tracebench-fake-override-key, OPENCODE_API_KEY: fake-decoy-key}
+    expected: tracebench-fake-override-key
+  - name: missing-variable
+    agents: [opencode]
+    variables: {}
+    error: absent or empty
+  - name: empty-variable
+    agents: [opencode]
+    variables: {OPENCODE_API_KEY: ''}
+    error: absent or empty
+  - name: malformed-variable-name
+    agents: [opencode]
+    variable: 'BAD=${tracebench-fake-name-key}'
+    variables: {}
+    error: invalid OpenCode credential variable name
+  - name: output-nondisclosure
+    agents: [opencode]
+    variables: {OPENCODE_API_KEY: "tracebench-fake\nmultiline-key"}
+    expected: "tracebench-fake\nmultiline-key"
+    failure: true
+  - name: passthrough-to-opencode
+    agents: [opencode]
+    variables: {OPENCODE_API_KEY: tracebench-fake-runtime-key}
+    expected: tracebench-fake-runtime-key
+  - name: oracle/other-agent-no-auth
+    agents: [oracle, nop]
+    variable: 'not a variable name'
+    variables: {}
+model: opencode-go/fixture-model
+host_shell_prefix: 'stdbuf() { shift; "$@"; }; '
+stream_boundary: 65530
+fake_server: |
+  #!/usr/bin/env python3
+  import os, pathlib, sys
+  key = os.environ.get('OPENCODE_API_KEY')
+  root = pathlib.Path(os.environ['FAKE_ARTIFACT_DIR'])
+  (root / 'receipt.txt').write_text('received' if key == os.environ['FAKE_EXPECTED_KEY'] else 'wrong')
+  (root / 'downloaded.txt').write_text('downloaded: ' + key)
+  (root / 'downloaded.bin').write_bytes(b'\0' + key.encode() + b'\0')
+  print('routine server output: ' + key, flush=True)
+  print('routine server error: ' + key, file=sys.stderr, flush=True)
+  sys.exit(int(os.environ['FAKE_EXIT_CODE']))

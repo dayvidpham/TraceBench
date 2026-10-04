@@ -10,9 +10,11 @@ dependencies = []
 [project.optional-dependencies]
 hf = ["huggingface_hub>=0.30"]
 test = ["pytest>=8", "PyYAML>=6"]
+harbor = ["harbor==0.23.0; python_version >= '3.12'", "PyYAML>=6"]
 
 [project.scripts]
 tracebench-corpus = "tracebench_corpus.cli:main"
+tracebench-harbor = "tracebench_corpus.local_run:main"
 
 [build-system]
 requires = ["setuptools>=68"]
