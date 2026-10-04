@@ -113,9 +113,11 @@ verifies each transcript's SHA3-256 against its metadata `contentHash`
 A Python loader for Harbor task environments and verifiers lives in
 [`loaders/`](loaders/README.md): it loads the dump (local or directly from
 HuggingFace), joins traces, PRs, metadata, and transcript turns, materializes
-self-contained per-PR bundles, assembles task payloads (PR + prior traces +
-integration points for the pre-PR repo and merged-state golden tests), and
-generates Harbor task skeletons from those payloads.
+self-contained per-PR bundles, assembles task payloads (PR + prior traces up
+to the PR's develop boundary + integration points for the pre-PR repo and
+merged-state golden tests), records the target harness/model/thinking
+configuration for a run, and generates Harbor task skeletons from those
+payloads.
 
 ## Verification status
 

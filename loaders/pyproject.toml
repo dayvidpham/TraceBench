@@ -9,7 +9,7 @@ dependencies = []
 
 [project.optional-dependencies]
 hf = ["huggingface_hub>=0.30"]
-test = ["pytest>=8"]
+test = ["pytest>=8", "PyYAML>=6"]
 
 [project.scripts]
 tracebench-corpus = "tracebench_corpus.cli:main"
