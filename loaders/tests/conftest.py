@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from tracebench_corpus import load_target_configs
+from tracebench_corpus import MAX_BODY_CHARS, load_target_configs
 
 ARCHIVE = "peasant-labs/peasant-prerelease-archive"
 LIVE = "peasant-labs/peasant"
@@ -134,6 +134,41 @@ def standard_index() -> dict[str, dict]:
         f"{LIVE}#22": {"merge_commit": "c22", "created_at": "2026-08-24T00:00:00Z",
                        "base_ref": "develop"},
     }
+
+
+#: Pull request body for the task pull request (#22) in the body fixtures.
+BODY_TEXT = "Fix the greeting endpoint to return 200 with the caller's name."
+
+
+def _dump_with_body(write_dump, root: Path, body: str | None) -> Path:
+    """Write the standard dump with ``body`` on the task pull request (#22).
+
+    ``None`` leaves every record body-free, mirroring the published dump.
+    """
+    pull_requests, traces, metadata_records, transcripts = standard_records()
+    if body is not None:
+        for record in pull_requests:
+            if record["id"] == f"{LIVE}#22":
+                record["body"] = body
+    return write_dump(
+        root,
+        pull_requests=pull_requests,
+        traces=traces,
+        metadata_records=metadata_records,
+        transcripts=transcripts,
+    )
+
+
+@pytest.fixture
+def body_dump(tmp_path: Path, write_dump) -> Path:
+    """Standard dump whose task pull request (#22) carries a PR body."""
+    return _dump_with_body(write_dump, tmp_path / "dump", BODY_TEXT)
+
+
+@pytest.fixture
+def long_body_dump(tmp_path: Path, write_dump) -> Path:
+    """Standard dump whose task pull request carries an over-long PR body."""
+    return _dump_with_body(write_dump, tmp_path / "dump", "word " * (MAX_BODY_CHARS // 5 + 200))
 
 
 @pytest.fixture

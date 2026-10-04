@@ -467,3 +467,11 @@ def test_unsampled_index_without_body_loads_as_null(standard_dump, standard_inde
     payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#23", tmp_path / "task")
     pr = json.loads((payload.path / "pr.json").read_text())
     assert pr.get("body") is None
+
+
+def test_payload_manifest_notes_body_redaction(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    payload = TaskBuilder(corpus, pr_index=standard_index).build(f"{LIVE}#22", tmp_path / "task")
+    manifest = json.loads((payload.path / "prior-traces" / "manifest.json").read_text())
+    assert "raw" in manifest["body_redaction"]
+    assert "transcript" in manifest["body_redaction"]
