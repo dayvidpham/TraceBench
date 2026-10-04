@@ -2,6 +2,9 @@
 # commits of the listed pull requests. Each commit writes `files` on top of the
 # previous tree.
 commits:
+  - name: initial
+    files:
+      README.md: "# demo\n"
   - name: base
     files:
       go.mod: "module example.com/demo\n"
@@ -17,6 +20,11 @@ commits:
     files:
       greet.go: "package main\n\nfunc greet() string { return \"hello\" }\n"
       greet_test.go: "package main\n\nimport \"testing\"\n\nfunc TestGreet(t *testing.T) {\n\tif greet() != \"hello\" {\n\t\tt.Fatal(\"greet\")\n\t}\n}\n"
+  - name: pr23
+    pr: 23
+    files:
+      greet.go: "package main\n\nfunc greet() string { return \"hello!\" }\n"
+      greet_test.go: "package main\n\nimport \"testing\"\n\nfunc TestGreet(t *testing.T) {\n\tif greet() != \"hello!\" {\n\t\tt.Fatal(\"greet\")\n\t}\n}\n"
 
 # Side commits off a named commit; their trees hold exactly `files`. PR 21's
 # merge has no test files, so its golden suite is missing.

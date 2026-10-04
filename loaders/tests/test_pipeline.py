@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -28,20 +28,8 @@ from tracebench_corpus.pipeline import (
 )
 from tracebench_corpus.repository_spec import DEFAULT_REPOSITORY_SPECS
 from tracebench_corpus.target_config import TargetConfiguration
-from tracebench_corpus.worktree import SNAPSHOT_MODULE
 
 FIXTURE = yaml.safe_load((TESTDATA / "pipeline.yaml").read_text())
-
-needs_go = pytest.mark.skipif(shutil.which("go") is None, reason="needs the Go toolchain")
-
-
-@pytest.fixture(scope="session")
-def snapshot_bin(tmp_path_factory) -> Path:
-    if shutil.which("go") is None:
-        pytest.skip("needs the Go toolchain")
-    out = tmp_path_factory.mktemp("bin") / "snapshot"
-    subprocess.run(["go", "build", "-o", str(out), "./cmd/snapshot"], cwd=SNAPSHOT_MODULE, check=True)
-    return out
 
 
 @pytest.fixture
@@ -59,7 +47,7 @@ def pipeline_env(git_repo, tmp_path, write_dump) -> dict:
         for path, content in spec["files"].items():
             (repo / path).write_text(content)
         git("add", ".")
-        git("commit", "-q", "-m", spec["name"])
+        git("-c", "commit.gpgsign=false", "commit", "-q", "-m", spec["name"])
         named[spec["name"]] = git("rev-parse", "HEAD")
         if "pr" in spec:
             merges[spec["pr"]] = named[spec["name"]]
@@ -85,26 +73,27 @@ def pipeline_env(git_repo, tmp_path, write_dump) -> dict:
         metadata_records=[metadata("s20", "2026-05-01T00:00:00Z")],
         transcripts={"s20": envelope("s20")},
     )
-    index = [{"repo": LIVE, "number": n, "merge_commit": merges[n]} for n in numbers]
+    # PR 23 is index-only: it has no sampled sessions, so the dump omits it.
+    index = [{"repo": LIVE, "number": n, "merge_commit": merges[n], "base_ref": "develop"}
+             for n in (*numbers, 23)]
     index_path = tmp_path / "merged_prs.json"
     index_path.write_text(json.dumps(index))
     return {"repo": repo, "dump": dump, "index": index_path, "merges": merges}
 
 
-def _cli(env: dict, dest: Path, snapshot_bin: Path, *extra: str) -> int:
+def _cli(env: dict, dest: Path, *extra: str) -> int:
     return main([
         "--corpus", str(env["dump"]), "pipeline",
         "--repo-dir", str(env["repo"]), "--index", str(env["index"]), "--dest", str(dest),
-        "--snapshot-bin", str(snapshot_bin), *extra,
+        *extra,
     ])
 
 
-@needs_go
-def test_two_prs_build_two_runnable_tasks(pipeline_env, tmp_path, snapshot_bin, capsys) -> None:
+def test_two_prs_build_two_runnable_tasks(pipeline_env, tmp_path, capsys) -> None:
     pr_file = tmp_path / "prs.txt"
     pr_file.write_text(f"# the task set\n{LIVE}#20\n\n")
     dest = tmp_path / "out"
-    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", str(pr_file), "--prs", f"{LIVE}#22",
+    assert _cli(pipeline_env, dest, "--prs", str(pr_file), "--prs", f"{LIVE}#22",
                 "--run-id", "run-x") == 0
     out = capsys.readouterr().out
     assert set(REQUIRED_TASK_PARTS) == set(FIXTURE["required_parts"])
@@ -113,7 +102,16 @@ def test_two_prs_build_two_runnable_tasks(pipeline_env, tmp_path, snapshot_bin, 
         assert f"ok     {pr_id}" in out
         for part in FIXTURE["required_parts"]:
             assert (task / part).exists(), f"{name} lacks {part}"
-        assert not (task / "environment" / "repo" / ".git").exists()
+        repo_git = task / "environment" / "repo"
+        count = subprocess.run(["git", "-C", str(repo_git), "rev-list", "--all", "--count"],
+                               capture_output=True, text=True, check=True).stdout.strip()
+        assert int(count) > 1, name
+        assert not (repo_git / ".git" / "shallow").exists(), name
+        assert subprocess.run(["git", "-C", str(repo_git), "remote"],
+                              capture_output=True, text=True, check=True).stdout.strip() == "", name
+        branch = subprocess.run(["git", "-C", str(repo_git), "symbolic-ref", "--short", "HEAD"],
+                                capture_output=True, text=True, check=True).stdout.strip()
+        assert branch == "develop", name
         assert (task / "tests" / "golden" / "greet_test.go").is_file()
     for name, sessions in FIXTURE["prior_traces"].items():
         transcripts = dest / "tasks" / name / "environment" / "prior-traces" / "transcripts"
@@ -128,10 +126,28 @@ def test_two_prs_build_two_runnable_tasks(pipeline_env, tmp_path, snapshot_bin, 
     assert "greet.go" in patch
 
 
-@needs_go
-def test_missing_part_fails_that_task_and_others_build(pipeline_env, tmp_path, snapshot_bin, capsys) -> None:
+def test_index_only_pr_builds_a_task(pipeline_env, tmp_path, capsys) -> None:
     dest = tmp_path / "out"
-    code = _cli(pipeline_env, dest, snapshot_bin,
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#23", "--run-id", "run-23") == 0
+    out = capsys.readouterr().out
+    assert f"ok     {LIVE}#23" in out
+    task = dest / "tasks" / "peasant-pr-0023"
+    for part in FIXTURE["required_parts"]:
+        assert (task / part).exists(), f"peasant-pr-0023 lacks {part}"
+    # Prior context still comes from the sampled corpus: s20 is linked to PR 20.
+    transcripts = task / "environment" / "prior-traces" / "transcripts"
+    assert sorted(p.stem for p in transcripts.glob("*.jsonl")) == ["s20"]
+    config = yaml.safe_load((dest / "job-config-run-23.yaml").read_text())
+    assert [Path(t["path"]).name for t in config["tasks"]] == ["peasant-pr-0023"]
+    # The environment healthcheck warms the pre-PR Go build before the offline phases.
+    environment = tomllib.loads((task / "task.toml").read_text())["environment"]
+    assert "go mod download" in environment["healthcheck"]["command"]
+    assert "safe.directory" in environment["healthcheck"]["command"]
+
+
+def test_missing_part_fails_that_task_and_others_build(pipeline_env, tmp_path, capsys) -> None:
+    dest = tmp_path / "out"
+    code = _cli(pipeline_env, dest,
                 "--prs", f"{LIVE}#21", "--prs", f"{LIVE}#22", "--prs", f"{LIVE}#99", "--run-id", "r")
     captured = capsys.readouterr()
     assert code == 1
@@ -147,11 +163,10 @@ def test_missing_part_fails_that_task_and_others_build(pipeline_env, tmp_path, s
                                  "env": {"TRACEBENCH_RUN_ID": "r"}}]
 
 
-@needs_go
-def test_job_config_carries_run_id_attempts_and_env(pipeline_env, tmp_path, snapshot_bin) -> None:
+def test_job_config_carries_run_id_attempts_and_env(pipeline_env, tmp_path) -> None:
     configs = TESTDATA / "target_configurations.yaml"
     dest = tmp_path / "out"
-    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#20",
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#20",
                 "--target-configs", str(configs), "--target-config", "opencode-gpt-medium",
                 "--job-config-format", "json") == 0
     [path] = dest.glob("job-config-*.json")
@@ -229,14 +244,14 @@ def test_agent_without_harness_fails_before_building(standard_dump, tmp_path) ->
 
 
 def test_cli_without_run_id_or_target_config_exits_2(pipeline_env, tmp_path, capsys) -> None:
-    code = _cli(pipeline_env, tmp_path / "out", tmp_path / "no-snapshot", "--prs", f"{LIVE}#20")
+    code = _cli(pipeline_env, tmp_path / "out", "--prs", f"{LIVE}#20")
     assert code == 2
     assert "--run-id" in capsys.readouterr().err
     assert not (tmp_path / "out").exists()
 
 
 def test_cli_run_label_with_run_id_exits_2(pipeline_env, tmp_path, capsys) -> None:
-    code = _cli(pipeline_env, tmp_path / "out", tmp_path / "no-snapshot", "--prs", f"{LIVE}#20",
+    code = _cli(pipeline_env, tmp_path / "out", "--prs", f"{LIVE}#20",
                 "--run-id", "r", "--run-label", "nightly")
     assert code == 2
     assert "--run-label" in capsys.readouterr().err
@@ -255,7 +270,7 @@ def json_index(path: Path) -> dict:
 
 def test_all_failed_run_writes_no_job_config(pipeline_env, tmp_path, capsys) -> None:
     dest = tmp_path / "out"
-    code = _cli(pipeline_env, dest, tmp_path / "no-snapshot", "--prs", f"{LIVE}#99", "--run-id", "r")
+    code = _cli(pipeline_env, dest, "--prs", f"{LIVE}#99", "--run-id", "r")
     out = capsys.readouterr().out
     assert code == 1
     assert "no job config written: no task succeeded" in out
@@ -315,25 +330,24 @@ def test_dependency_failure_names_its_part(pipeline_env, tmp_path, monkeypatch,
     assert result.job_config is None
 
 
-@needs_go
-def test_rerun_without_force_keeps_config_and_force_recovers(pipeline_env, tmp_path, snapshot_bin,
+def test_rerun_without_force_keeps_config_and_force_recovers(pipeline_env, tmp_path,
                                                              capsys) -> None:
     dest = tmp_path / "out"
-    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#20", "--run-id", "r") == 0
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#20", "--run-id", "r") == 0
     config_path = dest / "job-config-r.yaml"
     good = config_path.read_bytes()
     capsys.readouterr()
 
-    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#20", "--run-id", "r") == 1
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#20", "--run-id", "r") == 1
     out = capsys.readouterr().out
     assert "not empty" in out and "no job config written" in out
     assert config_path.read_bytes() == good
 
-    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#22", "--run-id", "other") == 0
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#22", "--run-id", "other") == 0
     assert config_path.read_bytes() == good
     assert (dest / "job-config-other.yaml").is_file()
 
-    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#20", "--run-id", "r",
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#20", "--run-id", "r",
                 "--force") == 0
     assert f"ok     {LIVE}#20" in capsys.readouterr().out
     assert yaml.safe_load(config_path.read_text())["job_name"] == "r"

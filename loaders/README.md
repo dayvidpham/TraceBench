@@ -104,9 +104,6 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
   proxy for everything. The chosen basis is recorded as `cutoff.basis` in both
   manifests. A merge commit is required: pass `--index` when the published dump
   record lacks one.
-- **Family.** The codebase family pairs `peasant-labs/peasant` with
-  `peasant-labs/peasant-prerelease-archive`, so live tasks see archive traces
-  as prior context.
 - **Exclusions.** The pull request's own sessions are never prior context, and
   prior sessions whose end time is after the boundary are cut (recorded as
   `sessions_past_cutoff`).
@@ -114,7 +111,9 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
   `missing_sessions`; the payload distinguishes selected from materialized
   sessions.
 - **Scope.** Prior traces cover the sampled pull requests only; the corpus is a
-  sample, not the repository's full history.
+  sample, not the repository's full history. Prior context comes from the same
+  repository: the prerelease archive is frozen pre-launch history and provides
+  neither tasks nor context (an archive target fails closed).
 - **Target configuration.** `--target-config NAME` selects an entry from
   `--target-configs SPEC`. The payload records the harness, model, and
   thinking level for the runner. The configuration does **not** filter prior
@@ -128,8 +127,11 @@ When `--repo-dir` is supplied, task generation compares the merged commit to
 its first parent and writes `test-manifest.json`. It includes every Go
 `*_test.go` file at the merged commit, with top-level test functions tagged
 `golden: true` only when their function was added or changed by the PR. Every
-case starts with `status: "accept"`; a future counting policy may change a
-case to `reject` without changing its golden classification.
+case starts with `status: "accept"`, except cases in files whose `//go:build`
+constraint the test command does not satisfy (the command runs without custom
+tags; the context is linux/amd64 with `cgo`/`gc`/`unix`): those carry
+`status: "reject"` with a reason, and the verifier excludes them from the
+reward denominator. Golden classification is independent of the status.
 
 ```json
 {
@@ -204,12 +206,12 @@ them; caller-authored files elsewhere are never touched.
 
 ```bash
 tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
-  --base-image tracebench/peasant-base:latest
+  --base-image tracebench/task-runtime:latest
 ```
 
 | path | contents |
 |---|---|
-| `task.toml` | registry-safe name (`<org>/<repo-slug>-pr-<number>`), PR metadata, `[environment].docker_image` (the shared base image) and `workdir`, offline network policy for agent and verifier |
+| `task.toml` | registry-safe name (`<org>/<repo-slug>-pr-<number>`), PR metadata, `[environment].docker_image` (the shared base image) and `workdir`, offline network policy for agent and verifier, and the environment healthcheck that warms the pre-PR dependency and build caches while the environment network is still up (the agent and verifier phases stay offline) |
 | `instruction.md` | scaffolded from the pull request; task authors replace the TODO with the issue description |
 | `environment/repo/`, `environment/prior-traces/` | task data, uploaded into the container workdir at environment start; **no per-task image is built** |
 | `tests/golden/` | the payload's extracted merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |
@@ -218,7 +220,7 @@ tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
 | `tests/verifier-config.json` | the PR id, the test command, the test patterns, and the removal regexes compiled from them by the canonical doublestar matcher |
 | `tests/verifier.py` | the standard-library verifier, copied from `tracebench_corpus/verifier.py` |
 | `tests/repo-request.json` | the payload's request, shipped unchanged for provenance |
-| `tests/test.sh` | runs `python3 /tests/verifier.py run`: removes the pre-PR test files, overlays the golden suite, runs the test command, writes `/logs/verifier/reward.txt` (`passed / total`) and `/logs/verifier/test-results.json`. A crashed verifier writes reward 0 |
+| `tests/test.sh` | runs `python3 /tests/verifier.py run`: removes the pre-PR test files, overlays the golden suite, runs the test command, writes `/logs/verifier/reward.txt` (`passed / accepted cases`; rejected cases are excluded) and `/logs/verifier/test-results.json`. A crashed verifier writes reward 0 |
 | `solution/` | the payload's `solution/` (oracle patch and generated `solve.sh`) when `oracle` has run; otherwise a placeholder `solve.sh` that exits non-zero |
 
 Without `oracle` output the oracle is an explicit placeholder: such a skeleton
@@ -279,7 +281,7 @@ tracebench-corpus --corpus corpus/dump pipeline \
   --dest build/run-1 \
   [--spec repository_specs.yaml] \
   [--run-id ID | --target-configs SPEC --target-config NAME [--run-label LABEL]] \
-  [--snapshot-bin /path/to/snapshot] [--job-config-format yaml|json] [--force]
+  [--job-config-format yaml|json] [--force]
 ```
 
 | flag | meaning |
@@ -292,9 +294,14 @@ tracebench-corpus --corpus corpus/dump pipeline \
 | `--run-id` | the run id; when absent it is derived from the target configuration |
 | `--target-configs`, `--target-config` | the target configuration; together, or not at all |
 | `--run-label` | label of a derived run id (default `tracebench-<configuration name>`) |
-| `--snapshot-bin` | a built `snapshot` binary (default `go run ./cmd/snapshot` in `snapshot/`) |
 | `--job-config-format` | `yaml` (default when PyYAML is installed) or `json` |
 | `--force` | rebuild existing payload and task directories |
+
+A target may be a merged pull request that the published dump does not sample
+(for example, one with no traced sessions): `TaskBuilder.resolve_pull_request`
+resolves it from `--index`, and prior context still comes from the sampled
+corpus. Only a pull request absent from both the corpus and the index fails
+closed.
 
 For each pull request, in order:
 
@@ -362,7 +369,7 @@ harbor run -c build/run-1/job-config.yaml
 | `task.py` | payload assembly: develop boundary, prior traces, session cuts, `repo-request.json`, destination hygiene |
 | `golden.py` | golden suite: files at `merge_commit` matching the test patterns, `tests/manifest.json`; owns the canonical doublestar matcher (`glob_to_regex`) |
 | `test_manifest.py` | case catalog: top-level Go test cases at `merge_commit`, PR-changed cases flagged `golden` |
-| `worktree.py` | secure worktree: drives the `snapshot` tool in commit mode and verifies `tree_sha` |
+| `worktree.py` | secure worktree: packs the ancestry of `tree_commit` into a fresh repo; asserts HEAD, tree, source-equal count, not shallow, no remotes, fix absent, clean `fsck` |
 | `oracle.py` | oracle: merge diff, `solve.sh`, equivalence check, the `task.json` `oracle` block |
 | `repository_spec.py` | repository adaptation spec: test and build command per repository |
 | `target_config.py` | target configurations: harness, model, thinking level |
@@ -372,20 +379,42 @@ harbor run -c build/run-1/job-config.yaml
 
 ### Secure worktree
 
-`materialize_worktree(repo_dir, payload_dir, snapshot_bin=None)` reads
-`tree_commit` from `repo-request.json` and runs
+`materialize_worktree(repo_dir, payload_dir)` reads
+`tree_commit` from `repo-request.json` (falling back to `merge_commit^`) and
+writes `repo/` as the project's **full real history truncated at the pre-PR
+commit**: every ancestor of `tree_commit` with its real SHA, and nothing at or
+after the PR. The PR's base branch comes from the payload's `base_ref`
+(`refs/heads/` stripped), defaulting to `main`.
 
 ```bash
-snapshot --repo <clone> --cutoff-type commit --commit <tree_commit sha> --out <tmp> --materialize
+git -C <clone> pack-objects --revs --stdout > history.pack   # stdin: <tree_commit>
+git init -q repo
+git -C repo config core.logAllRefUpdates false
+git -C repo index-pack --stdin < history.pack
+git -C repo update-ref refs/heads/<base_ref> <tree_commit>
+git -C repo symbolic-ref HEAD refs/heads/<base_ref>
+git -C repo reset --hard -q
+git -C repo config core.logAllRefUpdates true
+rm -rf repo/.git/logs repo/.git/ORIG_HEAD repo/.git/FETCH_HEAD
 ```
 
-Commit mode pins the exact tree of that commit, independent of HEAD (the
-`pr` cutoff of the snapshot tool is a time cut, not `merge_commit^`). The
-worktree fails closed, naming the commit, when the commit does not exist, the
-destination is not empty, the snapshot tool fails, `history.json` is
-unreadable, its `tree_sha` differs from `git rev-parse <tree_commit>^{tree}`,
-the tree is empty, or any `.git` entry is present. Errors are `WorktreeError`
+A local `user.name`/`user.email` (`TraceBench Agent <agent@tracebench.local>`)
+is set so the agent can commit, and no remote is configured. The source clone
+is only read; its refs and HEAD are unchanged.
+
+The worktree fails closed, naming the commit and the failing check, when the
+commit does not exist, the destination is not empty, HEAD is not the real
+`tree_commit`, the HEAD tree differs from `git rev-parse <tree_commit>^{tree}`,
+`git rev-list --all --count` differs from the source's count for that commit
+(or is not greater than 1), `.git/shallow` exists, a remote exists, the PR's
+`merge_commit` is in the object store, `.git/logs`/`ORIG_HEAD`/`FETCH_HEAD`/
+`objects/info/alternates` exist, the worktree is not clean, `git fsck --full`
+reports anything, or the local identity is wrong. Errors are `WorktreeError`
 (a `ValueError`).
+
+The default task image is `tracebench/task-runtime:latest`
+(`tasks/_base/task-runtime.Dockerfile`): the shared toolchain base without the
+peasant clone or the Go build cache, with `/workdir` present.
 
 ### Oracle
 
@@ -430,10 +459,12 @@ there is no `reward.json`.
 `test-results.json` carries `schema_version`, `pr`, `base_commit`,
 `merge_commit`, `manifest_schema_version`, `test_command`, `exit_code`,
 `duration_sec`, the counts (`total_cases`, `passed`, `failed`, `skipped`,
-`missing`, `golden_flagged`, `golden_flagged_passed`), `reward` (equal to
-`reward.txt`), `fail_closed_reasons`, `failed_test_ids` (outcome `fail` only),
-and `entries` (`id`, `package_dir`, `name`, `golden`, `outcome` in the closed
-set `pass`, `fail`, `skip`, `missing`). Harbor downloads it to
+`missing`, `rejected_cases`, `golden_flagged`, `golden_flagged_passed`),
+`reward` (equal to `reward.txt`), `fail_closed_reasons`, `failed_test_ids`
+(outcome `fail` only), `rejected_test_ids`, and `entries` (`id`,
+`package_dir`, `name`, `golden`, `status`, `outcome` in the closed set
+`pass`, `fail`, `skip`, `missing`, `reject`). Rejected cases are excluded from
+`total_cases` and the reward. Harbor downloads it to
 `<trial-dir>/verifier/test-results.json`. The `golden` flag is diagnostic; the
 reward does not use it.
 

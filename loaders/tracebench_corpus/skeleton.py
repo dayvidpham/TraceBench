@@ -39,6 +39,8 @@ from .task import GENERATED_ENTRIES, clear_generated, payload_test_patterns
 #: Tool-owned entries inside a generated task directory. ``--force`` clears
 #: exactly these.
 SKELETON_ENTRIES = ("environment", "tests", "solution", "task.toml", "instruction.md", "task-payload.json")
+#: Container working directory; the task payload lands under it.
+DEFAULT_WORKDIR = "/workdir"
 
 
 @dataclass(frozen=True)
@@ -81,12 +83,13 @@ def build_skeleton(
     dest: str | Path,
     *,
     org: str = "tracebench",
-    base_image: str = "tracebench/peasant-base:latest",
-    workdir: str = "/workdir",
+    base_image: str = "tracebench/task-runtime:latest",
+    workdir: str = DEFAULT_WORKDIR,
     task_version: str = "1.0.0",
     agent_timeout_sec: float = 3600.0,
     verifier_timeout_sec: float = 3600.0,
     test_command: str = verifier.DEFAULT_TEST_COMMAND,
+    healthcheck_command: str | None = None,
     force: bool = False,
 ) -> Skeleton:
     """Write a Harbor task skeleton from a task payload directory."""
@@ -128,6 +131,7 @@ def build_skeleton(
             task_version=task_version,
             agent_timeout_sec=agent_timeout_sec,
             verifier_timeout_sec=verifier_timeout_sec,
+            healthcheck_command=healthcheck_command,
         )
     )
     (dest / "instruction.md").write_text(_instruction(pr, summary, workdir))
@@ -217,8 +221,9 @@ def _task_toml(
     task_version: str,
     agent_timeout_sec: float,
     verifier_timeout_sec: float,
+    healthcheck_command: str | None = None,
 ) -> str:
-    title = pr.get("title", "")
+    title = pr.get("title") or ""
     description = f"Implement {pr['id']}: {title}"
     keywords = ", ".join(
         _toml_string(word)
@@ -240,9 +245,9 @@ def _task_toml(
         "[metadata]",
         'category = "programming"',
         f"repo = {_toml_string(pr['repo'])}",
-        f"pr_url = {_toml_string(pr.get('url', ''))}",
+        f"pr_url = {_toml_string(pr.get('url') or '')}",
         f"pr_number = {pr['number']}",
-        f"split = {_toml_string(pr.get('split', ''))}",
+        f"split = {_toml_string(pr.get('split') or '')}",
         f"prior_sessions = {int(summary.get('prior_sessions', 0))}",
         *(
             [f"target_configuration = {_toml_string(summary['target_configuration']['name'])}"]
@@ -272,6 +277,20 @@ def _task_toml(
         'network_mode = "public"',
         'os = "linux"',
         "mcp_servers = []",
+        *(
+            [
+                "",
+                "[environment.healthcheck]",
+                "# Warm the pre-PR dependency and build caches while the environment",
+                "# network is still up, so the offline agent and verifier can build.",
+                "# Doubles as a readiness check: the pre-PR tree must build first.",
+                f"command = {_toml_string(healthcheck_command)}",
+                "timeout_sec = 1800.0",
+                "retries = 2",
+            ]
+            if healthcheck_command
+            else []
+        ),
         "",
         "[environment.env]",
         "",
@@ -283,15 +302,15 @@ def _task_toml(
 
 def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> str:
     lines = [
-        f"# {pr.get('title', pr['id'])}",
+        f"# {pr.get('title') or pr['id']}",
         "",
         f"You are working in `{pr['repo']}` at the state just before pull request "
         f"#{pr['number']} was merged.",
         "",
-        f"- Pull request: {pr.get('url', pr['id'])}",
-        f"- Merged: {pr.get('merged_at', 'unknown')}",
-        f"- Size: +{pr.get('additions', 0)} / -{pr.get('deletions', 0)} lines",
-        f"- Benchmark split: {pr.get('split', 'unknown')}",
+        f"- Pull request: {pr.get('url') or pr['id']}",
+        f"- Merged: {pr.get('merged_at') or 'unknown'}",
+        f"- Size: +{pr.get('additions') or 0} / -{pr.get('deletions') or 0} lines",
+        f"- Benchmark split: {pr.get('split') or 'unknown'}",
         "",
         "## Goal",
         "",
@@ -347,7 +366,7 @@ if ! python3 "$TESTS_DIR/verifier.py" run \\
   echo "tracebench: verifier.py crashed; reward 0 (see the traceback above)" >&2
   echo 0 > "$LOG_DIR/reward.txt"
   if [ ! -f "$LOG_DIR/test-results.json" ]; then
-    echo '{{"schema_version": 1, "reward": 0, "fail_closed_reasons": ["verifier.py crashed before writing a report"]}}' \\
+    echo '{{"schema_version": {verifier.REPORT_SCHEMA_VERSION}, "reward": 0, "fail_closed_reasons": ["verifier.py crashed before writing a report"]}}' \\
       > "$LOG_DIR/test-results.json"
   fi
 fi

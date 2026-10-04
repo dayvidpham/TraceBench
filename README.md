@@ -137,8 +137,8 @@ Prerequisites:
   that contains each pull request's pre-PR commit and merge commit.
 * The merged-PR index, `corpus/index/merged_prs.json` (written by
   `tracebench-sample index`). It supplies each pull request's `merge_commit`.
-* Go on the `PATH` (the pipeline runs the `snapshot` tool with
-  `go run ./cmd/snapshot` unless `--snapshot-bin` names a built binary).
+* `git` on the `PATH` (the loader resolves boundaries, extracts the golden suite, and verifies
+  the oracle with the git CLI).
 
 Commands:
 
@@ -196,9 +196,11 @@ How the pieces fit:
 2. **Payload** — `pr.json`, the prior traces up to the pull request's develop
    boundary, and `repo-request.json` (the pre-PR commit `tree_commit` and the
    test patterns).
-3. **Secure worktree** — `repo/` is the tree of `tree_commit`, written by the
-   `snapshot` tool in commit mode, with no `.git`. Its tree hash must equal
-   `git rev-parse <tree_commit>^{tree}`.
+3. **Secure worktree** — `repo/` is the project's full real history truncated
+   at the real `tree_commit` (every ancestor with its real SHA, no remotes,
+   nothing at or after the PR), packed read-only from the source clone. Its
+   tree hash must equal `git rev-parse <tree_commit>^{tree}` and the merge
+   commit must be absent from the object store.
 4. **Golden suite** — every test file at `merge_commit` that matches the test
    patterns, plus `test-manifest.json`, the catalog of the test cases.
 5. **Oracle** — `solution/oracle.patch` is `git diff <tree_commit>

@@ -29,16 +29,16 @@ def write_index(tmp_path: Path, index: dict[str, dict]) -> Path:
     return path
 
 
-def test_repo_family_pairs_archive_and_live() -> None:
-    assert repo_family(LIVE) == {LIVE, ARCHIVE}
-    assert repo_family(ARCHIVE) == {LIVE, ARCHIVE}
+def test_repo_family_excludes_the_prerelease_archive() -> None:
+    assert repo_family(LIVE) == {LIVE}
+    assert ARCHIVE not in repo_family(LIVE)
 
 
 def test_task_payload_prior_traces_exclude_own_sessions(standard_dump, standard_index, tmp_path) -> None:
     corpus = Corpus(standard_dump)
     payload = TaskBuilder(corpus, pr_index=standard_index).build(f"{LIVE}#22", tmp_path / "task")
-    assert payload.prior_pull_requests == 3
-    assert payload.prior_sessions == 2
+    assert payload.prior_pull_requests == 2
+    assert payload.prior_sessions == 1
     assert payload.cutoff_basis == "merged_at"
     assert payload.cutoff_time == "2026-09-01T00:00:00Z"
     assert payload.boundary_commit is None
@@ -47,22 +47,59 @@ def test_task_payload_prior_traces_exclude_own_sessions(standard_dump, standard_
     assert payload.missing_sessions == 0
 
     traces = [json.loads(line) for line in (payload.path / "prior-traces" / "traces.jsonl").read_text().splitlines()]
-    assert sorted({trace["session_id"] for trace in traces}) == ["a1", "l1"]
+    assert sorted({trace["session_id"] for trace in traces}) == ["l1"]
     assert all(trace["session_id"] not in ("l2", "own1") for trace in traces)
-    assert {trace["pr"] for trace in traces} == {f"{ARCHIVE}#10", f"{LIVE}#20"}
+    assert {trace["pr"] for trace in traces} == {f"{LIVE}#20"}
 
     manifest = json.loads((payload.path / "prior-traces" / "manifest.json").read_text())
     assert manifest["cutoff"]["basis"] == "merged_at"
     assert manifest["cutoff"]["exclusive"] is True
-    assert manifest["family"] == [LIVE, ARCHIVE]
-    assert manifest["sessions"] == 2
-    assert manifest["materialized_sessions"] == 2
+    assert manifest["family"] == [LIVE]
+    assert manifest["sessions"] == 1
+    assert manifest["materialized_sessions"] == 1
     assert sorted(manifest["excluded_pr_sessions"]) == ["l2", "own1"]
     assert manifest["sessions_past_cutoff"] == []
     assert manifest["missing_sessions"] == []
     assert "sampled" in manifest["sampled_scope"]
-    assert (payload.path / "prior-traces" / "transcripts" / "a1.jsonl").is_file()
+    # The archive session is never materialized as prior context.
+    assert not (payload.path / "prior-traces" / "transcripts" / "a1.jsonl").exists()
     assert not (payload.path / "prior-traces" / "transcripts" / "l2.jsonl").exists()
+
+
+def test_task_target_from_index_without_sampled_sessions(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    index = dict(standard_index)
+    index[f"{LIVE}#23"] = {"repo": LIVE, "number": 23, "merge_commit": "c23",
+                           "merged_at": "2026-09-05T00:00:00Z"}
+    payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#23", tmp_path / "task")
+
+    pr = json.loads((payload.path / "pr.json").read_text())
+    assert pr["id"] == f"{LIVE}#23"
+    assert pr["repo"] == LIVE
+    assert pr["number"] == 23
+    assert pr["sampled"] is False
+    # The target itself is not part of the sampled corpus...
+    assert f"{LIVE}#23" not in corpus.pull_requests
+    # ...but prior context still comes from it.
+    assert payload.prior_pull_requests == 3
+    assert payload.prior_sessions == 3
+    traces = [json.loads(line) for line in (payload.path / "prior-traces" / "traces.jsonl").read_text().splitlines()]
+    assert sorted({trace["session_id"] for trace in traces}) == ["l1", "l2", "own1"]
+    task = json.loads((payload.path / "task.json").read_text())
+    assert task["split"] is None
+    assert json.loads((payload.path / "repo-request.json").read_text())["merge_commit"] == "c23"
+
+
+def test_task_target_from_the_prerelease_archive_is_rejected(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    with pytest.raises(KeyError, match="prerelease archive"):
+        TaskBuilder(corpus, pr_index=standard_index).build(f"{ARCHIVE}#10", tmp_path / "task")
+
+
+def test_task_target_absent_from_corpus_and_index_fails_closed(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    with pytest.raises(KeyError, match="not in the corpus or the index"):
+        TaskBuilder(corpus, pr_index=standard_index).build(f"{LIVE}#99", tmp_path / "task")
 
 
 def test_task_payload_layout_and_integration_point(standard_dump, standard_index, tmp_path) -> None:
@@ -75,6 +112,7 @@ def test_task_payload_layout_and_integration_point(standard_dump, standard_index
 
     request = json.loads((payload.path / "repo-request.json").read_text())
     assert request["pr"] == f"{LIVE}#22"
+    assert request["base_ref"] == "develop"
     assert request["merge_commit"] == "c22"
     assert request["tree_commit"] is None
     assert request["tree_commit_rule"] == "first parent of merge_commit (the develop commit before the PR)"
@@ -89,8 +127,8 @@ def test_task_payload_layout_and_integration_point(standard_dump, standard_index
 
     task = json.loads((payload.path / "task.json").read_text())
     assert task["pr"] == f"{LIVE}#22"
-    assert task["prior_pull_requests"] == 3
-    assert task["prior_sessions"] == 2
+    assert task["prior_pull_requests"] == 2
+    assert task["prior_sessions"] == 1
     assert task["cutoff"]["basis"] == "merged_at"
 
 
@@ -100,7 +138,7 @@ def test_index_created_at_does_not_change_the_cutoff(standard_dump, standard_ind
     corpus = Corpus(standard_dump)
     payload = TaskBuilder(corpus, pr_index=standard_index).build(f"{LIVE}#22", tmp_path / "task")
     assert payload.cutoff_time == "2026-09-01T00:00:00Z"
-    assert payload.prior_pull_requests == 3
+    assert payload.prior_pull_requests == 2
 
 
 def test_task_requires_a_merge_commit(standard_dump, tmp_path) -> None:
@@ -123,10 +161,8 @@ def test_destination_reuse_is_rejected_and_force_rebuilds(standard_dump, standar
     manifest = json.loads((dest / "prior-traces" / "manifest.json").read_text())
     files = {path.stem for path in (dest / "prior-traces" / "transcripts").glob("*.jsonl")}
     assert rebuilt.pr_id == f"{LIVE}#20"
-    assert files == set(["a1"])
-    assert manifest["sessions"] == 1
-    assert files == {"a1"}
-    assert "l1" not in files  # #20's own session never leaks from the earlier build
+    assert files == set()  # no live pull request precedes #20; the earlier l1 is gone
+    assert manifest["sessions"] == 0
     assert not (dest / "test-manifest.json").exists()
 
 
@@ -165,7 +201,7 @@ def standard_records_for_past_cutoff():
 
 def test_missing_transcripts_are_recorded(standard_index, tmp_path, write_dump) -> None:
     pull_requests, traces, metadata_records, transcripts = _standard_records()
-    transcripts.pop("a1")
+    transcripts.pop("l1")
     root = write_dump(
         tmp_path / "dump",
         pull_requests=pull_requests,
@@ -176,10 +212,10 @@ def test_missing_transcripts_are_recorded(standard_index, tmp_path, write_dump) 
     payload = TaskBuilder(Corpus(root), pr_index=standard_index).build(f"{LIVE}#22", tmp_path / "task")
     assert payload.missing_sessions == 1
     manifest = json.loads((payload.path / "prior-traces" / "manifest.json").read_text())
-    assert manifest["missing_sessions"] == ["a1"]
-    assert manifest["sessions"] == 2
-    assert manifest["materialized_sessions"] == 1
-    assert not (payload.path / "prior-traces" / "transcripts" / "a1.jsonl").exists()
+    assert manifest["missing_sessions"] == ["l1"]
+    assert manifest["sessions"] == 1
+    assert manifest["materialized_sessions"] == 0
+    assert not (payload.path / "prior-traces" / "transcripts" / "l1.jsonl").exists()
 
 
 def test_multi_pr_sessions_emit_one_row_per_association(standard_index, tmp_path, write_dump) -> None:
@@ -197,8 +233,8 @@ def test_multi_pr_sessions_emit_one_row_per_association(standard_index, tmp_path
     rows = [json.loads(line) for line in (payload.path / "prior-traces" / "traces.jsonl").read_text().splitlines()]
     assert sum(1 for row in rows if row["session_id"] == "l1") == 2
     manifest = json.loads((payload.path / "prior-traces" / "manifest.json").read_text())
-    assert manifest["traces"] == 3
-    assert manifest["sessions"] == 2
+    assert manifest["traces"] == 2
+    assert manifest["sessions"] == 1
     metadata_rows = [json.loads(line) for line in (payload.path / "prior-traces" / "metadata.jsonl").read_text().splitlines()]
     assert sum(1 for row in metadata_rows if row["sessionId"] == "l1") == 1
     assert (payload.path / "prior-traces" / "transcripts" / "l1.jsonl").is_file()
@@ -292,7 +328,7 @@ def test_ancestry_mode_uses_commit_order(git_repo, tmp_path, write_dump) -> None
     payload = TaskBuilder(corpus, pr_index=index, repo_dir=repo).build(f"{LIVE}#22", tmp_path / "ancestry")
     assert payload.cutoff_basis == "commit_ancestry"
     assert payload.boundary_commit == c21
-    assert payload.prior_pull_requests == 3  # #23 is not an ancestor of c21
+    assert payload.prior_pull_requests == 2  # #23 is not an ancestor of c21; the archive is excluded
     test_manifest = json.loads((payload.path / "test-manifest.json").read_text())
     assert test_manifest["base_commit"] == c21
     assert test_manifest["merge_commit"] == c22
@@ -304,7 +340,7 @@ def test_ancestry_mode_uses_commit_order(git_repo, tmp_path, write_dump) -> None
 
     fallback = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#22", tmp_path / "merged-at")
     assert fallback.cutoff_basis == "merged_at"
-    assert fallback.prior_pull_requests == 4  # merged_at includes #23
+    assert fallback.prior_pull_requests == 3  # merged_at includes #23; the archive is excluded
 
 
 def test_task_cli(standard_dump, standard_index, tmp_path, capsys) -> None:
@@ -315,7 +351,7 @@ def test_task_cli(standard_dump, standard_index, tmp_path, capsys) -> None:
     ]) == 0
     output = capsys.readouterr().out
     assert "cutoff basis merged_at" in output
-    assert "3 pull requests (2 sessions" in output
+    assert "2 pull requests (1 sessions" in output
 
     assert main([
         "--corpus", str(standard_dump), "task", f"{LIVE}#22",
@@ -372,7 +408,7 @@ def test_target_configuration_is_recorded_and_does_not_filter(
         for line in (payload.path / "prior-traces" / "traces.jsonl").read_text().splitlines()
     }
     # The configuration never removes prior context: every prior session stays.
-    assert sessions == {"a1", "l1"}
+    assert sessions == {"l1"}
     assert payload.target_config == config_name
 
     manifest = json.loads((payload.path / "prior-traces" / "manifest.json").read_text())

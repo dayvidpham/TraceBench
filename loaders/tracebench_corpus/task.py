@@ -112,10 +112,12 @@ _GIT_BINARY = "git"
 
 
 def repo_family(repo: str) -> set[str]:
-    """Return the repository and its codebase-family counterpart."""
-    if repo.endswith(ARCHIVE_SUFFIX):
-        return {repo, repo[: -len(ARCHIVE_SUFFIX)]}
-    return {repo, repo + ARCHIVE_SUFFIX}
+    """Repositories that may contribute prior context for ``repo``.
+
+    The prerelease archive is frozen pre-launch history: it never provides
+    tasks or prior context, so a repository is its own family.
+    """
+    return {repo}
 
 
 @dataclass(frozen=True)
@@ -167,6 +169,48 @@ class TaskBuilder:
         self.pr_index = pr_index or {}
         self.repo_dir = str(repo_dir) if repo_dir is not None else None
         self.materialize_tests = materialize_tests
+        self._unsampled: dict[str, dict[str, Any]] = {}
+
+    def resolve_pull_request(self, pr_id: str) -> dict[str, Any]:
+        """Return the record for ``pr_id``, sampled or index-only.
+
+        The published dump samples traced pull requests. A merged pull request
+        with no traced sessions is still a valid target: its record comes from
+        the index, and prior context still comes from the sampled corpus. The
+        prerelease archive is excluded: it provides neither tasks nor context.
+        """
+        repo = pr_id.partition("#")[0]
+        if repo.endswith(ARCHIVE_SUFFIX):
+            raise KeyError(
+                f"pull request {pr_id} belongs to the prerelease archive; "
+                "the archive provides neither tasks nor prior context"
+            )
+        pr = self.corpus.pull_requests.get(pr_id)
+        if pr is not None:
+            return pr
+        cached = self._unsampled.get(pr_id)
+        if cached is not None:
+            return cached
+        record = self.pr_index.get(pr_id)
+        if record is None:
+            raise KeyError(f"pull request {pr_id} is not in the corpus or the index")
+        pr = {
+            "id": pr_id,
+            "repo": record["repo"],
+            "number": record["number"],
+            "title": record.get("title"),
+            "url": record.get("url"),
+            "author": record.get("author"),
+            "head_ref": record.get("head_ref"),
+            "merged_at": record.get("merged_at"),
+            "additions": record.get("additions"),
+            "deletions": record.get("deletions"),
+            "lines_changed": (record.get("additions") or 0) + (record.get("deletions") or 0),
+            "split": None,
+            "sampled": False,
+        }
+        self._unsampled[pr_id] = pr
+        return pr
 
     def enrich(self, pr: dict[str, Any]) -> dict[str, Any]:
         """Overlay the richer index record (merge commits, dates) on the
@@ -207,10 +251,7 @@ class TaskBuilder:
     ) -> TaskPayload:
         # Resolved once: extraction and repo-request.json use the same list.
         patterns = list(test_patterns) if test_patterns else list(DEFAULT_TEST_PATTERNS)
-        pr = self.corpus.pull_requests.get(pr_id)
-        if pr is None:
-            raise KeyError(f"pull request {pr_id} is not in the corpus")
-        pr = self.enrich(pr)
+        pr = self.enrich(self.resolve_pull_request(pr_id))
         dest = Path(dest)
         if dest.exists() and any(dest.iterdir()):
             if not force:
@@ -310,6 +351,7 @@ class TaskBuilder:
             "pr": pr_id,
             "repo": pr["repo"],
             "number": pr["number"],
+            "base_ref": pr.get("base_ref"),
             "merge_commit": merge_commit,
             "tree_commit": boundary_commit,
             "tree_commit_rule": "first parent of merge_commit (the develop commit before the PR)",
@@ -322,8 +364,8 @@ class TaskBuilder:
             "glob_dialect": "doublestar globs relative to the repository root",
             "merge_commit_policy": "required; pass --index when the corpus record lacks one",
             "note": (
-                "repo/ is materialized by tracebench_corpus.worktree.materialize_worktree "
-                "using the snapshot commit mode at tree_commit, verified against "
+                "repo/ is materialized by tracebench_corpus.worktree.materialize_worktree as the "
+                "project's full real history truncated at tree_commit, verified against "
                 "tree_commit^{tree}; tests/ is materialized at merge_commit. The trace "
                 "cutoff is never used to select the tree."
             ),

@@ -55,6 +55,30 @@ def test_skeleton_ships_verifier_and_config(tmp_path, standard_dump, standard_in
     assert "verifier.py" in (tests / "test.sh").read_text()
 
 
+def test_skeleton_tolerates_an_unsampled_split(tmp_path, standard_dump, standard_index) -> None:
+    payload = make_payload(tmp_path, standard_dump, standard_index)
+    pr_path = payload / "pr.json"
+    pr = json.loads(pr_path.read_text())
+    pr["split"] = None
+    pr_path.write_text(json.dumps(pr))
+    build_skeleton(payload, tmp_path / "task")
+    task_toml = tomllib.loads((tmp_path / "task" / "task.toml").read_text())
+    assert task_toml["metadata"]["split"] == ""
+    assert "Benchmark split: unknown" in (tmp_path / "task" / "instruction.md").read_text()
+
+
+def test_skeleton_healthcheck_warms_the_pre_pr_tree(tmp_path, standard_dump, standard_index) -> None:
+    payload = make_payload(tmp_path, standard_dump, standard_index)
+    build_skeleton(payload, tmp_path / "task",
+                   healthcheck_command="cd /workdir/repo && go build ./...")
+    environment = tomllib.loads((tmp_path / "task" / "task.toml").read_text())["environment"]
+    assert environment["healthcheck"]["command"] == "cd /workdir/repo && go build ./..."
+    assert environment["healthcheck"]["retries"] == 2
+
+    build_skeleton(payload, tmp_path / "plain")
+    assert "healthcheck" not in tomllib.loads((tmp_path / "plain" / "task.toml").read_text())["environment"]
+
+
 def test_skeleton_uses_shared_base_image_and_runtime_data(tmp_path, standard_dump, standard_index) -> None:
     payload = make_payload(tmp_path, standard_dump, standard_index)
     skeleton = build_skeleton(payload, tmp_path / "task")
@@ -66,7 +90,7 @@ def test_skeleton_uses_shared_base_image_and_runtime_data(tmp_path, standard_dum
     # task data is uploaded from environment/ at environment start.
     assert not (task / "environment" / "Dockerfile").exists()
     assert (task / "environment" / "repo" / "main.go").is_file()
-    assert (task / "environment" / "prior-traces" / "transcripts" / "a1.jsonl").is_file()
+    assert (task / "environment" / "prior-traces" / "transcripts" / "l1.jsonl").is_file()
     environment_files = {
         path.relative_to(task / "environment").as_posix()
         for path in (task / "environment").rglob("*")
@@ -98,7 +122,7 @@ def test_skeleton_task_toml_parses(tmp_path, standard_dump, standard_index) -> N
     assert config["metadata"]["pr_number"] == 22
     assert config["agent"]["network_mode"] == "no-network"
     assert config["verifier"]["network_mode"] == "no-network"
-    assert config["environment"]["docker_image"] == "tracebench/peasant-base:latest"
+    assert config["environment"]["docker_image"] == "tracebench/task-runtime:latest"
     assert config["environment"]["workdir"] == "/workdir"
     assert config["environment"]["network_mode"] == "public"
 
