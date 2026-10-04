@@ -32,7 +32,7 @@ fail the build if any trip):
 | dangling objects (`fsck --unreachable`) | `gc --prune=now` after ref deletion |
 | remotes (re-fetch the fix) | `git remote remove origin` (agent phase is offline anyway) |
 | Go build cache (export data names future functions) | `go clean -cache` + full rebuild at task build time |
-| Go module cache | safe: dependency sources only, no peasant code |
+| Go module cache | safe: dependency sources only, no peasant code — but the base commit may pin *different dep versions* than the snapshot warmed, so task builds reopen `GOPROXY` for `go mod download` (build phase has network) and lock it back to `off` right after |
 | `/solution`, `/tests` in container | Harbor copies them for oracle/verifier runs only — absent during agent phase |
 | Dockerfile `ARG`s / image history | base SHA is public task metadata; the patch never enters any image layer (mounted at oracle time) |
 

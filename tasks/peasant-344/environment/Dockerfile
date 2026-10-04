@@ -10,12 +10,14 @@ ARG BASE_SHA=d3bc07f6568291ee70afb146409aae98d4f8e3d7
 # history vector — refs, reflogs, remotes, unreachable objects — so the fix
 # (which exists upstream of this checkout) is undiscoverable. The oracle
 # patch ships in solution/oracle.patch, copied in for oracle runs only.
+# NOTE: `git remote remove origin` runs FIRST because batch-deleting refs
+# trips over the origin/HEAD symref ("multiple updates ... via symref").
 RUN cd /peasant \
     && git checkout --quiet "${BASE_SHA}" \
+    && git remote remove origin \
     && git for-each-ref --format='delete %(refname)' | git update-ref --stdin \
     && git reflog expire --expire=now --all \
     && git gc --prune=now --quiet \
-    && git remote remove origin \
     && rm -rf .git/logs .git/FETCH_HEAD .git/ORIG_HEAD \
     && echo "--- leak asserts (build-breakers) ---" \
     && test "$(git rev-list --all --count)" = 1 \
@@ -26,9 +28,14 @@ RUN cd /peasant \
 
 WORKDIR /peasant
 
-# Rebuild at the base commit. `go clean -cache` first: the base image's cache
-# contains post-fix export data (future function names) — it must not ship.
-# Module cache is kept (dependency sources only, no peasant code).
+# Rebuild at the base commit. Two subtleties:
+# - `go clean -cache` first: the base image's cache contains post-fix export
+#   data (future function names) — it must not ship. Module cache is kept
+#   (dependency sources only, no peasant code).
+# - GOPROXY is reopened here: the base commit's go.mod can pin DIFFERENT dep
+#   versions than the base image warmed, and image build phase has network.
+#   It is locked back down right after; the final `go build` proves offline.
+ENV GOPROXY=https://proxy.golang.org,direct
 RUN go clean -cache && go mod download && go build ./...
 
 # Hermetic by construction: no module fetches after image build.
