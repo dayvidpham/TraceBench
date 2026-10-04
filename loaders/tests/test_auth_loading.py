@@ -13,13 +13,14 @@ import json
 import logging
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 import yaml
 
 from tracebench_corpus.local_run import (
-    KEY_ENV, STREAM_GUARD, LocalRunError, launch, main, prepare_auth,
+    KEY_ENV, STREAM_GUARD, LocalRunError, launch, main, prepare_auth, runtime_adapter,
 )
 
 pytest.importorskip("harbor", reason="installed-Harbor contract requires Python >=3.12 and dev dependencies")
@@ -152,7 +153,11 @@ def test_installed_agent_exec_boundary(case, monkeypatch, tmp_path, caplog):
             finally:
                 # Observe persistence BEFORE the launcher's artifact guard.
                 assert key not in (logs / "opencode.txt").read_text()
+                events = [json.loads(line) for line in (logs / "opencode.txt").read_text().splitlines()
+                          if line.startswith("{")]
+                assert events and all(key not in event["part"]["text"] for event in events)
                 logging.getLogger("fixture").warning("routine host failure: %s", key)
+                logging.getLogger("fixture").warning("routine JSON: %s", json.dumps(key))
     async def create_job(cls, candidate):
         assert candidate is config
         assert key not in candidate.model_dump_json()
@@ -181,6 +186,9 @@ def test_installed_agent_exec_boundary(case, monkeypatch, tmp_path, caplog):
     assert key not in caplog.text
     assert key not in config.model_dump_json()
     assert all(key.encode() not in path.read_bytes() for path in logs.rglob("*") if path.is_file())
+    artifacts = list(logs.glob("*.json"))
+    assert artifacts and all(key not in json.loads(path.read_text())["part"]["text"]
+                             for path in artifacts)
     assert asyncio.create_subprocess_exec is transport
 
 
@@ -201,3 +209,32 @@ def test_runtime_stream_guard_handles_split_matches(case):
         raise
     assert process.returncode == 0 and not stderr
     assert stdout == prefix.encode() + b"[REDACTED] after"
+
+
+def test_resolution_timeout_reaps_child(monkeypatch, tmp_path):
+    key = next(case["expected"] for case in DATA["cases"] if case["name"] == "default-variable")
+    environment = object.__new__(PodmanEnvironment)
+    environment.session_id = "resolution-timeout"
+    environment.environment_name = "resolution-timeout"
+    environment.environment_dir = tmp_path
+    environment._compose_env_vars = lambda **kwargs: {"PATH": os.environ["PATH"]}
+    monkeypatch.setattr(PodmanEnvironment, "_docker_compose_paths", property(lambda self: []))
+    monkeypatch.setattr(PodmanEnvironment, "runtime", classmethod(lambda cls: ContainerRuntime(
+        engine=("podman",), compose=("fixture-compose",))))
+    spawn = asyncio.create_subprocess_exec
+    children = []
+    async def transport(*argv, **kwargs):
+        assert argv[0] == "fixture-compose"
+        child = await spawn(sys.executable, "-c",
+                            f"import time; time.sleep({DATA['resolution_block_sec']})", **kwargs)
+        children.append(child)
+        return child
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", transport)
+    async def run():
+        with runtime_adapter(key):
+            with pytest.raises(LocalRunError):
+                await environment._run_docker_compose_command(
+                    ["exec", "-e", f"{KEY_ENV}={key}", "main", "true"],
+                    timeout_sec=DATA["resolution_timeout_sec"])
+    asyncio.run(asyncio.wait_for(run(), timeout=5))
+    assert children and all(child.returncode is not None for child in children)

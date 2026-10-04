@@ -89,6 +89,9 @@ OpenCode Go; `opencode/` means Zen. The launcher does not select or change the m
 job configs, target configurations, payloads and tasks remain credential-free. Task generation
 does not read any credential.
 
+Harbor installs OpenCode `latest` unless `agents[].kwargs.version` is set. To use OpenCode
+1.18.34, set that field to `"1.18.34"` in the public job config; the Harbor version pin is separate.
+
 ```bash
 uv sync
 # OPENCODE_API_KEY must already be set in the launching process. Do not paste a key here.
@@ -106,8 +109,9 @@ runtime. At the exec boundary, the adapter resolves the Compose service's contai
 Compose frontends that could re-expand a named reference into a literal engine argument. It
 does not change the host environment, even when trials run in parallel.
 
-The adapter guards normal OpenCode output **before** Harbor's tee writes it, sanitizes host
-logs/errors and exec output, and scrubs downloaded job artifacts on success, error or cancellation.
+The adapter guards raw and JSON-escaped credentials in normal OpenCode output **before** Harbor's
+tee writes it, sanitizes host logs/errors and exec output, and scrubs downloaded job artifacts
+on success, error or cancellation.
 Binary outputs with a match are scrubbed too and may no longer be usable. Exec progress output
 is delayed until that command completes so values that span lines do not leak. If artifact
 guarding fails, do not publish the output directory. The wrapper supports new local jobs, not
@@ -144,9 +148,13 @@ uv run pytest loaders/tests/test_auth_loading.py
 - Bound/lifetime: each stream-guard child has a ten-second timeout; pytest owns temporary files
   and fake executables. Contract exec tests use the installed collector with a ten-second limit.
   No container, database or provider call is created by the default test suite.
+  The blocked-resolution child sleeps at most thirty seconds; a 0.1-second exec deadline must
+  kill and reap it, and the test has a five-second outer bound.
 - Isolation: each test has a separate temp directory and fake environment; Harbor's per-task env
   scopes and per-subprocess mappings prevent host override mutation. Adapter ownership excludes
-  nested launchers; all patches restore on exit.
+nested launchers; all patches restore on exit.
+- Exec timeout: container resolution and engine exec share one deadline. Owned subprocesses
+  are killed and reaped on timeout or cancellation, including a blocked Compose provider.
 - Clean checkout: `uv run pytest` installs the pinned runtime through dev dependencies on Python
   3.12+. On older Python the installed-Harbor test module is skipped; use 3.12+ for this gate.
 - Evidence/mutation: removing the named-only mapping exposes a fake marker in argv; removing the
