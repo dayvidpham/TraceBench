@@ -3,7 +3,8 @@
 TraceBench is a collection of Harbor benchmark tasks with network-restricted sandboxes. Some tasks
 embed Go codebases, and task solutions, verifiers, or tooling may be Go. This file is the working
 agreement for writing Go in this repository: layout, standards, tests, generated code, and landing
-rules. `README.md` is authoritative for the task layout and the isolation model. The shared guide
+rules. `README.md` is authoritative for the task layout and the isolation model; `docs/architecture.md`
+shows how the parts of the system connect (C4 diagrams and call sequences). The shared guide
 in the parent directory (`../AGENTS.md`) owns worktree naming and the destructive-command
 prohibition; this file adds the repository-local conventions.
 
@@ -131,6 +132,14 @@ test or CI check fails when the committed output drifts from a fresh generation.
   produce errors, not guesses.
 - Never hand-merge a generated file on conflict: merge the source, rerun the generator, commit
   byte-identical output.
+
+## Documentation
+
+- `README.md` — task layout and the isolation model (authoritative).
+- `docs/architecture.md` — C4 diagrams, dynamic views, and call sequences of the corpus and task-generation system.
+- `loaders/README.md` — loader API, task payload contract, and skeleton layout.
+- `snapshot/README.md` — snapshot usage and the peasant binary contract.
+- `tasks/_base/README.md` — shared base image build order and the leak model.
 
 ## Skills
 
