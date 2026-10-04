@@ -1,0 +1,99 @@
+# Pipeline driver fixture: a linear repository whose commits are the merge
+# commits of the listed pull requests. Each commit writes `files` on top of the
+# previous tree.
+commits:
+  - name: base
+    files:
+      go.mod: "module example.com/demo\n"
+      main.go: "package main\n\nfunc main() {}\n"
+      main_test.go: "package main\n\nimport \"testing\"\n\nfunc TestMain0(t *testing.T) {}\n"
+  - name: pr20
+    pr: 20
+    files:
+      greet.go: "package main\n\nfunc greet() string { return \"hi\" }\n"
+      greet_test.go: "package main\n\nimport \"testing\"\n\nfunc TestGreet(t *testing.T) { _ = greet() }\n"
+  - name: pr22
+    pr: 22
+    files:
+      greet.go: "package main\n\nfunc greet() string { return \"hello\" }\n"
+      greet_test.go: "package main\n\nimport \"testing\"\n\nfunc TestGreet(t *testing.T) {\n\tif greet() != \"hello\" {\n\t\tt.Fatal(\"greet\")\n\t}\n}\n"
+
+# Side commits off a named commit; their trees hold exactly `files`. PR 21's
+# merge has no test files, so its golden suite is missing.
+side_commits:
+  - pr: 21
+    parent: base
+    files:
+      README.txt: "no tests here\n"
+
+# Tasks the two-PR build must produce (task directory names under tasks/).
+expected_tasks:
+  "peasant-labs/peasant#20": peasant-pr-0020
+  "peasant-labs/peasant#22": peasant-pr-0022
+
+# Parts every built task carries.
+required_parts:
+  - task.toml
+  - instruction.md
+  - environment/repo
+  - environment/prior-traces
+  - tests/golden
+  - tests/test.sh
+  - solution/oracle.patch
+  - solution/solve.sh
+
+# Prior traces a task carries: PR 22 merged after session s20 (linked to PR
+# 20), so its task holds s20's transcript; PR 20's own session is not prior.
+prior_traces:
+  peasant-pr-0022: [s20]
+  peasant-pr-0020: []
+
+# Run-id derivation cases at revision "rev1". Each case names a target
+# configuration (harness/model/thinking inline), the label, and the golden run
+# id: <label>-<first 12 hex of sha256("harness|model|thinking|rev1")>. A
+# provider prefix stays inside the model name, so it changes the digest.
+run_ids:
+  - config: opencode-gpt-medium
+    harness: opencode
+    model: gpt-5.2-codex
+    thinking: medium
+    label: null
+    run_id: tracebench-opencode-gpt-medium-3e97f5ddddb1
+  - config: claude-code-sonnet-high
+    harness: claude-code
+    model: claude-sonnet-4-6
+    thinking: high
+    label: nightly
+    run_id: nightly-0d5c05bd0ef9
+  - config: claude-code-anthropic-sonnet
+    harness: claude-code
+    model: anthropic/claude-sonnet-5
+    thinking: high
+    label: null
+    run_id: tracebench-claude-code-anthropic-sonnet-5106de3a77b1
+
+# Task-set revision: sha256 of "<pr id>@<merge commit>" lines in PR-list order.
+task_set_revision:
+  pr_ids: ["peasant-labs/peasant#20", "peasant-labs/peasant#22"]
+  index:
+    "peasant-labs/peasant#20": {merge_commit: aaa}
+    "peasant-labs/peasant#22": {merge_commit: bbb}
+  revision: 71045c1059f0fa29f7a3af1e5d4506f0ddbdfb724731d858f62dd1b7422146e4
+  # Variants that must each change the revision.
+  changed:
+    - name: changed merge commit
+      pr_ids: ["peasant-labs/peasant#20", "peasant-labs/peasant#22"]
+      index:
+        "peasant-labs/peasant#20": {merge_commit: aaa}
+        "peasant-labs/peasant#22": {merge_commit: ccc}
+    - name: added pull request
+      pr_ids: ["peasant-labs/peasant#20", "peasant-labs/peasant#22", "peasant-labs/peasant#23"]
+      index:
+        "peasant-labs/peasant#20": {merge_commit: aaa}
+        "peasant-labs/peasant#22": {merge_commit: bbb}
+        "peasant-labs/peasant#23": {merge_commit: ddd}
+
+# Malformed PR-list lines: each must be rejected naming the line.
+malformed_pr_lines:
+  - "peasant-labs/peasant-20"
+  - "just text"

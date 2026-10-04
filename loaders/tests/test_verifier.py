@@ -15,7 +15,8 @@ import yaml
 
 from conftest import TESTDATA
 from tracebench_corpus import DEFAULT_TEST_PATTERNS, glob_to_regex, grade, parse_go_test_json
-from tracebench_corpus.verifier import OUTCOMES, main, remove_test_files
+from tracebench_corpus import verifier
+from tracebench_corpus.verifier import DEFAULT_TEST_COMMAND, OUTCOMES, main, read_module_path, remove_test_files, run
 
 STREAMS = TESTDATA / "go_test_json"
 CASES = yaml.safe_load((STREAMS / "cases.yaml").read_text())
@@ -49,7 +50,9 @@ def test_grade_stream(case: dict) -> None:
     assert {entry["name"]: entry["outcome"] for entry in report["entries"]} == case["outcomes"]
     assert all(entry["outcome"] in OUTCOMES for entry in report["entries"])
     assert report["total_cases"] == 2
-    assert report["passed"] == sum(o == "pass" for o in case["outcomes"].values())
+    for key, outcome in (("passed", "pass"), ("failed", "fail"), ("skipped", "skip"), ("missing", "missing")):
+        assert report[key] == sum(o == outcome for o in case["outcomes"].values())
+    assert report["failed_test_ids"] == case["failed_test_ids"]
     if "reason" in case:
         assert any(case["reason"] in reason for reason in report["fail_closed_reasons"])
     else:
@@ -61,9 +64,26 @@ def test_subtests_never_counted() -> None:
     assert all("/" not in name for _, name in parsed.tests)
 
 
+REPORT_KEYS = {
+    "schema_version", "pr", "base_commit", "merge_commit", "manifest_schema_version", "test_command",
+    "exit_code", "duration_sec", "total_cases", "passed", "failed", "skipped", "missing",
+    "golden_flagged", "golden_flagged_passed", "failed_test_ids", "reward", "fail_closed_reasons", "entries",
+}
+
+
 def test_report_schema_fields() -> None:
     manifest = fixture_manifest(CASES["manifest_cases"])
-    _, report = grade(manifest, (STREAMS / "fail.jsonl").read_text(), CASES["module"], pr="o/r#1", exit_code=1)
+    _, report = grade(
+        manifest, (STREAMS / "fail.jsonl").read_text(), CASES["module"], pr="o/r#1", exit_code=1,
+        test_command="go test -json ./x/...", duration_sec=1.23456,
+    )
+    assert set(report) == REPORT_KEYS
+    assert report["base_commit"] == "base"
+    assert report["merge_commit"] == "merge"
+    assert report["test_command"] == "go test -json ./x/..."
+    assert report["duration_sec"] == 1.235
+    assert (report["failed"], report["skipped"], report["missing"]) == (1, 0, 0)
+    assert report["reward"] == 0.5
     assert report["schema_version"] == 1
     assert report["pr"] == "o/r#1"
     assert report["manifest_schema_version"] == 1
@@ -120,6 +140,12 @@ def _retired_find_path(pattern: str, path: str) -> bool:
     return fnmatch.fnmatchcase("/app/" + path, "/app/" + translated)
 
 
+@pytest.mark.parametrize("case", PARITY["divergences"], ids=lambda c: f"{c['pattern']}:{c['path']}")
+def test_canonical_matcher_divergence(case: dict) -> None:
+    assert bool(glob_to_regex(case["pattern"]).match(case["path"])) is case["canonical"]
+    assert _retired_find_path(case["pattern"], case["path"]) is case["retired"]
+
+
 @pytest.mark.parametrize("case", PARITY["cases"], ids=lambda c: f"{c['pattern']}:{c['path']}")
 def test_canonical_matcher_parity(case: dict) -> None:
     assert bool(glob_to_regex(case["pattern"]).match(case["path"])) is case["match"]
@@ -146,6 +172,126 @@ def test_grade_cli(tmp_path) -> None:
                  "--go-mod", str(go_mod), "--log-dir", str(log)]) == 0
     assert float((log / "reward.txt").read_text()) == 0.5
     assert sorted(p.name for p in log.iterdir()) == ["reward.txt", "test-results.json"]
+
+
+@pytest.mark.parametrize(
+    ("text", "module"),
+    [
+        ("module example.com/demo // the demo\n", "example.com/demo"),
+        ('module "example.com/q"\n', "example.com/q"),
+        ("// module example.com/nope\nmodule example.com/yes\n", "example.com/yes"),
+    ],
+)
+def test_read_module_path(tmp_path, text: str, module: str) -> None:
+    (tmp_path / "go.mod").write_text(text)
+    assert read_module_path(tmp_path / "go.mod") == module
+
+
+def test_read_module_path_bare_keyword(tmp_path) -> None:
+    (tmp_path / "go.mod").write_text("module\t// nothing\n")
+    with pytest.raises(ValueError, match="no module path"):
+        read_module_path(tmp_path / "go.mod")
+
+
+def test_default_test_command_is_single_sourced(tmp_path, standard_dump, standard_index) -> None:
+    from test_skeleton import make_payload
+    from tracebench_corpus.repository_spec import DEFAULT_REPOSITORY_SPECS
+    from tracebench_corpus.skeleton import build_skeleton
+
+    assert DEFAULT_TEST_COMMAND == "go test -json -count=1 ./..."
+    assert {spec.test_command for spec in DEFAULT_REPOSITORY_SPECS} == {DEFAULT_TEST_COMMAND}
+    build_skeleton(make_payload(tmp_path, standard_dump, standard_index), tmp_path / "task")
+    config = json.loads((tmp_path / "task" / "tests" / "verifier-config.json").read_text())
+    assert config["test_command"] == "go test -json -count=1 ./..."
+
+
+# --- run(): fail-closed paths that never need a Go toolchain.
+
+
+def run_workspace(tmp_path, test_command: str | None, *, manifest: object = "default", config: str | None = None):
+    tests_dir = tmp_path / "tests"
+    (tests_dir / "golden").mkdir(parents=True)
+    (tests_dir / "golden" / "a_test.go").write_text("package demo\n")
+    if manifest == "default":
+        manifest = fixture_manifest(CASES["manifest_cases"])
+    if manifest is not None:
+        (tests_dir / "test-manifest.json").write_text(json.dumps(manifest))
+    (tests_dir / "verifier-config.json").write_text(
+        config if config is not None else json.dumps({"pr": "o/r#1", "test_command": test_command})
+    )
+    app = tmp_path / "repo"
+    app.mkdir()
+    (app / "go.mod").write_text("module example.com/demo\n")
+    return {"tests_dir": tests_dir, "app_dir": app, "golden_dir": tests_dir / "golden", "log_dir": tmp_path / "log"}
+
+
+def read_report(log: Path) -> tuple[float, dict]:
+    return float((log / "reward.txt").read_text()), json.loads((log / "test-results.json").read_text())
+
+
+def test_run_timeout_fails_closed(tmp_path) -> None:
+    dirs = run_workspace(tmp_path, "echo partial-out; echo partial-err >&2; exec sleep 30")
+    assert run(**dirs, timeout_sec=0.5) == 0.0
+    reward, report = read_report(dirs["log_dir"])
+    assert reward == 0.0
+    assert any("timed out after 0.5s" in reason for reason in report["fail_closed_reasons"])
+    assert report["total_cases"] == 2
+    assert (dirs["log_dir"] / "test-stdout.jsonl").read_text() == "partial-out\n"
+    assert (dirs["log_dir"] / "test-stderr.txt").read_text() == "partial-err\n"
+
+
+def test_run_signal_kill_fails_closed(tmp_path) -> None:
+    stream = (STREAMS / "pass.jsonl").as_posix()
+    dirs = run_workspace(tmp_path, f"cat {stream}; kill -TERM $$")
+    assert run(**dirs) == 0.0
+    reward, report = read_report(dirs["log_dir"])
+    assert reward == 0.0
+    assert report["fail_closed_reasons"] == [
+        f"test command `cat {stream}; kill -TERM $$` was killed by signal 15"
+    ]
+    assert report["passed"] == 2  # the stream was complete; the kill alone fails it closed
+
+
+def test_run_missing_manifest_skips_test_command(tmp_path) -> None:
+    dirs = run_workspace(tmp_path, f"touch {tmp_path}/ran", manifest=None)
+    assert run(**dirs) == 0.0
+    _, report = read_report(dirs["log_dir"])
+    assert report["fail_closed_reasons"] == [verifier.MISSING_MANIFEST]
+    assert not (tmp_path / "ran").exists()
+
+
+def test_run_bad_manifest_shape_writes_report(tmp_path) -> None:
+    bad = {**fixture_manifest(CASES["manifest_cases"]), "suites": [{"cases": [{"no": "id"}]}]}
+    dirs = run_workspace(tmp_path, f"touch {tmp_path}/ran", manifest=bad)
+    assert run(**dirs) == 0.0
+    _, report = read_report(dirs["log_dir"])
+    assert any("has no `<path>::<name>` id" in reason for reason in report["fail_closed_reasons"])
+
+
+@pytest.mark.parametrize("config", ["{not json", "[1, 2]"])
+def test_run_bad_config_writes_report(tmp_path, config: str) -> None:
+    dirs = run_workspace(tmp_path, None, config=config)
+    assert run(**dirs) == 0.0
+    _, report = read_report(dirs["log_dir"])
+    assert any("verifier config" in reason for reason in report["fail_closed_reasons"])
+
+
+def test_run_crash_writes_minimal_report(tmp_path, monkeypatch) -> None:
+    dirs = run_workspace(tmp_path, "true")
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("disk on fire")
+
+    monkeypatch.setattr(verifier, "overlay", boom)
+    with pytest.raises(RuntimeError):
+        main(["run", "--tests-dir", str(dirs["tests_dir"]), "--app-dir", str(dirs["app_dir"]),
+              "--log-dir", str(dirs["log_dir"])])
+    reward, report = read_report(dirs["log_dir"])
+    assert reward == 0.0
+    assert report == {
+        "schema_version": 1, "reward": 0.0,
+        "fail_closed_reasons": ["verifier crashed: RuntimeError: disk on fire"],
+    }
 
 
 # --- End to end: a real Go module, a golden overlay, and a real `go test -json` run.

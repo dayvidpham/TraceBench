@@ -5,7 +5,8 @@ Python loader for the flat dump produced by `tracebench-sample dump` /
 It loads the session-to-PR mapping, pull requests, `schema.UnifiedMetadata`
 records, and `schema.TranscriptContent` transcripts, materializes
 self-contained per-PR bundles, assembles task payloads, and generates Harbor
-task skeletons from them.
+task skeletons from them. The `pipeline` command chains every step and builds
+runnable Harbor tasks from a list of pull requests.
 
 ## Install
 
@@ -60,6 +61,9 @@ tracebench-corpus oracle "peasant-labs/peasant#343" --payload task-343 \
 tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343
 tracebench-corpus test-manifest --repo-dir /path/to/clone \
   --base-commit BASE_SHA --merge-commit MERGE_SHA --dest test-manifest.json
+tracebench-corpus --corpus corpus/dump pipeline --prs prs.txt \
+  --repo-dir /path/to/clone --index corpus/index/merged_prs.json \
+  --dest build/run-1 --run-id tracebench-smoke-1
 ```
 
 ## Task payloads
@@ -211,7 +215,10 @@ tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
 | `tests/golden/` | the payload's extracted merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |
 | `tests/manifest.json` | verifier-side golden-suite manifest (commit, patterns, paths) |
 | `tests/test-manifest.json` | verifier-only copy of the case catalog when the payload has one |
-| `tests/test.sh` | removes pre-PR test files matching the payload's test patterns, overlays the golden suite, runs it, writes `/logs/verifier/reward.txt`; fails closed when golden tests are missing. (target contract: today `test.sh` still writes `0` to `reward.txt` until the verifier runner lands) |
+| `tests/verifier-config.json` | the PR id, the test command, the test patterns, and the removal regexes compiled from them by the canonical doublestar matcher |
+| `tests/verifier.py` | the standard-library verifier, copied from `tracebench_corpus/verifier.py` |
+| `tests/repo-request.json` | the payload's request, shipped unchanged for provenance |
+| `tests/test.sh` | runs `python3 /tests/verifier.py run`: removes the pre-PR test files, overlays the golden suite, runs the test command, writes `/logs/verifier/reward.txt` (`passed / total`) and `/logs/verifier/test-results.json`. A crashed verifier writes reward 0 |
 | `solution/` | the payload's `solution/` (oracle patch and generated `solve.sh`) when `oracle` has run; otherwise a placeholder `solve.sh` that exits non-zero |
 
 Without `oracle` output the oracle is an explicit placeholder: such a skeleton
@@ -219,7 +226,7 @@ is structure, not a solvable task. Task names
 are registry-safe and distinguish the archive (`peasant-archive-pr-0021`) from
 the live repository (`peasant-pr-0021`).
 
-Python API: `build_skeleton(payload_dir, dest, base_image=..., workdir=..., force=...)`.
+Python API: `build_skeleton(payload_dir, dest, base_image=..., workdir=..., test_command=..., force=...)`.
 
 ## Harbor integration
 
@@ -238,9 +245,16 @@ tasks/pr-0343/
 ├── environment/
 │   ├── repo/                 # uploaded to <workdir>/repo at start
 │   └── prior-traces/         # uploaded to <workdir>/prior-traces at start
-├── solution/solve.sh
+├── solution/
+│   ├── oracle.patch          # when the oracle has run
+│   └── solve.sh
 └── tests/
     ├── golden/               # verifier-only merged-state suite
+    ├── manifest.json         # extracted golden paths
+    ├── test-manifest.json    # case catalog
+    ├── verifier-config.json
+    ├── verifier.py
+    ├── repo-request.json
     └── test.sh
 ```
 
@@ -251,3 +265,269 @@ reads its `traces.jsonl` and `metadata.jsonl`).
 
 The loader is stdlib-only; `huggingface_hub` is needed only for
 `load_corpus(repo=...)`, and `PyYAML` only for YAML adaptation specs.
+
+## Pipeline
+
+`pipeline` builds one runnable Harbor task per pull request and one Harbor job
+config for the run. It never runs Harbor.
+
+```bash
+tracebench-corpus --corpus corpus/dump pipeline \
+  --prs "peasant-labs/peasant#343" --prs more-prs.txt \
+  --repo-dir /path/to/peasant-clone \
+  --index corpus/index/merged_prs.json \
+  --dest build/run-1 \
+  [--spec repository_specs.yaml] \
+  [--run-id ID | --target-configs SPEC --target-config NAME [--run-label LABEL]] \
+  [--snapshot-bin /path/to/snapshot] [--job-config-format yaml|json] [--force]
+```
+
+| flag | meaning |
+|---|---|
+| `--prs` | a pull request id (`owner/repo#N`) or a file with one id per line; repeatable; duplicates keep the first position |
+| `--repo-dir` | local clone that holds `tree_commit` and `merge_commit` of every pull request |
+| `--index` | `corpus/index/merged_prs.json`, the source of `merge_commit` |
+| `--dest` | output directory: `payloads/`, `tasks/`, and the job config |
+| `--spec` | repository adaptation spec; the shipped Go/Peasant default when absent |
+| `--run-id` | the run id; when absent it is derived from the target configuration |
+| `--target-configs`, `--target-config` | the target configuration; together, or not at all |
+| `--run-label` | label of a derived run id (default `tracebench-<configuration name>`) |
+| `--snapshot-bin` | a built `snapshot` binary (default `go run ./cmd/snapshot` in `snapshot/`) |
+| `--job-config-format` | `yaml` (default when PyYAML is installed) or `json` |
+| `--force` | rebuild existing payload and task directories |
+
+For each pull request, in order:
+
+1. **payload** — `TaskBuilder.build` with the golden suite materialized:
+   `pr.json`, `prior-traces/`, `repo-request.json`, `tests/` +
+   `tests/manifest.json`, `test-manifest.json`, `task.json`.
+2. **`environment/repo`** — `materialize_worktree` writes `repo/` at
+   `tree_commit` (below).
+3. **`solution/oracle.patch`** — `build_oracle` + `write_oracle` with the
+   spec's build command.
+4. **task** — `build_skeleton` with the spec's test command, then a check that
+   `task.toml`, `environment/repo`, `tests/golden`, `tests/test.sh`, and
+   `solution/oracle.patch` exist.
+
+A failure fails that task only and names the part (`payload`, `tests/golden`,
+`environment/repo`, `solution/oracle.patch`, `task`, or the first missing
+path). The other tasks still run. The summary prints one line per task, and the
+exit code is 1 when any task failed (2 when the run cannot start).
+
+Output layout (`<name>` is `<slug>-pr-NNNN`, for example `peasant-pr-0343`):
+
+```text
+<dest>/
+├── payloads/<name>/     # task payload
+├── tasks/<name>/        # Harbor task
+└── job-config.yaml      # or job-config.json
+```
+
+The job config:
+
+```yaml
+job_name: <run id>
+n_attempts: 3
+tasks:
+  - path: <dest>/tasks/<name>      # absolute; only the tasks that were built
+    source: <run id>
+agents:
+  - name: oracle                   # or the configuration's harness
+    model_name: null               # or the configuration's model
+    kwargs: {}                     # {reasoning_effort: <thinking>} when set
+    env: {TRACEBENCH_RUN_ID: <run id>}
+verifier:
+  env: {TRACEBENCH_RUN_ID: <run id>}
+```
+
+A derived run id is `<label>-<12 hex>`: the first 12 hex digits of
+`sha256(harness|provider|model|thinking|revision)`, where `provider` is the
+`provider/` prefix of the model name and `revision` hashes the ordered pull
+request ids with their merge commits. The same configuration and the same
+pull request list give the same run id.
+
+Verify a built task with Harbor (when Harbor is installed):
+
+```bash
+harbor run -p build/run-1/tasks/peasant-pr-0343 -a oracle -e podman   # reward 1.0
+harbor run -c build/run-1/job-config.yaml
+```
+
+### Modules
+
+| module | role |
+|---|---|
+| `cli.py` | the `tracebench-corpus` commands: `list`, `bundle`, `bundle-all`, `task`, `skeleton`, `test-manifest`, `oracle`, `pipeline` |
+| `corpus.py` | loads a local or HuggingFace dump; per-PR bundles and transcript turns |
+| `task.py` | payload assembly: develop boundary, prior traces, session cuts, `repo-request.json`, destination hygiene |
+| `golden.py` | golden suite: files at `merge_commit` matching the test patterns, `tests/manifest.json`; owns the canonical doublestar matcher (`glob_to_regex`) |
+| `test_manifest.py` | case catalog: top-level Go test cases at `merge_commit`, PR-changed cases flagged `golden` |
+| `worktree.py` | secure worktree: drives the `snapshot` tool in commit mode and verifies `tree_sha` |
+| `oracle.py` | oracle: merge diff, `solve.sh`, equivalence check, the `task.json` `oracle` block |
+| `repository_spec.py` | repository adaptation spec: test and build command per repository |
+| `target_config.py` | target configurations: harness, model, thinking level |
+| `skeleton.py` | Harbor task directory, `test.sh`, verifier shipping |
+| `verifier.py` | the verifier that runs inside the task (standard library only) |
+| `pipeline.py` | the batch driver and the Harbor job config |
+
+### Secure worktree
+
+`materialize_worktree(repo_dir, payload_dir, snapshot_bin=None)` reads
+`tree_commit` from `repo-request.json` and runs
+
+```bash
+snapshot --repo <clone> --cutoff-type commit --commit <tree_commit sha> --out <tmp> --materialize
+```
+
+Commit mode pins the exact tree of that commit, independent of HEAD (the
+`pr` cutoff of the snapshot tool is a time cut, not `merge_commit^`). The
+worktree fails closed, naming the commit, when the commit does not exist, the
+destination is not empty, the snapshot tool fails, `history.json` is
+unreadable, its `tree_sha` differs from `git rev-parse <tree_commit>^{tree}`,
+the tree is empty, or any `.git` entry is present. Errors are `WorktreeError`
+(a `ValueError`).
+
+### Oracle
+
+`build_oracle(repo_dir, tree_commit, merge_commit, build_command)` takes
+`git diff <tree_commit> <merge_commit>`, applies it in a temporary detached
+worktree at `tree_commit` (`git apply --check`, then `git apply --index`), and
+compares the written tree with `merge_commit^{tree}`. A mismatch fails closed
+and names both trees. `write_oracle` writes `solution/oracle.patch`,
+`solution/solve.sh` (apply the patch to `/workdir/repo`, then run the build
+command; non-zero on failure), and the `oracle` block of `task.json`
+(`patch`, `tree_commit`, `merge_commit`, `changed_files`, `applied_tree`,
+`verified`).
+
+### Verifier
+
+`tests/test.sh` runs `verifier.py` inside the task image, with no network:
+
+1. Delete the files under `/workdir/repo` that match `remove_regexes` from
+   `verifier-config.json`.
+2. Overlay `/tests/golden/` into `/workdir/repo`.
+3. Run the test command (`go test -json -count=1 ./...` by default; `-count=1`
+   disables the test cache).
+4. Parse the `go test -json` stream: keep events with a non-empty `Test` and no
+   `/` in the name; the last event per test decides (`pass`, `fail`, `skip`).
+5. Join to `test-manifest.json` on `(package_dir, test name)`; `package_dir`
+   is the `Package` import path minus the module path from `go.mod` (`.` for
+   the root).
+6. Write `/logs/verifier/reward.txt` = `passed / total`, where `total` is the
+   manifest's `summary.cases`.
+7. Write `/logs/verifier/test-results.json`.
+
+Fail-closed rules: a missing manifest, an unknown manifest `schema_version`,
+an unparsable stream line, a killed test command (timeout or signal), a
+truncated stream, or `total` of zero gives reward 0 and records the reason in
+`fail_closed_reasons`. The exit code of the test command never decides the
+reward. A manifest whose case list disagrees with `summary.cases` also gives
+reward 0. A case with outcome `fail`, `skip`, or `missing` counts as not
+passed: a package build failure and an unknown final action are `fail`, and a
+case with no final action is `missing`. Exactly one reward file is written;
+there is no `reward.json`.
+
+`test-results.json` carries `schema_version`, `pr`, `base_commit`,
+`merge_commit`, `manifest_schema_version`, `test_command`, `exit_code`,
+`duration_sec`, the counts (`total_cases`, `passed`, `failed`, `skipped`,
+`missing`, `golden_flagged`, `golden_flagged_passed`), `reward` (equal to
+`reward.txt`), `fail_closed_reasons`, `failed_test_ids` (outcome `fail` only),
+and `entries` (`id`, `package_dir`, `name`, `golden`, `outcome` in the closed
+set `pass`, `fail`, `skip`, `missing`). Harbor downloads it to
+`<trial-dir>/verifier/test-results.json`. The `golden` flag is diagnostic; the
+reward does not use it.
+
+## How to modify
+
+### Repository adaptation spec
+
+The spec names, per repository, the test framework, the test command (run by
+the verifier), and the build command (run by `solve.sh`). It is YAML when
+PyYAML is installed, JSON otherwise:
+
+```yaml
+repositories:
+  - match: peasant-labs/peasant
+    framework: go
+    test_command: "go test -json -count=1 ./..."
+    build_command: "go build ./..."
+  - match: peasant-labs/peasant-prerelease-archive
+    framework: go
+    test_command: "go test -json -count=1 ./..."
+    build_command: "go build ./..."
+```
+
+- `match` is the exact `owner/name` of the pull request's repository; the first
+  match wins, and a duplicate `match` is an error. A repository with no entry
+  fails that task and lists the known matches.
+- The keys are closed: `match`, `framework`, `test_command`, `build_command`,
+  all non-empty strings.
+- With no `--spec`, `DEFAULT_REPOSITORY_SPECS` in `repository_spec.py` applies
+  (the spec above). Change the default there; test fixtures live in
+  `tests/testdata/repository_specs.yaml`.
+- `oracle --spec FILE` reads the build command from the same spec;
+  `--build-command CMD` overrides it for one payload.
+
+**Adding a language.** A spec entry alone is not enough today: the case
+catalog (`test_manifest.py`) inventories Go test functions only, and the
+verifier (`verifier.py`) parses only the `go test -json` stream and joins on
+Go package directories. The `framework` field is recorded but not yet used to
+select a parser. A new language needs a case extractor in `test_manifest.py`,
+a report parser and join key in `verifier.py`, its test patterns, a spec entry
+with a test command that emits the parsed format, and a base image with the
+toolchain.
+
+### Target configurations
+
+`--target-configs SPEC --target-config NAME` selects the harness, model, and
+thinking level (see [Target configurations](#target-configurations)). In the
+pipeline, the configuration fills `agents[0]` of the job config (`name` =
+harness, `model_name` = model, `kwargs.reasoning_effort` = thinking) and
+derives the run id; without one, the job config uses the `oracle` agent and
+`--run-id` is required. A configuration used for a job config must name a
+harness.
+
+### Test patterns
+
+The test patterns decide which files form the golden suite and which pre-PR
+files the verifier deletes. They come from `repo-request.json`
+(`test_patterns`), with `DEFAULT_TEST_PATTERNS` as the fallback. Patterns are
+doublestar globs relative to the repository root; `**` matches only a whole
+path segment. `golden.glob_to_regex` is the one matcher: extraction uses it,
+and the skeleton compiles the removal regexes with it into
+`verifier-config.json`, so extraction and deletion never disagree. Matcher
+cases live in `tests/testdata/glob_patterns.yaml`.
+
+### Verifier contract
+
+The reward is the fraction `passed / total`, written as one float to
+`/logs/verifier/reward.txt`; the per-case report is
+`/logs/verifier/test-results.json` (see [Verifier](#verifier)). The verifier
+must stay standard-library only, because it is copied into each task and runs
+with the image's `python3`. Change the parser, the fail-closed rules, or the
+report in `verifier.py`; the stream fixtures live in
+`tests/testdata/go_test_json/`. A change to the `test-results.json` fields
+bumps its `schema_version`, because the eval pipeline reads it.
+
+### Skeleton layout
+
+`skeleton.py` owns the task layout: `task.toml` (base image, workdir,
+timeouts, network policy), `instruction.md`, `environment/`, `tests/`, and
+`solution/`. `--force` clears only the entries in `SKELETON_ENTRIES`. The
+verifier timeout passed to `test.sh` leaves headroom under Harbor's verifier
+timeout so a hung test run is recorded as killed.
+
+### Where each artifact lives
+
+| artifact | payload | task | in the container |
+|---|---|---|---|
+| pre-PR tree | `repo/` | `environment/repo/` | `/workdir/repo` |
+| prior traces | `prior-traces/` | `environment/prior-traces/` | `/workdir/prior-traces` |
+| golden suite | `tests/` | `tests/golden/` | `/tests/golden/` (verifier only) |
+| extracted paths | `tests/manifest.json` | `tests/manifest.json` | `/tests/manifest.json` |
+| case catalog | `test-manifest.json` | `tests/test-manifest.json` | `/tests/test-manifest.json` |
+| verifier config | — | `tests/verifier-config.json` | `/tests/verifier-config.json` |
+| oracle | `solution/oracle.patch`, `solution/solve.sh` | `solution/` | oracle runs only |
+| reward | — | — | `/logs/verifier/reward.txt` |
+| per-case report | — | — | `/logs/verifier/test-results.json` |
+| job config | — | — (one per run: `<dest>/job-config.yaml`) | — |
