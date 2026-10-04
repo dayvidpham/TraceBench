@@ -12,6 +12,11 @@ from tracebench_corpus import RepositorySpec, find_repository_spec, load_reposit
 FIXTURES = yaml.safe_load((Path(__file__).parent / "testdata" / "repository_specs.yaml").read_text())
 
 
+def test_invalid_fixture_names_are_present() -> None:
+    names = {case["name"] for case in FIXTURES["invalid_specs"]}
+    assert set(FIXTURES["required_names"]) <= names
+
+
 def test_loads_valid_spec(tmp_path) -> None:
     path = tmp_path / "spec.yaml"
     path.write_text(FIXTURES["valid_spec"])
