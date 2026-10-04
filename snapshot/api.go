@@ -15,6 +15,7 @@ type Snapshot struct {
 	CutoffTime time.Time   `json:"cutoff_time"`
 	CutoffKind string      `json:"cutoff_kind"`
 	RepoSHA    string      `json:"repo_sha"`
+	TreeSHA    string      `json:"tree_sha"`
 	Commits    []Commit    `json:"commits"`
 	Files      []FileEntry `json:"files"`
 	Traces     []TraceFile `json:"traces"`
@@ -42,7 +43,14 @@ func SnapshotRepo(repoPath string, cutoff Cutoff, opts Options) (*Snapshot, erro
 	if _, err := os.Stat(repoPath); err != nil {
 		return nil, fmt.Errorf("snapshot: repo not found: %s", repoPath)
 	}
-	cutoffTime, err := cutoff.Resolve(opts.Peasant, opts.PRStartOverride)
+	var cutoffTime time.Time
+	var pinnedSHA, pinnedTree string
+	var err error
+	if cutoff.Kind == CutoffCommit {
+		pinnedSHA, pinnedTree, cutoffTime, err = ResolveCommit(repoPath, cutoff.Commit)
+	} else {
+		cutoffTime, err = cutoff.Resolve(opts.Peasant, opts.PRStartOverride)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +85,14 @@ func SnapshotRepo(repoPath string, cutoff Cutoff, opts Options) (*Snapshot, erro
 			cutoffTime.UTC().Format(time.RFC3339))
 	}
 	// Newest satisfying commit owns the tree, so files obey the cutoff.
+	// A commit cutoff pins the tree exactly instead of selecting by time.
 	sha := commits[len(commits)-1].SHA
+	treeSHA := pinnedTree
+	if pinnedSHA != "" {
+		sha = pinnedSHA
+	} else if treeSHA, err = TreeSHA(repoPath, sha); err != nil {
+		return nil, err
+	}
 	files, err := ListTree(repoPath, sha)
 	if err != nil {
 		return nil, err
@@ -118,7 +133,7 @@ func SnapshotRepo(repoPath string, cutoff Cutoff, opts Options) (*Snapshot, erro
 
 	return &Snapshot{
 		CutoffTime: cutoffTime.UTC(), CutoffKind: cutoff.Kind,
-		RepoSHA: sha, Commits: commits, Files: files, Traces: traces,
+		RepoSHA: sha, TreeSHA: treeSHA, Commits: commits, Files: files, Traces: traces,
 	}, nil
 }
 
@@ -160,11 +175,12 @@ func snapshotJSON(s Snapshot) any {
 		CutoffKind string       `json:"cutoff_kind"`
 		CutoffTime string       `json:"cutoff_time"`
 		RepoSHA    string       `json:"repo_sha"`
+		TreeSHA    string       `json:"tree_sha"`
 		Commits    []commitJSON `json:"commits"`
 		Files      []fileJSON   `json:"files"`
 		Traces     []traceJSON  `json:"traces"`
 	}{
-		CutoffKind: s.CutoffKind, CutoffTime: iso(s.CutoffTime), RepoSHA: s.RepoSHA,
+		CutoffKind: s.CutoffKind, CutoffTime: iso(s.CutoffTime), RepoSHA: s.RepoSHA, TreeSHA: s.TreeSHA,
 	}
 	for _, c := range s.Commits {
 		parents := c.Parents

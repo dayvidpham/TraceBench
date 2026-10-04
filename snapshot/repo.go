@@ -174,3 +174,36 @@ func MaterializeTree(repo, sha, dest string) error {
 	_ = filepath.Clean(dest)
 	return nil
 }
+
+// ResolveCommit verifies sha names a commit and returns its full SHA, tree SHA,
+// and committer time. It fails closed, naming the commit, when it is absent.
+func ResolveCommit(repo, sha string) (full, tree string, committed time.Time, err error) {
+	out, err := gitRun(repo, 60*time.Second, "rev-parse", "--verify", "--quiet", sha+"^{commit}")
+	if err != nil || strings.TrimSpace(out) == "" {
+		return "", "", time.Time{}, fmt.Errorf(
+			"snapshot: commit %q not found in %s; fetch it (git fetch origin %s) or fix the commit cutoff",
+			sha, repo, sha)
+	}
+	full = strings.TrimSpace(out)
+	if tree, err = TreeSHA(repo, full); err != nil {
+		return "", "", time.Time{}, err
+	}
+	when, err := gitRun(repo, 60*time.Second, "show", "-s", "--format=%cI", full)
+	if err != nil {
+		return "", "", time.Time{}, err
+	}
+	committed, err = ParseTime(strings.TrimSpace(when))
+	if err != nil {
+		return "", "", time.Time{}, fmt.Errorf("snapshot: bad committer date for %s: %v", full, err)
+	}
+	return full, tree, committed, nil
+}
+
+// TreeSHA returns git rev-parse <sha>^{tree}.
+func TreeSHA(repo, sha string) (string, error) {
+	out, err := gitRun(repo, 60*time.Second, "rev-parse", "--verify", sha+"^{tree}")
+	if err != nil {
+		return "", fmt.Errorf("snapshot: cannot resolve tree of %s: %v", sha, err)
+	}
+	return strings.TrimSpace(out), nil
+}

@@ -21,8 +21,9 @@ func main() {
 func run(args []string) error {
 	fs := flag.NewFlagSet("snapshot", flag.ContinueOnError)
 	repo := fs.String("repo", "", "path to any git repo")
-	cutoffType := fs.String("cutoff-type", "", "{date,pr}")
+	cutoffType := fs.String("cutoff-type", "", "{date,pr,commit}")
 	cutoffDate := fs.String("cutoff-date", "", "ISO date (date cutoff)")
+	commit := fs.String("commit", "", "commit SHA (commit cutoff: exact tree)")
 	pr := fs.Int("pr", 0, "PR number (pr cutoff)")
 	traceDir := fs.String("trace-dir", "", "trace files directory")
 	peasantBin := fs.String("peasant-bin", "", "path to peasant binary")
@@ -50,8 +51,13 @@ func run(args []string) error {
 			return fmt.Errorf("--pr is required for pr cutoffs")
 		}
 		cutoff, err = snap.ByPR(*pr)
+	case "commit":
+		if *commit == "" {
+			return fmt.Errorf("--commit is required for commit cutoffs")
+		}
+		cutoff, err = snap.ByCommit(*commit)
 	default:
-		return fmt.Errorf("--cutoff-type must be date or pr")
+		return fmt.Errorf("--cutoff-type must be date, pr, or commit (got %q)", *cutoffType)
 	}
 	if err != nil {
 		return err
