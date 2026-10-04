@@ -123,9 +123,9 @@ Write `<base-dir>/report.md` with:
 8. **Findings** ranked `BLOCKER` / `IMPORTANT` / `MINOR`, each with `path:line`, a concrete
    scenario, impact, and a specific fix.
 9. **An explanatory ASCII diagram** of the mechanism as built.
-10. **At least one `c4` diagram**, linted:
-    `python3 "$REPO_HOST/.claude/skills/c4-model/scripts/c4-lint.py" <report>` —
-    exit 0 required. The brief may waive this for a lean wave.
+10. **At least one C4 diagram**: a Mermaid block per the `c4-model` skill. The brief may waive
+    this for a lean wave. Lint any ASCII `c4` block with
+    `python3 "$REPO_HOST/.claude/skills/c4-model/scripts/c4-lint.py" <report>` (exit 0 required).
 11. **Checks run / skipped**: the exact commands and observed results, plus coverage limits; section
     3a already carries relevant, up-to-date results, so do not repeat a covered suite.
 12. **Integration with the current default branch** — merge, generation, and relevant tests.

@@ -183,4 +183,4 @@ Workflow skills live in `.claude/skills/`:
 | `epic-composer` | Turn follow-up items into approved epics and sub-issues. |
 | `review-wave` | Run the single-reviewer wave (all axes, lean mandate) and publish one curated report. |
 | `reviewer` | Independently review a PR or a wave and return ranked findings. |
-| `c4-model` | Draw software architecture in ASCII C4. |
+| `c4-model` | Draw software architecture in C4: Mermaid for TraceBench docs, ASCII where no renderer exists. |

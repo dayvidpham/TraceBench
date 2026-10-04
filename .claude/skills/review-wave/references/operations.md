@@ -145,12 +145,13 @@ the report path it must write, and these constraints:
 - Write the report as one file, with bash heredocs (`cat > … <<'EOF'`) or the edit tool.
 - Produce a verdict (`ACCEPT` / `REVISE`), problem statement, constraints, requirements,
   acceptance status, developed solution, tradeoffs, ranked findings with `path:line`, a concrete
-  scenario, impact and a fix, an explanatory ASCII diagram, at least one `c4` diagram (waived when
-  the brief says so), checks run and skipped, and the integration result against the current default
-  branch.
+  scenario, impact and a fix, an explanatory ASCII diagram, at least one C4 diagram (a Mermaid
+  block per the `c4-model` skill; waived when the brief says so), checks run and skipped, and the
+  integration result against the current default branch.
 - Lint every `c4` block with
   `python3 "$REPO_HOST/.claude/skills/c4-model/scripts/c4-lint.py" <report>`
-  until it exits 0.
+  until it exits 0. Mermaid blocks are not linted: check that they render and follow the
+  `c4-model` skill's `references/mermaid-notation.md`.
 - Consume the brief's "Validation evidence (already run)": verify it and spot-check specific claims
   rather than repeating a covered suite.
 - Public-audience prose: no internal task IDs, slice or phase names, or workflow taxonomy.
