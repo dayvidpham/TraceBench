@@ -30,6 +30,9 @@
             jq
             curl
             sqlite
+            # Harbor's podman provider shells out to `docker compose`; the
+            # devShell provides v2 so Harbor runs need no nix-shell wrapper.
+            docker-compose
           ];
           shellHook = ''
             echo "tracebench dev shell: $(go version | cut -d' ' -f3), $(uv --version)"

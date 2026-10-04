@@ -65,10 +65,14 @@ harbor run -p tasks/trace-propagation -a claude-code \
 harbor view ./jobs
 ```
 
+For the full proof-of-concept runbook — image setup, the `peasant-344` MVP, and the generated
+pipeline — see [`docs/proof-of-concept.md`](docs/proof-of-concept.md).
+
 ## Tasks
 
 | Task | What it tests | Difficulty |
 | - | - | - |
+| `tracebench/peasant-344` | Feasibility: implement peasant#344's publication-validation refactor against the pre-PR repo (sealed oracle, fail-to-pass verifier) | Small: 6 files, +99/−22 |
 | `tracebench/trace-propagation` | Fix W3C `traceparent` propagation across two services (trace-id, sampled flag, tracestate) | Medium: 3 files to read, reproduce, fix 1 function |
 | `tracebench/peasant-smoke` | Containerized Peasant codebase builds + fast unit tests pass (issue #1) | Smoke: no bug fix, proves image-origin and host cleanliness |
 
@@ -86,6 +90,10 @@ go run ./cmd/tracebench-sample index
 go run ./cmd/tracebench-sample sample --train 30 --val 10 --test 9
 go run ./cmd/tracebench-sample dump
 ```
+
+The prerelease archive (`--archive-repo`) is indexed for reference but never
+sampled: it is frozen pre-launch history and contributes neither tasks nor
+prior context.
 
 Indexes land in `corpus/index/`, the sampled dataset in `corpus/dataset/`, and
 `dump/` holds a flat, publishable dump: `metadata.jsonl` records in
@@ -179,11 +187,17 @@ code is 1 when any task failed.
 Verify with Harbor:
 
 ```bash
-# The oracle applies solution/oracle.patch, then the verifier runs; expect reward 1.0.
+# Re-tag the shared images first (Harbor's teardown removes the image a task references):
+scripts/ensure-task-images.sh
+
+# The oracle applies solution/oracle.patch, then the verifier runs; generated tasks score
+# around 0.998 (the residual is the documented calibration set); the hand-built
+# tasks/peasant-344 MVP scores 1.0.
 harbor run -p build/run-1/tasks/peasant-pr-0343 -a oracle -e podman
 
-# Run every task of the run under the job config.
-harbor run -c build/run-1/job-config.yaml
+# Run every task of the run under the job config (-k 1 for a fast smoke; the config
+# carries n_attempts: 3 for real evals).
+harbor run -c build/run-1/job-config.yaml -e podman -k 1
 ```
 
 Harbor is not installed in every development environment. Where it is not,
@@ -210,7 +224,8 @@ How the pieces fit:
 6. **Skeleton** — the Harbor task directory that references the shared base
    image and uploads `environment/` at start.
 7. **Verifier** — `tests/test.sh` removes the pre-PR tests, overlays the golden
-   suite, runs the test command, and writes the reward (`passed / total`) to
+   suite, runs the test command, and writes the reward (`passed / accepted
+   cases`; build-tag-gated cases are rejected and excluded) to
    `/logs/verifier/reward.txt` and a per-case report to `test-results.json`.
 8. **Job config** — one Harbor job per run id.
 

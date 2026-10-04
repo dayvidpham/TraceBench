@@ -63,6 +63,30 @@ const (
 
 var splitOrder = []Split{Train, Val, Test}
 
+// ExcludeRepos returns the candidates whose pull request does not belong to
+// any of the given repositories. The prerelease archive is excluded this way:
+// it is frozen pre-launch history and never contributes tasks or prior
+// context, so it is indexed for reference but never sampled.
+func ExcludeRepos(candidates []Candidate, repos ...string) []Candidate {
+	excluded := make(map[string]bool, len(repos))
+	for _, repo := range repos {
+		if repo != "" {
+			excluded[repo] = true
+		}
+	}
+	if len(excluded) == 0 {
+		return candidates
+	}
+	kept := make([]Candidate, 0, len(candidates))
+	for _, candidate := range candidates {
+		if excluded[string(candidate.PR.Repo)] {
+			continue
+		}
+		kept = append(kept, candidate)
+	}
+	return kept
+}
+
 // Select chooses candidates for the requested split sizes. When more
 // candidates exist than the total target, the selection round-robins across
 // time and size strata so both axes stay covered; otherwise every candidate
