@@ -10,8 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from conftest import LIVE, TESTDATA
+from conftest import BODY_TEXT, LIVE, TESTDATA
 from tracebench_corpus import (
+    MAX_BODY_CHARS,
     Corpus,
     TaskBuilder,
     build_skeleton,
@@ -221,3 +222,52 @@ def test_skeleton_rejects_non_object_task_json(tmp_path) -> None:
     (payload / "task.json").write_text("[]")
     with pytest.raises(ValueError, match="task.json"):
         build_skeleton(payload, tmp_path / "task")
+
+
+def test_skeleton_renders_pr_body_as_goal(tmp_path, body_dump, standard_index) -> None:
+    payload = tmp_path / "payload"
+    TaskBuilder(Corpus(body_dump), pr_index=standard_index).build(f"{LIVE}#22", payload)
+    build_skeleton(payload, tmp_path / "task")
+    instruction = (tmp_path / "task" / "instruction.md").read_text()
+    goal = instruction.split("## Goal")[1]
+    assert BODY_TEXT in goal
+    assert "TODO(task author)" not in instruction
+    assert "/workdir/repo" in instruction
+    assert "/workdir/prior-traces" in instruction
+
+
+def test_skeleton_keeps_todo_without_body(tmp_path, standard_dump, standard_index) -> None:
+    payload = make_payload(tmp_path, standard_dump, standard_index)
+    pr = json.loads((payload / "pr.json").read_text())
+    assert pr.get("body") is None
+    build_skeleton(payload, tmp_path / "task")
+    instruction = (tmp_path / "task" / "instruction.md").read_text()
+    assert "Implement the change the pull request made." in instruction
+    assert "## TODO(task author)" in instruction
+
+    pr["body"] = "  \n "
+    (payload / "pr.json").write_text(json.dumps(pr))
+    build_skeleton(payload, tmp_path / "blank-task", force=True)
+    assert "## TODO(task author)" in (tmp_path / "blank-task" / "instruction.md").read_text()
+
+
+def test_skeleton_rejects_non_string_body(tmp_path, standard_dump, standard_index) -> None:
+    payload = make_payload(tmp_path, standard_dump, standard_index)
+    pr = json.loads((payload / "pr.json").read_text())
+    pr["body"] = 123
+    (payload / "pr.json").write_text(json.dumps(pr))
+    with pytest.raises(ValueError, match="field `body`"):
+        build_skeleton(payload, tmp_path / "task")
+
+
+def test_skeleton_truncates_overlong_body(tmp_path, long_body_dump, standard_index) -> None:
+    payload = tmp_path / "payload"
+    TaskBuilder(Corpus(long_body_dump), pr_index=standard_index).build(f"{LIVE}#22", payload)
+    pr = json.loads((payload / "pr.json").read_text())
+    assert len(pr["body"]) > MAX_BODY_CHARS
+    build_skeleton(payload, tmp_path / "task")
+    instruction = (tmp_path / "task" / "instruction.md").read_text()
+    goal = instruction.split("## Goal")[1]
+    assert f"[truncated: pull request body exceeded {MAX_BODY_CHARS} characters]" in goal
+    assert pr["body"] not in goal
+    assert "TODO(task author)" not in instruction
