@@ -2,15 +2,14 @@
 
 ## 1. What this wave is
 
-A coordinated review of <one PR | two sibling PRs> by three independent reviewers, one per lens:
+A coordinated review of <one PR | two sibling PRs> by **one reviewer covering all axes**
+(correctness, integration, minimal test sanity). The reviewer reviews every PR and votes
+**ACCEPT** or **REVISE** per PR. The orchestrator curates the findings afterwards into a two-part
+report: a short human document and a precise agent document.
 
-- **Correctness** — does the implementation faithfully serve the issue and its invariants?
-- **API design** — is the surface no larger than the problem; boundaries, naming, contracts?
-- **Test quality** — fixtures, real services, observable assertions, `-race`?
-
-Each reviewer reviews every PR and votes **ACCEPT** or **REVISE** per PR. The orchestrator curates
-the findings afterwards into a two-part report: a short human document and a precise agent
-document.
+**Lean mandate (user ruling 2026-10-04):** only leaks, broken pipeline/materialization paths, and
+docs that would mislead agents are blockers. Testing findings are advisory; IMPORTANT/MINOR
+findings route to follow-ups and do not block.
 
 Scope boundaries to respect: <e.g. no routes, UI, migrations, dispatcher wiring; do not demand
 them>. Do not propose <e.g. a scoring formula>. Review what is here against the acceptance.
@@ -36,13 +35,11 @@ them>. Do not propose <e.g. a scoring formula>. Review what is here against the 
 
 ## 3. Environment
 
-- Reviewer A: `<base-dir>/a/pr<n>` (detached at the head SHA), `<base-dir>/a/integration` scratch
-  at the current default branch.
-- Reviewer B: `<base-dir>/b/pr<n>`, `<base-dir>/b/integration`.
-- Reviewer C: `<base-dir>/c/pr<n>`, `<base-dir>/c/integration`.
-- <If the change needs a service, each reviewer's own instance and connection details go here.>
+- Reviewer: `<base-dir>/review/pr<n>` (detached at the head SHA), `<base-dir>/review/integration`
+  scratch at the current default branch.
+- <If the change needs a service, the reviewer's instance and connection details go here.>
 
-PR checkouts are read-only. The integration checkout is disposable for local merge and generation
+The PR checkout is read-only. The integration checkout is disposable for local merge and generation
 experiments: no commits, no pushes, reset it when done.
 
 Spot-check recipe (the orchestrator already ran the authoritative checks; see section 3a).
@@ -90,7 +87,9 @@ network-restricted sandboxes.>
 ## 6. Prior review items (re-reviews only)
 
 Every item from the previous review at the prior SHA must be confirmed or refuted against the
-current build, with evidence. Do not re-review only the fix.
+current build, with evidence. Do not re-review only the fix. A small, non-functional delta (docs,
+message strings) may be verified with a focused fix-verification pass; state what was and was not
+re-walked.
 
 1. <prior finding> — <location, what to check>
 2. …
@@ -110,9 +109,9 @@ current build, with evidence. Do not re-review only the fix.
 - Public API or file-format changes state their compatibility impact.
 - No internal task taxonomy in code, docs, comments, or reports; public-audience prose.
 
-## 9. Output contract for each reviewer
+## 9. Output contract for the reviewer
 
-Write `<base-dir>/report-<a|b|c>.md` with:
+Write `<base-dir>/report.md` with:
 
 1. **Verdict** at the verified SHA — `ACCEPT` or `REVISE` (binary).
 2. **Problem statement** — grounded in the issue, in your own words.
@@ -126,7 +125,7 @@ Write `<base-dir>/report-<a|b|c>.md` with:
 9. **An explanatory ASCII diagram** of the mechanism as built.
 10. **At least one `c4` diagram**, linted:
     `python3 "$REPO_HOST/.claude/skills/c4-model/scripts/c4-lint.py" <report>` —
-    exit 0 required.
+    exit 0 required. The brief may waive this for a lean wave.
 11. **Checks run / skipped**: the exact commands and observed results, plus coverage limits; section
     3a already carries relevant, up-to-date results, so do not repeat a covered suite.
 12. **Integration with the current default branch** — merge, generation, and relevant tests.
