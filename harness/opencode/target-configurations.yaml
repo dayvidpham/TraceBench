@@ -1,0 +1,6 @@
+# Select this target with --target-config opencode-oauth. Change model to any
+# OpenCode-supported model; the auth launcher does not restrict model names.
+target_configurations:
+  - name: opencode-oauth
+    harness: harness.opencode.agent:OpenCode
+    model: openai/gpt-5.6-luna

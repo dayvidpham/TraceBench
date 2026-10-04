@@ -1,0 +1,21 @@
+invalid_auth_paths:
+  - name: missing-file
+    path: missing.json
+  - name: directory
+    path: .
+rejected_jobs:
+  - name: other-agent
+    config:
+      agents:
+        - name: oracle
+  - name: mixed-agents
+    config:
+      agents:
+        - name: harness.opencode.agent:OpenCode
+        - name: oracle
+  - name: user-agent
+    config:
+      agents:
+        - name: harness.opencode.agent:OpenCode
+      user_agent:
+        name: oracle

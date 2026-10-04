@@ -198,6 +198,9 @@ uv run tracebench-corpus --corpus data/tracebench pipeline \
 * `--run-id ID` names the run. Without it, pass `--target-configs SPEC
   --target-config NAME`, and the run id is derived from the target
   configuration and the pull request list.
+* For the custom OpenCode agent, add `--target-configs
+  harness/opencode/target-configurations.yaml --target-config opencode-oauth`.
+  Set `model` in that spec to any OpenCode-supported model.
 * `--force` rebuilds payload and task directories that already exist.
 
 Outputs under `--dest`:
@@ -206,7 +209,7 @@ Outputs under `--dest`:
 |---|---|
 | `payloads/<slug>-pr-NNNN/` | The task payload: `pr.json`, `prior-traces/`, `repo/`, `tests/`, `test-manifest.json`, `solution/`, `repo-request.json`, `task.json`. |
 | `tasks/<slug>-pr-NNNN/` | The Harbor task: `task.toml`, `instruction.md`, `environment/`, `tests/`, `solution/`. |
-| `job-config.yaml` | The Harbor job config: `job_name` (the run id), `n_attempts: 3`, the built tasks, and `TRACEBENCH_RUN_ID` in `agents[].env` and `verifier.env`. It is `job-config.json` when PyYAML is not installed. |
+| `job-config-<run id>.yaml` | The Harbor job config: `job_name` (the run id), `n_attempts: 3`, the built tasks, and `TRACEBENCH_RUN_ID` in `agents[].env` and `verifier.env`. It uses `.json` when PyYAML is not installed. |
 
 `<slug>` is `peasant` for `peasant-labs/peasant` and `peasant-archive` for the
 prerelease archive; `NNNN` is the zero-padded pull request number. The command
@@ -228,8 +231,24 @@ harbor run -p build/run-1/tasks/peasant-pr-0343 -a oracle -e podman
 
 # Run every task of the run under the job config (-k 1 for a fast smoke; the config
 # carries n_attempts: 3 for real evals).
-harbor run -c build/run-1/job-config.yaml -e podman -k 1
+harbor run -c build/run-1/job-config-tracebench-smoke-1.yaml -e podman -k 1
 ```
+
+For a local job that uses `harness.opencode.agent:OpenCode`, mount an existing
+OpenCode login when the job starts:
+
+```bash
+TRACEBENCH_OPENCODE_AUTH_JSON="$HOME/.local/share/opencode/auth.json" \
+  python3 -m harness.opencode.run_local \
+  --job-config build/run-1/job-config-tracebench-smoke-1.yaml
+```
+
+The launcher checks the source file before it starts Harbor. It mounts the
+file read-only at `/tmp/tracebench-opencode-data/opencode/auth.json` in the
+Podman agent container and sets `XDG_DATA_HOME=/tmp/tracebench-opencode-data`.
+The shared base image, generated task, and saved job config contain no login data.
+Omit the environment variable to launch the job without a login mount. Model
+selection stays in the target configuration that produced the job config.
 
 Harbor is not installed in every development environment. Where it is not,
 these are the documented commands, and the loader tests cover the parts that
