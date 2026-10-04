@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import contextlib
+import contextvars
+import json
 import logging
 import os
 import re
@@ -26,22 +28,33 @@ _ADAPTER_OWNER = threading.Lock()
 # This program runs in the container. The credential is read from the runtime
 # environment, never interpolated into the program or its arguments. Buffer a
 # possible partial match between reads, including an unterminated last line.
-STREAM_GUARD = """import os, sys
-key = os.environ['OPENCODE_API_KEY'].encode()
+STREAM_GUARD = """import json, os, sys
+key = os.environ['OPENCODE_API_KEY']
+forms = sorted({key.encode(), *(json.dumps(key, ensure_ascii=ascii)[1:-1].encode()
+                              for ascii in (True, False))}, key=len, reverse=True)
+def clean(data):
+    for form in forms:
+        data = data.replace(form, b'[REDACTED]')
+    return data
 pending = b''
 while True:
     chunk = os.read(0, 65536)
     if not chunk:
-        sys.stdout.buffer.write(pending.replace(key, b'[REDACTED]'))
+        sys.stdout.buffer.write(clean(pending))
         sys.stdout.buffer.flush()
         break
     pending += chunk
-    cut = max(0, len(pending) - len(key) + 1)
-    hit = pending.find(key)
-    while hit != -1 and hit < cut:
-        cut = max(cut, hit + len(key))
-        hit = pending.find(key, hit + len(key))
-    sys.stdout.buffer.write(pending[:cut].replace(key, b'[REDACTED]'))
+    cut = max(0, len(pending) - len(forms[0]) + 1)
+    while True:
+        previous = cut
+        for form in forms:
+            hit = pending.find(form)
+            while hit != -1 and hit < cut:
+                cut = max(cut, hit + len(form))
+                hit = pending.find(form, hit + len(form))
+        if cut == previous:
+            break
+    sys.stdout.buffer.write(clean(pending[:cut]))
     sys.stdout.buffer.flush()
     pending = pending[cut:]
 """
@@ -49,6 +62,12 @@ while True:
 
 class LocalRunError(ValueError):
     """A sanitized failure at the local launch boundary."""
+
+
+def _credential_forms(key: str) -> list[str]:
+    """Representations used by routine raw and JSON output."""
+    return sorted({key, *(json.dumps(key, ensure_ascii=ascii)[1:-1]
+                          for ascii in (True, False))}, key=len, reverse=True)
 
 
 def prepare_auth(config, variable: str = KEY_ENV) -> str | None:
@@ -85,13 +104,16 @@ def scrub_artifacts(root: Path, key: str) -> None:
     Harbor also downloads server state and arbitrary task artifacts; guard those
     before returning job evidence, including on failure.
     """
-    marker = key.encode()
+    markers = [form.encode() for form in _credential_forms(key)]
     for path in root.rglob("*"):
         if path.is_symlink() or not path.is_file():
             continue
         content = path.read_bytes()
-        if marker in content:
-            path.write_bytes(content.replace(marker, b"[REDACTED]"))
+        guarded = content
+        for marker in markers:
+            guarded = guarded.replace(marker, b"[REDACTED]")
+        if guarded != content:
+            path.write_bytes(guarded)
 
 
 @contextlib.contextmanager
@@ -110,10 +132,21 @@ def runtime_adapter(key: str):
     compose = PodmanEnvironment._run_docker_compose_command
     exec_command = PodmanEnvironment.exec
     handle_record = logging.Logger.handle
+    forms = _credential_forms(key)
+    owned_processes = contextvars.ContextVar("credential_exec_processes", default=None)
+
+    async def tracked_process(*args, **kwargs):
+        process = await create_process(*args, **kwargs)
+        processes = owned_processes.get()
+        if processes is not None:
+            processes.append(process)
+        return process
 
     def clean(value):
         if isinstance(value, str):
-            return value.replace(key, "[REDACTED]")
+            for form in forms:
+                value = value.replace(form, "[REDACTED]")
+            return value
         if isinstance(value, tuple):
             return tuple(clean(item) for item in value)
         if isinstance(value, list):
@@ -132,7 +165,15 @@ def runtime_adapter(key: str):
             record.env[KEY_ENV] = "[REDACTED]"
         handle_record(logger, record)
 
-    async def guarded_compose(environment, command, *args, **kwargs):
+    async def guarded_command(environment, command, *args, deadline=None, **kwargs):
+        def remaining():
+            if deadline is None:
+                return None
+            duration = deadline - asyncio.get_running_loop().time()
+            if duration <= 0:
+                raise LocalRunError("local credential exec timed out")
+            return duration
+
         callback = kwargs.get("on_output")
         if callback:
             async def guarded_output(text, stream):
@@ -155,7 +196,8 @@ def runtime_adapter(key: str):
                 if command[0] != "exec" or index >= len(command):
                     raise LocalRunError("unsupported local credential exec command")
                 service = command[index]
-                resolved = await compose(environment, ["ps", "-q", service])
+                resolved = await compose(environment, ["ps", "-q", service],
+                                         timeout_sec=remaining())
                 # Podman may prefix the ID with the ANSI reset from its Compose
                 # provider banner, even when output is captured without a TTY.
                 output = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", resolved.stdout or "")
@@ -174,7 +216,7 @@ def runtime_adapter(key: str):
                     raise LocalRunError("credential-bearing runtime argument rejected")
                 env = environment._compose_env_vars(include_os_env=True)
                 env[KEY_ENV] = key
-                process = await create_process(
+                process = await tracked_process(
                     *argv, env=env,
                     stdin=asyncio.subprocess.PIPE if kwargs.get("stdin_data") is not None
                     else asyncio.subprocess.DEVNULL,
@@ -182,7 +224,7 @@ def runtime_adapter(key: str):
                 )
                 collector = (environment._collect_streamed_output if callback
                              else environment._collect_buffered_output)
-                collection = dict(timeout_sec=kwargs.get("timeout_sec"),
+                collection = dict(timeout_sec=remaining(),
                                   stdin_data=kwargs.get("stdin_data"))
                 if callback:
                     collection["on_output"] = kwargs["on_output"]
@@ -201,6 +243,27 @@ def runtime_adapter(key: str):
         except Exception as exc:
             raise LocalRunError(clean(str(exc))) from None
 
+    async def guarded_compose(environment, command, *args, **kwargs):
+        timeout = kwargs.get("timeout_sec")
+        deadline = asyncio.get_running_loop().time() + timeout if timeout else None
+        processes = []
+        token = owned_processes.set(processes)
+        try:
+            async with asyncio.timeout_at(deadline):
+                return await guarded_command(environment, command, *args,
+                                             deadline=deadline, **kwargs)
+        except TimeoutError:
+            raise LocalRunError("local credential exec timed out") from None
+        finally:
+            owned_processes.reset(token)
+            for process in processes:
+                if process.returncode is None:
+                    try:
+                        process.kill()
+                    except ProcessLookupError:
+                        pass
+                    await process.wait()
+
     async def guarded_exec(environment, command, *args, **kwargs):
         # Keep the installed command and flags. Insert the guard before its
         # existing tee, so normal stdout never persists a credential marker.
@@ -216,6 +279,7 @@ def runtime_adapter(key: str):
             raise LocalRunError("a local credential adapter already owns this process")
         stack.callback(_ADAPTER_OWNER.release)
         for target, name, replacement in (
+            (asyncio, "create_subprocess_exec", tracked_process),
             (PodmanEnvironment, "_run_docker_compose_command", guarded_compose),
             (PodmanEnvironment, "exec", guarded_exec),
             (logging.Logger, "handle", guarded_record),
