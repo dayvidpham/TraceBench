@@ -1,5 +1,5 @@
-// Command render builds harness/opencode/opencode.json from the single
-// parent-level toggle (harness/tools.json) and the per-harness mapping
+// Command render builds a generated opencode.json from the single parent
+// config (harness/config.json) and the per-harness mapping
 // definition (harness/opencode/tool-map.json).
 //
 // Only search/fetch may be toggled. bash is never representable.
@@ -33,11 +33,35 @@ func loadObject(path string) map[string]json.RawMessage {
 
 func main() {
 	if len(os.Args) != 4 {
-		fail("usage: render <tools.json> <tool-map.json> <out.json>")
+		fail("usage: render <config.json> <tool-map.json> <out.json>")
 	}
-	toolsPath, mapPath, outPath := os.Args[1], os.Args[2], os.Args[3]
+	configPath, mapPath, outPath := os.Args[1], os.Args[2], os.Args[3]
 
-	toolsRaw := loadObject(toolsPath)
+	configRaw := loadObject(configPath)
+	if len(configRaw) != 2 {
+		fail("config must contain exactly version and tools")
+	}
+	versionRaw, ok := configRaw["version"]
+	if !ok {
+		fail("config must contain exactly version and tools")
+	}
+	var version string
+	if err := json.Unmarshal(versionRaw, &version); err != nil || version == "" {
+		fail("version must be a non-empty string")
+	}
+	toolsJSON, ok := configRaw["tools"]
+	if !ok {
+		fail("config must contain exactly version and tools")
+	}
+	var toolsRaw map[string]json.RawMessage
+	if err := json.Unmarshal(toolsJSON, &toolsRaw); err != nil {
+		fail("tools must be an object")
+	}
+	for name := range configRaw {
+		if name != "version" && name != "tools" {
+			fail("config must contain exactly version and tools")
+		}
+	}
 	if len(toolsRaw) != len(allowed) {
 		fail("tools must be exactly [fetch search], got %d keys", len(toolsRaw))
 	}

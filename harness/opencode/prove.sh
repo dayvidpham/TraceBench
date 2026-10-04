@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 payload=harness/opencode
-ref=$(tr -d '[:space:]' < "$payload/version")
+ref=$(go run "$payload/config-value.go" harness/config.json version)
 
 test -n "$ref"
 test -d "$payload/src"

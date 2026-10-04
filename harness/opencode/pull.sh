@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Shallow-fetch the ref in harness/opencode/version. One commit, then no .git.
+# Shallow-fetch the OpenCode version in harness/config.json. One commit, then no .git.
 # Also fetch the linux release binary for this machine's arch.
 # Payload lands in harness/opencode/{src,REVISION,bin/opencode}.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-ref=$(tr -d '[:space:]' < harness/opencode/version)
+ref=$(go run harness/opencode/config-value.go harness/config.json version)
 git init harness/opencode/src
 git -C harness/opencode/src remote add origin https://github.com/anomalyco/opencode.git
 git -C harness/opencode/src fetch --depth 1 origin "$ref"

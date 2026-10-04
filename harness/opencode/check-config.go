@@ -1,8 +1,8 @@
-// Command check-config validates the parent-level toggle, the per-harness
+// Command check-config validates the single parent config, the per-harness
 // mapping definition, and the rendered opencode.json. No container.
 //
-// Default: check-config <tools.json> <tool-map.json> <opencode.json>
-// Verifies the committed off/off baseline.
+// Default: check-config <config.json> <tool-map.json> <opencode.json>
+// Verifies the off/off baseline rendered from the source config.
 //
 // Perm-only: check-config --perm-only <opencode.json> <want-perm-json>
 // Verifies a rendered permission object (used for the search-on case).
@@ -47,13 +47,20 @@ func main() {
 		return
 	}
 	if len(os.Args) != 4 {
-		fail("usage: check-config <tools.json> <tool-map.json> <opencode.json>")
+		fail("usage: check-config <config.json> <tool-map.json> <opencode.json>")
 	}
-	var tools map[string]bool
-	loadJSON(os.Args[1], &tools)
+	var config struct {
+		Version string          `json:"version"`
+		Tools   map[string]bool `json:"tools"`
+	}
+	loadJSON(os.Args[1], &config)
+	if config.Version == "" {
+		fail("config version is empty")
+	}
+	tools := config.Tools
 	if !reflect.DeepEqual(tools, map[string]bool{"search": false, "fetch": false}) {
 		b, _ := json.Marshal(tools)
-		fail("tools.json is %s, want search/fetch both false", string(b))
+		fail("config tools is %s, want search/fetch both false", string(b))
 	}
 	var mapping map[string]string
 	loadJSON(os.Args[2], &mapping)
