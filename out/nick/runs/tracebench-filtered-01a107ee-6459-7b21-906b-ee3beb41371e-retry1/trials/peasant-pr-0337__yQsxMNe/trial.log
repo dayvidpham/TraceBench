@@ -1,0 +1,6 @@
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0337__yQsxMNe failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts

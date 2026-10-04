@@ -1,0 +1,10 @@
+{
+    "environment": {
+        "type": "podman"
+    },
+    "tasks": [
+        {
+            "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0337"
+        }
+    ]
+}

@@ -1,0 +1,71 @@
+{
+    "job_name": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e-retry1",
+    "n_concurrent_trials": 2,
+    "environment": {
+        "type": "podman"
+    },
+    "verifier": {
+        "env": {
+            "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        }
+    },
+    "metrics": [
+        {},
+        {
+            "type": "min"
+        },
+        {
+            "type": "max"
+        }
+    ],
+    "agents": [
+        {
+            "name": "oracle",
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+            }
+        }
+    ],
+    "tasks": [
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0146",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0150",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0157",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0310",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0315",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0331",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0337",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0338",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0343",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0344",
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        }
+    ]
+}

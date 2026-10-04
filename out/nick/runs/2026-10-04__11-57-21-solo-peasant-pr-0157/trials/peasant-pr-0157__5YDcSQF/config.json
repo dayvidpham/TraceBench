@@ -1,0 +1,11 @@
+{
+    "task": {
+        "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0157"
+    },
+    "trial_name": "peasant-pr-0157__5YDcSQF",
+    "trials_dir": "jobs/2026-10-04__11-57-21",
+    "environment": {
+        "type": "podman"
+    },
+    "job_id": "1dcaa1b6-a5d3-44b9-8c16-d817213e3cce"
+}

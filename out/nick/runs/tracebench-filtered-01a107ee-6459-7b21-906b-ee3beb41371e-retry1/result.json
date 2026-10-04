@@ -1,0 +1,69 @@
+{
+    "id": "d28011e3-e187-4689-90f5-6809764de004",
+    "started_at": "2026-10-04T11:39:02.765242",
+    "updated_at": "2026-10-04T11:55:19.051821",
+    "finished_at": "2026-10-04T11:55:19.051821",
+    "n_total_trials": 10,
+    "stats": {
+        "n_completed_trials": 10,
+        "n_errored_trials": 3,
+        "n_running_trials": 0,
+        "n_pending_trials": 0,
+        "n_cancelled_trials": 0,
+        "n_retries": 0,
+        "evals": {
+            "oracle__tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e": {
+                "n_trials": 7,
+                "n_errors": 3,
+                "metrics": [
+                    {
+                        "mean": 0.6768691002639462
+                    },
+                    {
+                        "min": 0
+                    },
+                    {
+                        "max": 0.9977220956719818
+                    }
+                ],
+                "pass_at_k": {},
+                "reward_stats": {
+                    "reward": {
+                        "0.9974765681326604": [
+                            "peasant-pr-0150__mgNy4sr"
+                        ],
+                        "0.9977220956719818": [
+                            "peasant-pr-0310__VxCweSF"
+                        ],
+                        "0.9971144597627445": [
+                            "peasant-pr-0315__SKDxTtT"
+                        ],
+                        "0.9421170450911417": [
+                            "peasant-pr-0331__vmCErin"
+                        ],
+                        "0.8912080961416825": [
+                            "peasant-pr-0338__VftRjhk"
+                        ],
+                        "0.9459217209441291": [
+                            "peasant-pr-0343__gbZS5L4"
+                        ],
+                        "0.9971310168951227": [
+                            "peasant-pr-0344__wX6eUGe"
+                        ]
+                    }
+                },
+                "exception_stats": {
+                    "HealthcheckError": [
+                        "peasant-pr-0146__hZYtZy5",
+                        "peasant-pr-0157__z6Bu2vW",
+                        "peasant-pr-0337__yQsxMNe"
+                    ]
+                }
+            }
+        },
+        "n_input_tokens": null,
+        "n_cache_tokens": null,
+        "n_output_tokens": null,
+        "cost_usd": null
+    }
+}

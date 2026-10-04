@@ -1,0 +1,105 @@
+{
+    "id": "0231cabb-8704-4221-8399-7b8261344ef4",
+    "task_name": "tracebench/peasant-pr-0146",
+    "trial_name": "peasant-pr-0146__hZYtZy5",
+    "trial_uri": "file:///Users/nick/DEV/SH26/TraceBench/worktree/TEST-RUN/jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e-retry1/peasant-pr-0146__hZYtZy5",
+    "task_id": {
+        "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0146"
+    },
+    "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+    "task_checksum": "ae028f9c252bd0ad22a86945a5317628c160d2d572277ec40ac0efd105a16a4e",
+    "config": {
+        "task": {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0146",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        "trial_name": "peasant-pr-0146__hZYtZy5",
+        "trials_dir": "jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e-retry1",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "oracle",
+            "import_path": null,
+            "model_name": null,
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [],
+            "kwargs": {},
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+            },
+            "mcp_servers": []
+        },
+        "user_agent": null,
+        "environment": {
+            "type": "podman",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+            },
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "extra_instructions": [],
+        "job_id": "d28011e3-e187-4689-90f5-6809764de004",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "oracle",
+        "version": "1.0.0",
+        "model_info": null
+    },
+    "agent_result": null,
+    "verifier_result": null,
+    "verifier_environment_mode": "shared",
+    "exception_info": {
+        "exception_type": "HealthcheckError",
+        "exception_message": "Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...",
+        "exception_traceback": "Traceback (most recent call last):\n  File \"/Users/nick/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/trial/trial.py\", line 415, in run\n    await self._prepare()\n  File \"/Users/nick/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/trial/trial.py\", line 454, in _prepare\n    await self.agent_environment.run_healthcheck()\n  File \"/Users/nick/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/environments/base.py\", line 1385, in run_healthcheck\n    raise HealthcheckError(\n    ...<2 lines>...\n    )\nharbor.environments.base.HealthcheckError: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...\n",
+        "occurred_at": "2026-10-04T18:40:02.091887Z"
+    },
+    "started_at": "2026-10-04T18:39:08.624525Z",
+    "finished_at": "2026-10-04T18:40:13.385247Z",
+    "environment_setup": {
+        "started_at": "2026-10-04T18:39:09.323834Z",
+        "finished_at": "2026-10-04T18:39:11.317131Z"
+    },
+    "agent_setup": null,
+    "agent_execution": null,
+    "verifier": null,
+    "step_results": null
+}

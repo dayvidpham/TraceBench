@@ -1,0 +1,121 @@
+{
+    "id": "57d0a861-9c8f-4e02-9d8c-bd2ad7736965",
+    "task_name": "tracebench/peasant-pr-0331",
+    "trial_name": "peasant-pr-0331__vmCErin",
+    "trial_uri": "file:///Users/nick/DEV/SH26/TraceBench/worktree/TEST-RUN/jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e-retry1/peasant-pr-0331__vmCErin",
+    "task_id": {
+        "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0331"
+    },
+    "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+    "task_checksum": "e4b51e07c3c2b64a157a4fc6012be84c13f905e7eb030185a9c198059c9a032b",
+    "config": {
+        "task": {
+            "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0331",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        "trial_name": "peasant-pr-0331__vmCErin",
+        "trials_dir": "jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e-retry1",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "oracle",
+            "import_path": null,
+            "model_name": null,
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [],
+            "kwargs": {},
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+            },
+            "mcp_servers": []
+        },
+        "user_agent": null,
+        "environment": {
+            "type": "podman",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+            },
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "extra_instructions": [],
+        "job_id": "d28011e3-e187-4689-90f5-6809764de004",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "oracle",
+        "version": "1.0.0",
+        "model_info": null
+    },
+    "agent_result": {
+        "n_input_tokens": null,
+        "n_cache_tokens": null,
+        "n_output_tokens": null,
+        "cost_usd": null,
+        "model_usage": null,
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.9421170450911417
+        }
+    },
+    "verifier_environment_mode": "shared",
+    "exception_info": null,
+    "started_at": "2026-10-04T18:45:29.542471Z",
+    "finished_at": "2026-10-04T18:49:50.767898Z",
+    "environment_setup": {
+        "started_at": "2026-10-04T18:45:29.689937Z",
+        "finished_at": "2026-10-04T18:45:32.010714Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-10-04T18:45:55.808981Z",
+        "finished_at": "2026-10-04T18:45:55.809085Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-10-04T18:45:55.809204Z",
+        "finished_at": "2026-10-04T18:46:03.029049Z"
+    },
+    "verifier": {
+        "started_at": "2026-10-04T18:46:03.533366Z",
+        "finished_at": "2026-10-04T18:49:11.854012Z"
+    },
+    "step_results": null
+}

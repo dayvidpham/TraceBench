@@ -1,0 +1,11 @@
+{
+    "job_name": "2026-10-04__11-57-21",
+    "environment": {
+        "type": "podman"
+    },
+    "tasks": [
+        {
+            "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0157"
+        }
+    ]
+}

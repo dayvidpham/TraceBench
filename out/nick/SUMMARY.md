@@ -30,7 +30,41 @@ Confirms the HealthcheckErrors were parallel-run throttling, not broken tasks.
 
 ## Retry of remaining 10 (`-n 2`, `inputs/job-config-retry1.yaml`)
 
-Pending at packaging time; appended in a follow-up commit.
+7 completed, 3 `HealthcheckError` (0146, 0157, 0337):
+
+- `peasant-pr-0150`: 0.9975, `peasant-pr-0310`: 0.9977, `peasant-pr-0315`: 0.9971
+- `peasant-pr-0331`: 0.9421, `peasant-pr-0338`: 0.8912
+- `peasant-pr-0343`: 0.9459, `peasant-pr-0344`: 0.9971
+
+Results in `runs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e-retry1/`.
+
+## Solo re-runs of the last 3 (serial, all pass)
+
+- `peasant-pr-0146`: 0.9975, `peasant-pr-0157`: 0.9976, `peasant-pr-0337`: 0.9971
+- Results in `runs/<timestamp>-solo-<task>/`.
+
+## Final tally: 14/14 tasks scored
+
+| PR | Reward | Source run |
+|---|---|---|
+| #145 | 0.9975 | solo |
+| #146 | 0.9975 | solo |
+| #150 | 0.9975 | retry1 |
+| #157 | 0.9976 | solo |
+| #310 | 0.9977 | retry1 |
+| #315 | 0.9971 | retry1 |
+| #316 | 0.9841 | main |
+| #331 | 0.9421 | retry1 |
+| #334 | 0.6255 | main |
+| #337 | 0.9971 | solo |
+| #338 | 0.8912 | retry1 |
+| #343 | 0.9459 | retry1 |
+| #344 | 0.9971 | retry1 |
+| #347 | 0.9635 | main |
+
+Takeaway: every `HealthcheckError` in the parallel runs was Go-proxy throttling
+during the env warm phase; each affected task passes serially. Lowest genuine
+scores are #334 (0.63) and #338 (0.89).
 
 ## Layout
 
