@@ -122,6 +122,20 @@ def materialize_golden_tests(
             "Check that the merge commit is correct and that repo-request.json "
             "test_patterns cover the repository's test files."
         )
+    if (dest / MANIFEST_NAME).is_dir():
+        raise GoldenSuiteError(
+            f"golden suite for pull request {pr_id or '<unknown>'}: {dest / MANIFEST_NAME} "
+            "is a directory and collides with the golden suite manifest. Remove it or "
+            "rebuild the payload with --force."
+        )
+    for path in selected:
+        if path.startswith(MANIFEST_NAME + "/"):
+            raise GoldenSuiteError(
+                f"golden suite for pull request {pr_id or '<unknown>'}: the test file "
+                f"{path!r} at merge commit {merge_commit} lies under {MANIFEST_NAME}/ and "
+                f"collides with the golden suite manifest {dest / MANIFEST_NAME}. Narrow "
+                "the test patterns in repo-request.json so they exclude it."
+            )
     dest.mkdir(parents=True, exist_ok=True)
     root = dest.resolve()
     for path in selected:

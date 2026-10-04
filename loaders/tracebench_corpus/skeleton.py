@@ -90,6 +90,11 @@ def build_skeleton(
     summary: dict[str, Any] = {}
     if (payload / "task.json").is_file():
         summary = json.loads((payload / "task.json").read_text())
+        if not isinstance(summary, dict):
+            raise ValueError(
+                f"{payload / 'task.json'} must hold a JSON object, got "
+                f"{type(summary).__name__}; regenerate the payload with --force"
+            )
 
     dest = Path(dest)
     if dest.exists() and any(dest.iterdir()):

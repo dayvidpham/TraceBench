@@ -180,3 +180,12 @@ def test_skeleton_cli(tmp_path, standard_dump, standard_index, capsys) -> None:
 
     assert main(["skeleton", "--payload", str(tmp_path / "missing"), "--dest", str(tmp_path / "x")]) == 2
     assert "not a task payload" in capsys.readouterr().err
+
+
+def test_skeleton_rejects_non_object_task_json(tmp_path) -> None:
+    payload = tmp_path / "payload"
+    payload.mkdir()
+    (payload / "pr.json").write_text(json.dumps({"id": f"{LIVE}#1", "repo": LIVE, "number": 1}))
+    (payload / "task.json").write_text("[]")
+    with pytest.raises(ValueError, match="task.json"):
+        build_skeleton(payload, tmp_path / "task")
