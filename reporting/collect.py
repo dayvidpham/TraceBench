@@ -9,7 +9,9 @@ timestamps, ``exception_info``), the verifier's ``test-results.json``
 (``passed``, ``failed``, ``skipped``, ``missing``, ``total_cases``,
 ``rejected_cases``), and, for model agents, ``agent/trajectory.json`` with
 ``final_metrics.total_steps``. Oracle trials have no trajectory, so their
-turn counts stay null.
+turn counts stay null. Trial directories are direct children of the job
+directory; a ``trials/`` subdirectory is accepted as a fallback for
+reorganized evidence trees.
 
 Derived per-trial values:
 
@@ -232,13 +234,27 @@ def summarize(values: list[float | int | None]) -> dict[str, float | None]:
     }
 
 
+def find_trial_dirs(job_dir: Path) -> list[Path]:
+    """Trial directories hold ``result.json``.
+
+    Harbor writes one directory per trial directly under the job directory;
+    reorganized evidence trees nest them under ``trials/`` instead. Direct
+    children win; the ``trials/`` subdirectory is the fallback.
+    """
+    direct = sorted(entry for entry in job_dir.iterdir() if entry.is_dir() and (entry / RESULT_FILE).exists())
+    if direct:
+        return direct
+    nested = job_dir / "trials"
+    if nested.is_dir():
+        return sorted(entry for entry in nested.iterdir() if entry.is_dir() and (entry / RESULT_FILE).exists())
+    return []
+
+
 def collect_job(job_dir: Path) -> dict[str, Any]:
     """Collect every trial under *job_dir* into the aggregate record."""
     if not job_dir.is_dir():
         raise CollectError(f"{job_dir}: job directory does not exist")
-    trial_dirs = sorted(
-        entry for entry in job_dir.iterdir() if entry.is_dir() and (entry / RESULT_FILE).exists()
-    )
+    trial_dirs = find_trial_dirs(job_dir)
     if not trial_dirs:
         raise CollectError(f"{job_dir}: no trial directories with {RESULT_FILE}")
 

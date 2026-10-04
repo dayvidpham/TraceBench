@@ -61,6 +61,19 @@ def test_errored_trial_keeps_nulls_and_records_exception(tmp_path: Path) -> None
     ]
 
 
+def test_nested_trials_subdirectory_is_accepted(tmp_path: Path) -> None:
+    """Reorganized evidence trees with trials under trials/ collect the same way."""
+    out = tmp_path / "aggregate.json"
+    proc = run_collect(TESTDATA / "job-nested", out)
+    assert proc.returncode == 0, proc.stderr
+    aggregate = json.loads(out.read_text(encoding="utf-8"))
+    assert aggregate["run_id"] == "nested-job"
+    task = aggregate["tasks"]["tracebench/peasant-pr-0343"]
+    assert task["attempts"] == 1
+    assert task["reward"] == {"mean": 0.9, "min": 0.9, "max": 0.9}
+    assert task["turns"] == {"mean": 5.0, "min": 5, "max": 5}
+
+
 def test_missing_result_json_fails_closed(tmp_path: Path) -> None:
     """A job with no trial result files fails, naming the job directory."""
     job = TESTDATA / "malformed-missing-result" / "job"
