@@ -446,3 +446,24 @@ def test_task_cli_target_configuration(standard_dump, standard_index, tmp_path, 
         "--dest", str(tmp_path / "unknown"),
     ]) == 2
     assert "unknown target configuration" in capsys.readouterr().err
+
+
+def test_unsampled_index_body_flows_into_pr_json(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    index = dict(standard_index)
+    index[f"{LIVE}#23"] = {"repo": LIVE, "number": 23, "merge_commit": "c23",
+                           "merged_at": "2026-09-05T00:00:00Z",
+                           "body": "Intent text for the change."}
+    payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#23", tmp_path / "task")
+    pr = json.loads((payload.path / "pr.json").read_text())
+    assert pr["body"] == "Intent text for the change."
+
+
+def test_unsampled_index_without_body_loads_as_null(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    index = dict(standard_index)
+    index[f"{LIVE}#23"] = {"repo": LIVE, "number": 23, "merge_commit": "c23",
+                           "merged_at": "2026-09-05T00:00:00Z"}
+    payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#23", tmp_path / "task")
+    pr = json.loads((payload.path / "pr.json").read_text())
+    assert pr.get("body") is None

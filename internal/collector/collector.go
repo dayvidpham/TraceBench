@@ -89,13 +89,16 @@ type SessionDetail struct {
 	Relation      string             `json:"relation,omitempty"`
 }
 
-// PRRecord is one pull request in the dataset manifest.
+// PRRecord is one pull request in the dataset manifest. Body is the
+// already-public pull request description and stays raw; see
+// corpus.PullRequest for the redaction rationale.
 type PRRecord struct {
 	ID           string        `json:"id"`
 	Split        sampler.Split `json:"split"`
 	Repo         string        `json:"repo"`
 	Number       int           `json:"number"`
 	Title        string        `json:"title"`
+	Body         string        `json:"body,omitempty"`
 	URL          string        `json:"url"`
 	Author       string        `json:"author,omitempty"`
 	HeadRef      string        `json:"head_ref"`
@@ -181,6 +184,7 @@ func Collect(ctx context.Context, datasetDir string, bundles []Bundle, opts Opti
 			Repo:         string(pr.Repo),
 			Number:       pr.Number,
 			Title:        pr.Title,
+			Body:         pr.Body,
 			URL:          pr.URL,
 			Author:       pr.Author,
 			HeadRef:      pr.HeadRef,

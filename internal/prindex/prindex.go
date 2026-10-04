@@ -17,10 +17,13 @@ import (
 	"github.com/dayvidpham/TraceBench/internal/corpus"
 )
 
-// ghPullRequest mirrors the `gh pr list --json` fields used here.
+// ghPullRequest mirrors the `gh pr list --json` fields used here. Body is
+// the pull request description as published on GitHub; it stays raw for
+// the reason documented on corpus.PullRequest.
 type ghPullRequest struct {
 	Number int    `json:"number"`
 	Title  string `json:"title"`
+	Body   string `json:"body"`
 	URL    string `json:"url"`
 	Author *struct {
 		Login string `json:"login"`
@@ -46,7 +49,7 @@ func FetchMergedPRs(ctx context.Context, ghBin, repo string) ([]corpus.PullReque
 		"--state", "merged",
 		"--limit", fmt.Sprint(limit),
 		"--json", strings.Join([]string{
-			"number", "title", "url", "author", "createdAt", "mergedAt",
+			"number", "title", "body", "url", "author", "createdAt", "mergedAt",
 			"additions", "deletions", "changedFiles", "headRefName",
 			"headRefOid", "baseRefName", "mergeCommit",
 		}, ","),
@@ -68,30 +71,38 @@ func FetchMergedPRs(ctx context.Context, ghBin, repo string) ([]corpus.PullReque
 
 	prs := make([]corpus.PullRequest, 0, len(raw))
 	for _, r := range raw {
-		pr := corpus.PullRequest{
-			Repo:         corpus.RepoSlug(repo),
-			Number:       r.Number,
-			Title:        r.Title,
-			URL:          r.URL,
-			HeadRef:      r.HeadRefName,
-			HeadOID:      r.HeadRefOID,
-			BaseRef:      r.BaseRefName,
-			CreatedAt:    r.CreatedAt.UTC(),
-			MergedAt:     r.MergedAt.UTC(),
-			Additions:    r.Additions,
-			Deletions:    r.Deletions,
-			ChangedFiles: r.ChangedFiles,
-		}
-		if r.Author != nil {
-			pr.Author = r.Author.Login
-		}
-		if r.MergeCommit != nil {
-			pr.MergeCommit = r.MergeCommit.OID
-		}
-		prs = append(prs, pr)
+		prs = append(prs, toPullRequest(repo, r))
 	}
 	sort.Slice(prs, func(i, j int) bool { return prs[i].Number < prs[j].Number })
 	return prs, nil
+}
+
+// toPullRequest maps one `gh pr list --json` record to the corpus model.
+// A missing body decodes to an empty Body, so indexes written before the
+// body field still load.
+func toPullRequest(repo string, r ghPullRequest) corpus.PullRequest {
+	pr := corpus.PullRequest{
+		Repo:         corpus.RepoSlug(repo),
+		Number:       r.Number,
+		Title:        r.Title,
+		Body:         r.Body,
+		URL:          r.URL,
+		HeadRef:      r.HeadRefName,
+		HeadOID:      r.HeadRefOID,
+		BaseRef:      r.BaseRefName,
+		CreatedAt:    r.CreatedAt.UTC(),
+		MergedAt:     r.MergedAt.UTC(),
+		Additions:    r.Additions,
+		Deletions:    r.Deletions,
+		ChangedFiles: r.ChangedFiles,
+	}
+	if r.Author != nil {
+		pr.Author = r.Author.Login
+	}
+	if r.MergeCommit != nil {
+		pr.MergeCommit = r.MergeCommit.OID
+	}
+	return pr
 }
 
 // LinkInput carries the evidence used to link sessions to pull requests.
