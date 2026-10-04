@@ -154,15 +154,28 @@ def _verify(
     return applied
 
 
-def write_oracle(payload_dir: str | Path, oracle: Oracle) -> Path:
-    """Write ``solution/`` into a payload and record the ``task.json`` oracle block."""
-    payload = Path(payload_dir)
-    task_path = payload / "task.json"
+def _load_task_summary(task_path: Path) -> dict[str, Any]:
+    """Load ``task.json``; raise ``ValueError`` naming the path when absent or malformed."""
     if not task_path.is_file():
         raise ValueError(
             f"oracle: missing {task_path}; run the `task` subcommand to assemble the payload first"
         )
-    summary: dict[str, Any] = json.loads(task_path.read_text())
+    try:
+        summary = json.loads(task_path.read_text())
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"oracle: {task_path} is not valid JSON: {exc}; rebuild the payload"
+        ) from exc
+    if not isinstance(summary, dict):
+        raise ValueError(f"oracle: {task_path} must hold a JSON object; rebuild the payload")
+    return summary
+
+
+def write_oracle(payload_dir: str | Path, oracle: Oracle) -> Path:
+    """Write ``solution/`` into a payload and record the ``task.json`` oracle block."""
+    payload = Path(payload_dir)
+    task_path = payload / "task.json"
+    summary = _load_task_summary(task_path)
     solution = payload / "solution"
     solution.mkdir(parents=True, exist_ok=True)
     (payload / PATCH_PATH).write_bytes(oracle.patch)
@@ -182,11 +195,7 @@ def payload_request(payload_dir: str | Path) -> dict[str, Any]:
         raise ValueError(
             f"oracle: missing {request_path}; run the `task` subcommand to assemble the payload first"
         )
-    task_path = payload / "task.json"
-    if not task_path.is_file():
-        raise ValueError(
-            f"oracle: missing {task_path}; run the `task` subcommand to assemble the payload first"
-        )
+    _load_task_summary(payload / "task.json")
     try:
         request = json.loads(request_path.read_text())
     except json.JSONDecodeError as exc:
@@ -200,12 +209,18 @@ def payload_request(payload_dir: str | Path) -> dict[str, Any]:
     return request
 
 
-def payload_commits(payload_dir: str | Path, repo_dir: str | Path) -> tuple[str, str]:
+def payload_commits(
+    payload_dir: str | Path,
+    repo_dir: str | Path,
+    request: dict[str, Any] | None = None,
+) -> tuple[str, str]:
     """``(tree_commit, merge_commit)`` from a payload's ``repo-request.json``.
 
-    A null ``tree_commit`` falls back to ``merge_commit^``.
+    Pass an already-loaded ``request`` (from ``payload_request``) to skip
+    re-reading it. A null ``tree_commit`` falls back to ``merge_commit^``.
     """
-    request = payload_request(payload_dir)
+    if request is None:
+        request = payload_request(payload_dir)
     merge_commit = request["merge_commit"]
     tree_commit = request.get("tree_commit") or _rev(Path(repo_dir), f"{merge_commit}^")
     return tree_commit, merge_commit

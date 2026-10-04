@@ -263,7 +263,7 @@ def _oracle(args: argparse.Namespace) -> int:
         build_command = args.build_command
         if args.spec:
             build_command = _spec_build_command(args.spec, repo)
-        tree_commit, merge_commit = payload_commits(args.payload, args.repo_dir)
+        tree_commit, merge_commit = payload_commits(args.payload, args.repo_dir, request)
         oracle = build_oracle(args.repo_dir, tree_commit, merge_commit, build_command)
         solution = write_oracle(args.payload, oracle)
     except (ValueError, OSError) as exc:
