@@ -41,10 +41,6 @@ from .task import GENERATED_ENTRIES, clear_generated, payload_test_patterns
 SKELETON_ENTRIES = ("environment", "tests", "solution", "task.toml", "instruction.md", "task-payload.json")
 #: Container working directory; the task payload lands under it.
 DEFAULT_WORKDIR = "/workdir"
-#: Maximum pull request body characters rendered into ``instruction.md``.
-#: Longer bodies are cut at this cap with a marker stating the rule; the
-#: full body stays in the payload's ``pr.json``.
-MAX_BODY_CHARS = 4000
 
 
 @dataclass(frozen=True)
@@ -308,16 +304,17 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
     lines = [
         f"# {pr.get('title') or pr['id']}",
         "",
-        f"You are working in `{pr['repo']}` at the state just before pull request "
-        f"#{pr['number']} was merged.",
-        "",
-        f"- Pull request: {pr.get('url') or pr['id']}",
-        f"- Merged: {pr.get('merged_at') or 'unknown'}",
-        f"- Size: +{pr.get('additions') or 0} / -{pr.get('deletions') or 0} lines",
-        f"- Benchmark split: {pr.get('split') or 'unknown'}",
+        f"You are working in `{pr['repo']}` on pull request #{pr['number']}.",
         "",
         "## Goal",
         "",
+        f"Implement the changes to fulfill the description within the <pull_request_body> tags. "
+        f"The repository is at `{workdir}/repo`.",
+        "",
+        f"Agent traces for work on this repository before this pull request are",
+        f"available at `{workdir}/prior-traces` as context.",
+        "",
+        "<pull_request_body>",
     ]
     raw_body = pr.get("body")
     if raw_body is None:
@@ -330,38 +327,8 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
     else:
         body = raw_body.strip()
     if body:
-        lines.append(_truncate_body(body))
-        lines.append("")
-        lines.append(f"The repository is at `{workdir}/repo`.")
-        lines.append("")
-    else:
-        lines.extend(
-            [
-                f"Implement the change the pull request made. The repository is at "
-                f"`{workdir}/repo`.",
-                "",
-            ]
-        )
-    lines.extend(
-        [
-            f"Agent traces for work on this repository before this pull request are",
-            f"available at `{workdir}/prior-traces` as context.",
-            "",
-            "The verifier applies the test suite from the merged state and runs it.",
-            "Do not modify test files.",
-            "",
-        ]
-    )
-    if not body:
-        lines.extend(
-            [
-                "## TODO(task author)",
-                "",
-                "Replace this section with the issue description. This pull request",
-                "carries no body, so this skeleton starts from the title only.",
-                "",
-            ]
-        )
+        lines.append(body)
+    lines.extend(["</pull_request_body>", ""])
     if summary.get("prior_sessions"):
         lines.append(
             f"Prior context: {summary['prior_sessions']} sessions across "
@@ -369,20 +336,6 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
         )
         lines.append("")
     return "\n".join(lines)
-
-
-def _truncate_body(body: str) -> str:
-    """Render a pull request body for ``instruction.md``.
-
-    Bodies longer than :data:`MAX_BODY_CHARS` are cut at the cap with a
-    marker stating the rule.
-    """
-    if len(body) <= MAX_BODY_CHARS:
-        return body
-    return (
-        body[:MAX_BODY_CHARS].rstrip()
-        + f"\n\n[truncated: pull request body exceeded {MAX_BODY_CHARS} characters]"
-    )
 
 
 def _solve_sh(pr_id: str) -> str:

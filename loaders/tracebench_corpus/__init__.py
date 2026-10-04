@@ -4,7 +4,7 @@ from .corpus import Bundle, Corpus, Trace, load_corpus
 from .golden import GoldenSuiteError, glob_to_regex, materialize_golden_tests
 from .oracle import build_oracle, write_oracle
 from .repository_spec import DEFAULT_REPOSITORY_SPECS, RepositorySpec, find_repository_spec, load_repository_specs
-from .skeleton import MAX_BODY_CHARS, Skeleton, build_skeleton, task_slug
+from .skeleton import Skeleton, build_skeleton, task_slug
 from .verifier import grade, parse_go_test_json
 from .target_config import THINKING_LEVELS, TargetConfiguration, find_target_config, load_target_configs
 from .test_manifest import build_test_manifest
@@ -27,7 +27,6 @@ __all__ = [
     "DEFAULT_TEST_PATTERNS",
     "GENERATED_ENTRIES",
     "GoldenSuiteError",
-    "MAX_BODY_CHARS",
     "RepositorySpec",
     "Skeleton",
     "THINKING_LEVELS",

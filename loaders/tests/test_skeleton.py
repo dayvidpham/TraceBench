@@ -12,7 +12,6 @@ import pytest
 
 from conftest import BODY_TEXT, LIVE, TESTDATA
 from tracebench_corpus import (
-    MAX_BODY_CHARS,
     Corpus,
     TaskBuilder,
     build_skeleton,
@@ -65,7 +64,6 @@ def test_skeleton_tolerates_an_unsampled_split(tmp_path, standard_dump, standard
     build_skeleton(payload, tmp_path / "task")
     task_toml = tomllib.loads((tmp_path / "task" / "task.toml").read_text())
     assert task_toml["metadata"]["split"] == ""
-    assert "Benchmark split: unknown" in (tmp_path / "task" / "instruction.md").read_text()
 
 
 def test_skeleton_healthcheck_warms_the_pre_pr_tree(tmp_path, standard_dump, standard_index) -> None:
@@ -231,24 +229,30 @@ def test_skeleton_renders_pr_body_as_goal(tmp_path, body_dump, standard_index) -
     instruction = (tmp_path / "task" / "instruction.md").read_text()
     goal = instruction.split("## Goal")[1]
     assert BODY_TEXT in goal
+    assert f"<pull_request_body>\n{BODY_TEXT}\n</pull_request_body>" in goal
     assert "TODO(task author)" not in instruction
     assert "/workdir/repo" in instruction
     assert "/workdir/prior-traces" in instruction
+    assert "Benchmark split" not in instruction
+    assert "- Size:" not in instruction
 
 
-def test_skeleton_keeps_todo_without_body(tmp_path, standard_dump, standard_index) -> None:
+def test_skeleton_renders_without_body_placeholder(tmp_path, standard_dump, standard_index) -> None:
     payload = make_payload(tmp_path, standard_dump, standard_index)
     pr = json.loads((payload / "pr.json").read_text())
     assert pr.get("body") is None
     build_skeleton(payload, tmp_path / "task")
     instruction = (tmp_path / "task" / "instruction.md").read_text()
-    assert "Implement the change the pull request made." in instruction
-    assert "## TODO(task author)" in instruction
+    assert "Implement the changes to fulfill the description within the <pull_request_body> tags." in instruction
+    assert "<pull_request_body>\n</pull_request_body>" in instruction
+    assert "TODO(task author)" not in instruction
 
     pr["body"] = "  \n "
     (payload / "pr.json").write_text(json.dumps(pr))
     build_skeleton(payload, tmp_path / "blank-task", force=True)
-    assert "## TODO(task author)" in (tmp_path / "blank-task" / "instruction.md").read_text()
+    blank = (tmp_path / "blank-task" / "instruction.md").read_text()
+    assert "<pull_request_body>\n</pull_request_body>" in blank
+    assert "TODO(task author)" not in blank
 
 
 def test_skeleton_rejects_non_string_body(tmp_path, standard_dump, standard_index) -> None:
@@ -260,14 +264,13 @@ def test_skeleton_rejects_non_string_body(tmp_path, standard_dump, standard_inde
         build_skeleton(payload, tmp_path / "task")
 
 
-def test_skeleton_truncates_overlong_body(tmp_path, long_body_dump, standard_index) -> None:
+def test_skeleton_renders_the_full_body(tmp_path, long_body_dump, standard_index) -> None:
     payload = tmp_path / "payload"
     TaskBuilder(Corpus(long_body_dump), pr_index=standard_index).build(f"{LIVE}#22", payload)
     pr = json.loads((payload / "pr.json").read_text())
-    assert len(pr["body"]) > MAX_BODY_CHARS
+    body = pr["body"].strip()
     build_skeleton(payload, tmp_path / "task")
     instruction = (tmp_path / "task" / "instruction.md").read_text()
     goal = instruction.split("## Goal")[1]
-    assert f"[truncated: pull request body exceeded {MAX_BODY_CHARS} characters]" in goal
-    assert pr["body"] not in goal
-    assert "TODO(task author)" not in instruction
+    assert f"<pull_request_body>\n{body}\n</pull_request_body>" in goal
+    assert "truncated" not in instruction
