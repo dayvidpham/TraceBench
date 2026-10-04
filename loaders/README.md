@@ -67,7 +67,8 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
 | `pr.json` | the pull request, enriched from `--index` (`merge_commit`, `head_oid`, `base_ref`) |
 | `prior-traces/` | `traces.jsonl`, `metadata.jsonl`, `transcripts/`, and `manifest.json` for the prior context (below) |
 | `repo/` | **integration point**: the working tree at the pre-PR state; empty until the repository tooling fills it |
-| `tests/` | **integration point**: every test file at the merged state (the golden suite); empty until filled |
+| `tests/` | **integration point**: every test file at the merged state; empty until filled |
+| `test-manifest.json` | with `--repo-dir`, every merged-state Go test file and case, with PR-changed cases tagged `golden` and all cases initially `accept` |
 | `repo-request.json` | the contract for the repository tooling: `tree_commit`, `trace_cutoff`, test patterns, glob dialect, merge-commit policy |
 | `task.json` | payload summary: cutoff, target configuration, counts, exclusions |
 
@@ -100,6 +101,53 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
   configuration. A generated skeleton's `task.toml` metadata carries the
   configuration name.
 
+### Test manifest
+
+When `--repo-dir` is supplied, task generation compares the merged commit to
+its first parent and writes `test-manifest.json`. It includes every Go
+`*_test.go` file at the merged commit, with top-level test functions tagged
+`golden: true` only when their function was added or changed by the PR. Every
+case starts with `status: "accept"`; a future counting policy may change a
+case to `reject` without changing its golden classification.
+
+```json
+{
+  "schema_version": 1,
+  "base_commit": "...",
+  "merge_commit": "...",
+  "case_granularity": "top-level Go test functions; runtime subtests are not enumerated",
+  "summary": {"suites": 1, "cases": 2, "golden_cases": 1},
+  "suites": [{
+    "path": "internal/api/sync_test.go",
+    "framework": "go",
+    "package_dir": "internal/api",
+    "golden": true,
+    "cases": [
+      {"id": "internal/api/sync_test.go::TestExisting", "name": "TestExisting", "golden": false, "status": "accept"},
+      {"id": "internal/api/sync_test.go::TestNew", "name": "TestNew", "golden": true, "status": "accept"}
+    ]
+  }]
+}
+```
+
+For a standalone manifest, run:
+
+```bash
+tracebench-corpus test-manifest --repo-dir /path/to/peasant-clone \
+  --base-commit BASE_SHA --merge-commit MERGE_SHA \
+  --dest test-manifest.json
+```
+
+Removed tests are absent because the inventory represents the merged suite.
+Dynamic subtests and fixture-driven cases require runtime discovery through
+`go test -json`; the static manifest inventories top-level Go functions. The
+current extractor does not classify JavaScript or TypeScript test cases.
+Without `--repo-dir`, task generation cannot classify PR changes and does
+not write a manifest.
+The existing `tests/golden/` directory name predates this classification: it
+holds the full merged-state suite, while the manifest's `golden` flags identify
+the PR-added or PR-modified cases within it.
+
 ### Target configurations
 
 A target configuration names the harness, model, and thinking level that a
@@ -125,7 +173,7 @@ The corpus does not carry a thinking level yet; the upstream work is tracked in
 
 `task` and `skeleton` refuse a non-empty destination. `--force` clears exactly
 the tool-owned entries (`prior-traces/`, `repo/`, `tests/`, `repo-request.json`,
-`pr.json`, `task.json`; the task directory's `environment/`, `tests/`,
+`pr.json`, `task.json`, `test-manifest.json`; the task directory's `environment/`, `tests/`,
 `solution/`, `task.toml`, `instruction.md`, `task-payload.json`) and rebuilds
 them; caller-authored files elsewhere are never touched.
 
@@ -143,7 +191,8 @@ tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
 | `task.toml` | registry-safe name (`<org>/<repo-slug>-pr-<number>`), PR metadata, `[environment].docker_image` (the shared base image) and `workdir`, offline network policy for agent and verifier |
 | `instruction.md` | scaffolded from the pull request; task authors replace the TODO with the issue description |
 | `environment/repo/`, `environment/prior-traces/` | task data, uploaded into the container workdir at environment start; **no per-task image is built** |
-| `tests/golden/` | the merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |
+| `tests/golden/` | the full merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |
+| `tests/test-manifest.json` | verifier-only copy of the manifest when the payload has one |
 | `tests/test.sh` | removes pre-PR test files matching the payload's test patterns, overlays the golden suite, runs it, writes `/logs/verifier/reward.txt`; fails closed when golden tests are missing |
 | `solution/solve.sh` | oracle placeholder (exits non-zero until implemented) |
 

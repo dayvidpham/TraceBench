@@ -111,6 +111,7 @@ def test_destination_reuse_is_rejected_and_force_rebuilds(standard_dump, standar
     dest = tmp_path / "task"
     builder = TaskBuilder(corpus, pr_index=standard_index)
     builder.build(f"{LIVE}#22", dest)
+    (dest / "test-manifest.json").write_text('{"stale": true}\n')
 
     with pytest.raises(ValueError, match="not empty"):
         builder.build(f"{LIVE}#20", dest)
@@ -123,6 +124,7 @@ def test_destination_reuse_is_rejected_and_force_rebuilds(standard_dump, standar
     assert manifest["sessions"] == 1
     assert files == {"a1"}
     assert "l1" not in files  # #20's own session never leaks from the earlier build
+    assert not (dest / "test-manifest.json").exists()
 
 
 def test_sessions_past_the_boundary_are_excluded(standard_index, tmp_path, write_dump) -> None:
@@ -288,6 +290,11 @@ def test_ancestry_mode_uses_commit_order(git_repo, tmp_path, write_dump) -> None
     assert payload.cutoff_basis == "commit_ancestry"
     assert payload.boundary_commit == c21
     assert payload.prior_pull_requests == 3  # #23 is not an ancestor of c21
+    test_manifest = json.loads((payload.path / "test-manifest.json").read_text())
+    assert test_manifest["base_commit"] == c21
+    assert test_manifest["merge_commit"] == c22
+    assert test_manifest["suites"] == []
+    assert json.loads((payload.path / "task.json").read_text())["test_manifest"] == "test-manifest.json"
     sessions = {json.loads(line)["session_id"] for line in
                 (payload.path / "prior-traces" / "traces.jsonl").read_text().splitlines()}
     assert "s23" not in sessions

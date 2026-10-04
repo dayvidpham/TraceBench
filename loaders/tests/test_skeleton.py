@@ -28,6 +28,7 @@ def make_payload(tmp_path: Path, dump: Path, index: dict, *, golden: bool = True
     (payload / "repo" / "main.go").write_text("package main\n")
     if golden:
         (payload / "tests" / "greeting_test.go").write_text("package main\n")
+    (payload / "test-manifest.json").write_text('{"suites": []}\n')
     return payload
 
 
@@ -70,6 +71,8 @@ def test_skeleton_uses_shared_base_image_and_runtime_data(tmp_path, standard_dum
 
     # The golden suite is verifier-only.
     assert (task / "tests" / "golden" / "greeting_test.go").is_file()
+    assert json.loads((task / "tests" / "test-manifest.json").read_text()) == {"suites": []}
+    assert not (task / "tests" / "golden" / "test-manifest.json").exists()
 
     instruction = (task / "instruction.md").read_text()
     assert "/workdir/repo" in instruction

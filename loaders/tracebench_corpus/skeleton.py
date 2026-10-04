@@ -119,6 +119,9 @@ def build_skeleton(
     _copy_tree(payload / "repo", dest / "environment" / "repo")
     _copy_tree(payload / "prior-traces", dest / "environment" / "prior-traces")
     golden_tests = _copy_tree(payload / "tests", dest / "tests" / "golden")
+    manifest = payload / "test-manifest.json"
+    if manifest.is_file():
+        (dest / "tests" / "test-manifest.json").write_bytes(manifest.read_bytes())
 
     patterns = _test_patterns(payload)
     _write_script(dest / "tests" / "test.sh", _test_sh(patterns))

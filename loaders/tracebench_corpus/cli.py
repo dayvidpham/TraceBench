@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -11,6 +12,7 @@ from .corpus import Corpus, load_corpus
 from .skeleton import build_skeleton
 from .target_config import find_target_config, load_target_configs
 from .task import TaskBuilder, load_pr_index
+from .test_manifest import build_test_manifest
 
 _SPLITS = ("train", "val", "test")
 
@@ -85,10 +87,19 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="rebuild tool-owned entries in a non-empty destination",
     )
+    manifest_parser = commands.add_parser(
+        "test-manifest", help="inventory Go tests and mark PR-added or modified cases"
+    )
+    manifest_parser.add_argument("--repo-dir", required=True, help="local repository clone")
+    manifest_parser.add_argument("--base-commit", required=True, help="pre-PR commit")
+    manifest_parser.add_argument("--merge-commit", required=True, help="merged PR commit")
+    manifest_parser.add_argument("--dest", required=True, help="output JSON file")
 
     args = parser.parse_args(argv)
     if args.command == "skeleton":
         return _skeleton(args)
+    if args.command == "test-manifest":
+        return _test_manifest(args)
     try:
         corpus = load_corpus(
             path=args.corpus,
@@ -188,4 +199,17 @@ def _skeleton(args: argparse.Namespace) -> int:
         f"wrote {skeleton.path}: Harbor task {skeleton.task_name} "
         f"with {skeleton.golden_tests} golden test files"
     )
+    return 0
+
+
+def _test_manifest(args: argparse.Namespace) -> int:
+    try:
+        manifest = build_test_manifest(args.repo_dir, args.base_commit, args.merge_commit)
+        destination = Path(args.dest)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(manifest, indent=2) + "\n")
+    except (ValueError, OSError) as exc:
+        print(f"tracebench-corpus: {exc}", file=sys.stderr)
+        return 2
+    print(f"wrote {destination}: {len(manifest['suites'])} test suites")
     return 0
