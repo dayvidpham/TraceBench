@@ -17,3 +17,8 @@ __pycache__/
 loaders/.venv/
 loaders/.pytest_cache/
 loaders/*.egg-info/
+
+# Run evidence: agent streams and raw verifier stdout are kept on
+# HuggingFace (dayvidpham/TraceBench, runs/), not in git.
+out/**/agent/
+out/**/verifier/test-stdout.*

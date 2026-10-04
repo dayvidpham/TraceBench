@@ -1,0 +1,23 @@
+{
+    "task": {
+        "path": "/private/tmp/opencode/filtered-run/tasks/peasant-pr-0315",
+        "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+    },
+    "trial_name": "peasant-pr-0315__hjM44KD",
+    "trials_dir": "jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+    "agent": {
+        "name": "oracle",
+        "env": {
+            "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        }
+    },
+    "environment": {
+        "type": "podman"
+    },
+    "verifier": {
+        "env": {
+            "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        }
+    },
+    "job_id": "b18a114d-6544-4797-95d8-1dd5026779e5"
+}

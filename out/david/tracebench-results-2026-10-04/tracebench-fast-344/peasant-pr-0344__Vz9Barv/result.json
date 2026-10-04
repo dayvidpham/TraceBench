@@ -1,0 +1,138 @@
+{
+    "id": "36cfaa72-8c4c-41c4-98ed-8b8156bba6e5",
+    "task_name": "tracebench/peasant-pr-0344",
+    "trial_name": "peasant-pr-0344__Vz9Barv",
+    "trial_uri": "file:///home/minttea/codebases/dayvidpham/TraceBench/jobs/tracebench-fast-344/peasant-pr-0344__Vz9Barv",
+    "task_id": {
+        "path": "/tmp/opencode/fast-run/tasks/peasant-pr-0344"
+    },
+    "source": "tracebench-fast-344",
+    "task_checksum": "332d71d606a2735bc354fdc6449e84d02165e940eb5bb1c3b99d11e5db367559",
+    "config": {
+        "task": {
+            "path": "/tmp/opencode/fast-run/tasks/peasant-pr-0344",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "tracebench-fast-344"
+        },
+        "trial_name": "peasant-pr-0344__Vz9Barv",
+        "trials_dir": "jobs/tracebench-fast-344",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "opencode",
+            "import_path": null,
+            "model_name": "opencode-go/deepseek-v4.1-flash",
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [
+                "opencode.ai",
+                "models.dev"
+            ],
+            "kwargs": {
+                "version": "1.18.34",
+                "variant": "high"
+            },
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-fast-344",
+                "OPENCODE_API_KEY": "${OPENCODE_API_KEY}"
+            },
+            "mcp_servers": []
+        },
+        "user_agent": null,
+        "environment": {
+            "type": "podman",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-fast-344"
+            },
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "extra_instructions": [],
+        "job_id": "353f77b7-23bd-4b73-b992-dc9fa103be21",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "opencode",
+        "version": "1.18.34",
+        "model_info": {
+            "name": "deepseek-v4.1-flash",
+            "provider": "opencode-go"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 8025210,
+        "n_cache_tokens": 7901696,
+        "n_output_tokens": 15118,
+        "cost_usd": 0.072717588,
+        "model_usage": {
+            "opencode-go/deepseek-v4.1-flash": {
+                "n_input_tokens": 8025210,
+                "n_cache_tokens": 7901696,
+                "n_output_tokens": 15118,
+                "cost_usd": 0.072717588
+            }
+        },
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.9974497927956647
+        }
+    },
+    "verifier_environment_mode": "shared",
+    "exception_info": null,
+    "started_at": "2026-10-04T18:06:23.336012Z",
+    "finished_at": "2026-10-04T18:29:59.945790Z",
+    "environment_setup": {
+        "started_at": "2026-10-04T18:06:23.497710Z",
+        "finished_at": "2026-10-04T18:06:25.317887Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-10-04T18:06:42.804886Z",
+        "finished_at": "2026-10-04T18:06:53.010091Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-10-04T18:06:53.010195Z",
+        "finished_at": "2026-10-04T18:26:27.595941Z"
+    },
+    "verifier": {
+        "started_at": "2026-10-04T18:26:28.450878Z",
+        "finished_at": "2026-10-04T18:29:46.419854Z"
+    },
+    "step_results": null
+}

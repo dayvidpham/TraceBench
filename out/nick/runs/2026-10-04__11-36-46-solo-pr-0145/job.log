@@ -1,0 +1,5 @@
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Healthcheck passed
+Collecting main service artifacts

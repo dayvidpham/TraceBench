@@ -1,0 +1,105 @@
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Uploading environment/ to /workdir
+Uploading environment/ to /workdir
+Uploading environment/ to /workdir
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0145__DM8FfDn failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0146__6JYXWiZ failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0157__N4Yu4HB failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0150__fo5SyF6 failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Uploading environment/ to /workdir
+Uploading environment/ to /workdir
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0310__WERmKTd failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0331__FQXaFAw failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0315__hjM44KD failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck passed
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Uploading environment/ to /workdir
+Collecting main service artifacts
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Healthcheck passed
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0337__WNq64Q7 failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Collecting main service artifacts
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0338__LyPnNqp failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Collecting main service artifacts
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0343__VF6fREj failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Not retrying trial because the maximum number of retries has been reached
+Agent 'oracle' does not declare an options_model; leftover kwargs are ignored
+Uploading environment/ to /workdir
+Running healthcheck: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Healthcheck failed (rc=1, in_start_period=False)
+Trial peasant-pr-0344__bdYwNqr failed: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
+Collecting main service artifacts
+Not retrying trial because the maximum number of retries has been reached
+Healthcheck passed
+Collecting main service artifacts

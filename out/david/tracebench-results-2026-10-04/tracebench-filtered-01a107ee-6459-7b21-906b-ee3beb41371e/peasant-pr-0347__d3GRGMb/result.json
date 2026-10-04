@@ -1,0 +1,136 @@
+{
+    "id": "c8ad5d43-4cb7-46a1-972b-7726465f7b36",
+    "task_name": "tracebench/peasant-pr-0347",
+    "trial_name": "peasant-pr-0347__d3GRGMb",
+    "trial_uri": "file:///home/minttea/codebases/dayvidpham/TraceBench/jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e/peasant-pr-0347__d3GRGMb",
+    "task_id": {
+        "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0347"
+    },
+    "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+    "task_checksum": "aaa037fb4d5fa8b1c22d1b19ee03f6074f8eca66f3590b032643b2ea8745f9b9",
+    "config": {
+        "task": {
+            "path": "/tmp/opencode/filtered-run/tasks/peasant-pr-0347",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+        },
+        "trial_name": "peasant-pr-0347__d3GRGMb",
+        "trials_dir": "jobs/tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "opencode",
+            "import_path": null,
+            "model_name": "opencode-go/deepseek-v4.1-flash",
+            "n_concurrent": null,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "resume_trajectory": false,
+            "load_trajectory": null,
+            "extra_allowed_hosts": [
+                "opencode.ai",
+                "models.dev"
+            ],
+            "kwargs": {
+                "version": "1.18.34",
+                "variant": "high"
+            },
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e",
+                "OPENCODE_API_KEY": "${OPENCODE_API_KEY}"
+            },
+            "mcp_servers": []
+        },
+        "user_agent": null,
+        "environment": {
+            "type": "podman",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {},
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {
+                "TRACEBENCH_RUN_ID": "tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e"
+            },
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "extra_instructions": [],
+        "job_id": "37fa700a-5bcf-45e7-857e-bf50b1e07e5c",
+        "source_trial": null
+    },
+    "agent_info": {
+        "name": "opencode",
+        "version": "1.18.34",
+        "model_info": {
+            "name": "deepseek-v4.1-flash",
+            "provider": "opencode-go"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 4821289,
+        "n_cache_tokens": 4698752,
+        "n_output_tokens": 9234,
+        "cost_usd": 0.04925160599999999,
+        "model_usage": {
+            "opencode-go/deepseek-v4.1-flash": {
+                "n_input_tokens": 4821289,
+                "n_cache_tokens": 4698752,
+                "n_output_tokens": 9234,
+                "cost_usd": 0.04925160599999999
+            }
+        },
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": null,
+    "verifier_environment_mode": "shared",
+    "exception_info": {
+        "exception_type": "CancelledError",
+        "exception_message": "",
+        "exception_traceback": "Traceback (most recent call last):\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/trial/trial.py\", line 418, in run\n    await self._run()\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/trial/single_step.py\", line 41, in _run\n    await self._run_agent()\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/trial/single_step.py\", line 77, in _run_agent\n    await self._run_agent_phase(\n    ...<5 lines>...\n    )\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/trial/trial.py\", line 554, in _run_agent_phase\n    await asyncio.wait_for(\n    ...<6 lines>...\n    )\n  File \"/home/minttea/.local/share/uv/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/asyncio/tasks.py\", line 507, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/agents/installed/base.py\", line 186, in wrapper\n    return await fn(self, instruction, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/agents/installed/opencode.py\", line 539, in run\n    await self.exec_as_agent(\n    ...<11 lines>...\n    )\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/agents/installed/base.py\", line 995, in exec_as_agent\n    return await self._exec(\n           ^^^^^^^^^^^^^^^^^\n        environment, command, env=env, cwd=cwd, timeout_sec=timeout_sec\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/agents/installed/base.py\", line 946, in _exec\n    result = await environment.exec(\n             ^^^^^^^^^^^^^^^^^^^^^^^\n    ...<5 lines>...\n    )\n    ^\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/loaders/tracebench_corpus/local_run.py\", line 212, in guarded_exec\n    return await exec_command(environment, command, *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/environments/docker/docker.py\", line 1249, in exec\n    return await self._compose_exec(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<6 lines>...\n    )\n    ^\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/environments/docker/docker.py\", line 1326, in _compose_exec\n    return await self._run_docker_compose_command(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<4 lines>...\n    )\n    ^\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/loaders/tracebench_corpus/local_run.py\", line 189, in guarded_compose\n    result = await collector(process, **collection)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/minttea/codebases/dayvidpham/TraceBench/.venv/lib/python3.13/site-packages/harbor/environments/docker/docker.py\", line 727, in _collect_buffered_output\n    stdout_bytes, stderr_bytes = await process.communicate(input=stdin_data)\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/minttea/.local/share/uv/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/asyncio/subprocess.py\", line 201, in communicate\n    stdin, stdout, stderr = await tasks.gather(stdin, stdout, stderr)\n                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/minttea/.local/share/uv/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/asyncio/subprocess.py\", line 181, in _read_stream\n    output = await stream.read()\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/minttea/.local/share/uv/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/asyncio/streams.py\", line 723, in read\n    block = await self.read(self._limit)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/minttea/.local/share/uv/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/asyncio/streams.py\", line 730, in read\n    await self._wait_for_data('read')\n  File \"/home/minttea/.local/share/uv/python/cpython-3.13.2-linux-x86_64-gnu/lib/python3.13/asyncio/streams.py\", line 539, in _wait_for_data\n    await self._waiter\nasyncio.exceptions.CancelledError\n",
+        "occurred_at": "2026-10-04T18:37:47.375597Z"
+    },
+    "started_at": "2026-10-04T18:30:51.719154Z",
+    "finished_at": "2026-10-04T18:38:01.396028Z",
+    "environment_setup": {
+        "started_at": "2026-10-04T18:30:51.900897Z",
+        "finished_at": "2026-10-04T18:30:53.656547Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-10-04T18:31:12.957819Z",
+        "finished_at": "2026-10-04T18:31:22.297014Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-10-04T18:31:22.297083Z",
+        "finished_at": "2026-10-04T18:37:45.342613Z"
+    },
+    "verifier": null,
+    "step_results": null
+}

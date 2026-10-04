@@ -1,0 +1,65 @@
+{
+    "id": "b18a114d-6544-4797-95d8-1dd5026779e5",
+    "started_at": "2026-10-04T11:21:03.960176",
+    "updated_at": "2026-10-04T11:36:11.556592",
+    "finished_at": "2026-10-04T11:36:11.556592",
+    "n_total_trials": 14,
+    "stats": {
+        "n_completed_trials": 14,
+        "n_errored_trials": 11,
+        "n_running_trials": 0,
+        "n_pending_trials": 0,
+        "n_cancelled_trials": 0,
+        "n_retries": 0,
+        "evals": {
+            "oracle__tracebench-filtered-01a107ee-6459-7b21-906b-ee3beb41371e": {
+                "n_trials": 3,
+                "n_errors": 11,
+                "metrics": [
+                    {
+                        "mean": 0.18379826471639996
+                    },
+                    {
+                        "min": 0
+                    },
+                    {
+                        "max": 0.9841423948220065
+                    }
+                ],
+                "pass_at_k": {},
+                "reward_stats": {
+                    "reward": {
+                        "0.9841423948220065": [
+                            "peasant-pr-0316__XsQERdT"
+                        ],
+                        "0.6255210003206155": [
+                            "peasant-pr-0334__JySZpZM"
+                        ],
+                        "0.9635123108869772": [
+                            "peasant-pr-0347__aqNkfZt"
+                        ]
+                    }
+                },
+                "exception_stats": {
+                    "HealthcheckError": [
+                        "peasant-pr-0145__DM8FfDn",
+                        "peasant-pr-0146__6JYXWiZ",
+                        "peasant-pr-0150__fo5SyF6",
+                        "peasant-pr-0157__N4Yu4HB",
+                        "peasant-pr-0310__WERmKTd",
+                        "peasant-pr-0315__hjM44KD",
+                        "peasant-pr-0331__FQXaFAw",
+                        "peasant-pr-0337__WNq64Q7",
+                        "peasant-pr-0338__LyPnNqp",
+                        "peasant-pr-0343__VF6fREj",
+                        "peasant-pr-0344__bdYwNqr"
+                    ]
+                }
+            }
+        },
+        "n_input_tokens": null,
+        "n_cache_tokens": null,
+        "n_output_tokens": null,
+        "cost_usd": null
+    }
+}
