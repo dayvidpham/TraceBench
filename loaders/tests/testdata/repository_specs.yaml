@@ -1,0 +1,64 @@
+# Repository adaptation spec fixtures for load_repository_specs().
+# valid_spec: a spec that loads; expected lists the entries in order.
+# first_match_spec: two entries for one repository would be rejected, so the
+#   first-match rule is proven on the in-memory list in the test.
+# invalid_specs: each case names the error fragment it must raise.
+valid_spec: |
+  repositories:
+    - match: peasant-labs/peasant
+      framework: go
+      test_command: "go test -json -count=1 ./..."
+      build_command: "go build ./..."
+    - match: peasant-labs/village
+      framework: go
+      test_command: "go test -json ./..."
+      build_command: "go build ./cmd/..."
+expected:
+  - match: peasant-labs/peasant
+    framework: go
+    test_command: "go test -json -count=1 ./..."
+    build_command: "go build ./..."
+  - match: peasant-labs/village
+    framework: go
+    test_command: "go test -json ./..."
+    build_command: "go build ./cmd/..."
+default_expected:
+  - match: peasant-labs/peasant
+    framework: go
+    test_command: "go test -json -count=1 ./..."
+    build_command: "go build ./..."
+  - match: peasant-labs/peasant-prerelease-archive
+    framework: go
+    test_command: "go test -json -count=1 ./..."
+    build_command: "go build ./..."
+invalid_specs:
+  - name: empty-list
+    spec: "repositories: []\n"
+    error: "non-empty 'repositories'"
+  - name: missing-list
+    spec: "other: 1\n"
+    error: "non-empty 'repositories'"
+  - name: not-a-mapping
+    spec: "repositories:\n  - just-a-string\n"
+    error: "entry 0 is not a mapping"
+  - name: unknown-key
+    spec: "repositories:\n  - {match: a/b, framework: go, test_command: t, build_command: b, timeout: 3}\n"
+    error: "unknown keys: timeout"
+  - name: duplicate-match
+    spec: "repositories:\n  - {match: a/b, framework: go, test_command: t, build_command: b}\n  - {match: a/b, framework: go, test_command: t, build_command: b}\n"
+    error: "entry 1 \\('a/b'\\) duplicates match"
+  - name: missing-match
+    spec: "repositories:\n  - {framework: go, test_command: t, build_command: b}\n"
+    error: "non-empty string 'match'"
+  - name: missing-test-command
+    spec: "repositories:\n  - {match: a/b, framework: go, build_command: b}\n"
+    error: "'a/b'\\) needs a non-empty string 'test_command'"
+  - name: missing-build-command
+    spec: "repositories:\n  - {match: a/b, framework: go, test_command: t}\n"
+    error: "needs a non-empty string 'build_command'"
+  - name: blank-test-command
+    spec: "repositories:\n  - {match: a/b, framework: go, test_command: '  ', build_command: b}\n"
+    error: "needs a non-empty string 'test_command'"
+  - name: missing-framework
+    spec: "repositories:\n  - {match: a/b, test_command: t, build_command: b}\n"
+    error: "needs a non-empty string 'framework'"
