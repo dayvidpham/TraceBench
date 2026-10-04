@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -335,17 +336,21 @@ def test_dependency_failure_names_its_part(pipeline_env, tmp_path, monkeypatch,
     assert result.job_config is None
 
 
-def test_rerun_without_force_keeps_config_and_force_recovers(pipeline_env, tmp_path,
-                                                             capsys) -> None:
+def test_rerun_without_force_refreshes_and_force_recovers(pipeline_env, tmp_path,
+                                                          capsys) -> None:
     dest = tmp_path / "out"
     assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#20", "--run-id", "r") == 0
     config_path = dest / "job-config-r.yaml"
     good = config_path.read_bytes()
+    task = dest / "tasks" / "peasant-pr-0020"
+    instruction = (task / "instruction.md").read_text()
+    (task / "instruction.md").write_text("stale instruction\n")
     capsys.readouterr()
 
-    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#20", "--run-id", "r") == 1
-    out = capsys.readouterr().out
-    assert "not empty" in out and "no job config written" in out
+    # The happy path re-renders the instruction and keeps the built task.
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#20", "--run-id", "r") == 0
+    assert f"ok     {LIVE}#20" in capsys.readouterr().out
+    assert (task / "instruction.md").read_text() == instruction
     assert config_path.read_bytes() == good
 
     assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#22", "--run-id", "other") == 0
@@ -356,6 +361,19 @@ def test_rerun_without_force_keeps_config_and_force_recovers(pipeline_env, tmp_p
                 "--force") == 0
     assert f"ok     {LIVE}#20" in capsys.readouterr().out
     assert yaml.safe_load(config_path.read_text())["job_name"] == "r"
+
+
+def test_rerun_without_force_fails_closed_on_an_incomplete_task(pipeline_env, tmp_path,
+                                                                capsys) -> None:
+    dest = tmp_path / "out"
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#22", "--run-id", "r") == 0
+    capsys.readouterr()
+    shutil.rmtree(dest / "tasks" / "peasant-pr-0022" / "environment" / "repo")
+
+    assert _cli(pipeline_env, dest, "--prs", f"{LIVE}#22", "--run-id", "r") == 1
+    captured = capsys.readouterr()
+    assert f"failed {LIVE}#22  part environment/repo" in captured.out
+    assert "rebuild it with --force" in captured.out
 
 
 def test_run_id_is_required_without_target_config(standard_dump) -> None:

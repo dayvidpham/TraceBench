@@ -74,7 +74,9 @@ suite, case catalog, secure worktree at `tree_commit` (real git history truncate
 commit; local identity; no remotes), verified
 oracle, and the task with its verifier. It writes `<dest>/payloads/`, `<dest>/tasks/`, and
 `<dest>/job-config.yaml` (run id, `n_attempts: 3`, `TRACEBENCH_RUN_ID`). A failed task names
-the failed part and the others still build. Validate a built task with
+the failed part and the others still build. Re-running over an existing destination without
+`--force` refreshes each task's `instruction.md` from its payload; `--force` rebuilds it.
+Validate a built task with
 `harbor run -p <dest>/tasks/<name> -a oracle -e podman` when Harbor is installed: generated tasks
 score around 0.998 (the residual is the documented calibration set). The full runbook —
 dependencies, image setup with the `:keep`
