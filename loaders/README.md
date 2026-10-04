@@ -9,8 +9,16 @@ task skeletons from them.
 
 ## Install
 
+The repository root is a uv workspace with this package as its only member.
+
 ```bash
-uv run --directory loaders --extra test pytest   # run the tests
+# From the repository root:
+uv sync                          # workspace environment, dev tools included
+uv run pytest                    # run the loader tests
+uv run tracebench-corpus --help  # the CLI
+
+# From loaders/, the member's extras also work:
+uv run --directory loaders --extra test pytest
 uv run --directory loaders --extra hf python     # REPL with HuggingFace loading
 ```
 

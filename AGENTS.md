@@ -19,6 +19,7 @@ inside a task may instead live in that task's own module.
 | Vet | `go vet ./...` |
 | Build | `go build ./...` |
 | Test | `go test -race ./...` |
+| Python tests | `uv run pytest` (uv workspace at the repository root) |
 | Tidy | `go mod tidy` (must leave `go.mod` and `go.sum` unchanged) |
 | Commit | `git agent-commit -m "type(scope): summary"` (never plain `git commit`) |
 
