@@ -93,9 +93,10 @@ malformed_pr_lines:
   - "peasant-labs/peasant-20"
   - "just text"
 
-# How the thinking level reaches the Harbor agent block per harness. OpenCode
-# selects a model variant; other harnesses take a reasoning effort. An unset
-# thinking level emits no kwargs; an unknown harness keeps the default.
+# How the thinking level and harness version reach the Harbor agent block per
+# harness. OpenCode selects a model variant; other harnesses take a reasoning
+# effort. An unset thinking level emits no kwargs; an unknown harness keeps the
+# default. A set version is pinned for every harness.
 thinking_kwargs:
   - name: opencode-uses-variant
     harness: opencode
@@ -117,3 +118,13 @@ thinking_kwargs:
     harness: custom-agent
     thinking: medium
     kwargs: {reasoning_effort: medium}
+  - name: version-and-thinking-land-together
+    harness: opencode
+    version: "1.18.34"
+    thinking: high
+    kwargs: {version: "1.18.34", variant: high}
+  - name: version-without-thinking
+    harness: claude-code
+    version: "2.1.0"
+    thinking: null
+    kwargs: {version: "2.1.0"}

@@ -63,7 +63,7 @@ Tasks follow the Harbor layout in `README.md` (`tasks/<name>/` with `instruction
   `blobs.py` (batched git object reads: one `git cat-file --batch` process per commit),
   `worktree.py` (secure worktree: packs the ancestry of `tree_commit` into a fresh repo), `oracle.py` (oracle patch and
   `solve.sh`), `repository_spec.py` (test and build command per repository), `target_config.py`
-  (harness, model, thinking), `skeleton.py` (Harbor task directory), `verifier.py` (in-sandbox
+  (harness, model, version, thinking), `skeleton.py` (Harbor task directory), `verifier.py` (in-sandbox
   grading, standard library only), and `pipeline.py` (batch driver and Harbor job config). Its
   tests and `testdata/*.yaml` fixtures live in `loaders/tests/`.
 

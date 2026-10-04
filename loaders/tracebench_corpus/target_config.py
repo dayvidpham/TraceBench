@@ -1,10 +1,10 @@
 """Target configurations for benchmark runs.
 
-A target configuration names the harness, model, and thinking level that a
-benchmark run uses. The task payload records the configuration so the runner
-knows what to execute. The configuration does not filter prior context: the
-model receives every prior trace, independent of the harness, model, and
-thinking level.
+A target configuration names the harness, model, version, and thinking level
+that a benchmark run uses. The task payload records the configuration so the
+runner knows what to execute. The configuration does not filter prior context:
+the model receives every prior trace, independent of the harness, model,
+version, and thinking level.
 
 The thinking level is recorded from the spec. The corpus does not carry a
 thinking level yet (peasant-labs/schema#147, peasant-labs/peasant#545), so the
@@ -24,16 +24,17 @@ from typing import Any
 #: Accepted thinking levels in a target-configuration spec.
 THINKING_LEVELS = ("none", "low", "medium", "high", "xhigh")
 
-_CONFIG_KEYS = {"name", "harness", "model", "thinking"}
+_CONFIG_KEYS = {"name", "harness", "model", "version", "thinking"}
 
 
 @dataclass(frozen=True)
 class TargetConfiguration:
-    """The harness, model, and thinking level a benchmark run uses."""
+    """The harness, model, version, and thinking level a benchmark run uses."""
 
     name: str
     harness: str | None = None
     model: str | None = None
+    version: str | None = None
     thinking: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -42,6 +43,7 @@ class TargetConfiguration:
             "name": self.name,
             "harness": self.harness,
             "model": self.model,
+            "version": self.version,
             "thinking": self.thinking,
         }
 
@@ -75,7 +77,7 @@ def load_target_configs(path: str | Path) -> list[TargetConfiguration]:
         if name in names:
             raise ValueError(f"target configurations {path} has duplicate name {name!r}")
         names.add(name)
-        for key in ("harness", "model", "thinking"):
+        for key in ("harness", "model", "version", "thinking"):
             value = entry.get(key)
             if value is not None and not isinstance(value, str):
                 raise ValueError(f"target configurations {path} entry {name!r}: {key} must be a string")
@@ -90,6 +92,7 @@ def load_target_configs(path: str | Path) -> list[TargetConfiguration]:
                 name=name,
                 harness=entry.get("harness"),
                 model=entry.get("model"),
+                version=entry.get("version"),
                 thinking=thinking,
             )
         )

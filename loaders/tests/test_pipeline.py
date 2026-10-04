@@ -180,7 +180,8 @@ def test_job_config_carries_run_id_attempts_and_env(pipeline_env, tmp_path) -> N
     assert config["tasks"] == [{"path": str((dest / "tasks" / "peasant-pr-0020").resolve()), "source": run_id}]
     assert config["agents"] == [{
         "name": "opencode", "model_name": "gpt-5.2-codex",
-        "kwargs": {"variant": "medium"}, "env": {"TRACEBENCH_RUN_ID": run_id},
+        "kwargs": {"version": "1.18.34", "variant": "medium"},
+        "env": {"TRACEBENCH_RUN_ID": run_id},
     }]
     assert config["verifier"] == {"env": {"TRACEBENCH_RUN_ID": run_id}}
     assert RUN_ID_ENV == "TRACEBENCH_RUN_ID"
@@ -189,7 +190,8 @@ def test_job_config_carries_run_id_attempts_and_env(pipeline_env, tmp_path) -> N
 @pytest.mark.parametrize("case", FIXTURE["thinking_kwargs"], ids=lambda case: case["name"])
 def test_thinking_maps_to_the_harness_kwarg(case) -> None:
     config = TargetConfiguration(
-        name="cfg", harness=case["harness"], model="provider/model", thinking=case["thinking"]
+        name="cfg", harness=case["harness"], model="provider/model",
+        version=case.get("version"), thinking=case["thinking"],
     )
     assert pipeline_module.job_agent(config) == {
         "name": case["harness"],

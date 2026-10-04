@@ -1,10 +1,10 @@
 # Target configurations a benchmark run uses. The product and the tests share
 # this spec through load_target_configs(). The configuration records the
-# harness, model, and thinking level for the runner. It does not filter prior
-# context: the model receives every prior trace. Thinking levels are a closed
-# set: none, low, medium, high, xhigh. The corpus does not carry a thinking
-# level yet (peasant-labs/schema#147, peasant-labs/peasant#545); a missing
-# level is recorded as null.
+# harness, model, version, and thinking level for the runner. It does not
+# filter prior context: the model receives every prior trace. Thinking levels
+# are a closed set: none, low, medium, high, xhigh. The corpus does not carry a
+# thinking level yet (peasant-labs/schema#147, peasant-labs/peasant#545); a
+# missing level is recorded as null.
 target_configurations:
   - name: claude-code-sonnet-high
     harness: claude-code
@@ -17,6 +17,7 @@ target_configurations:
   - name: opencode-gpt-medium
     harness: opencode
     model: gpt-5.2-codex
+    version: "1.18.34"
     thinking: medium
   - name: codex-gpt-none
     harness: codex

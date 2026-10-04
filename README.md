@@ -216,7 +216,7 @@ A Python loader for Harbor task environments and verifiers lives in
 HuggingFace), joins traces, PRs, metadata, and transcript turns, materializes
 self-contained per-PR bundles, assembles task payloads (PR + prior traces up
 to the PR's develop boundary + integration points for the pre-PR repo and
-merged-state golden tests), records the target harness/model/thinking
+merged-state golden tests), records the target harness/model/version/thinking
 configuration for a run, and generates Harbor task skeletons from those
 payloads. The loader is a uv workspace member; from the repository root run
 `uv sync` and `uv run pytest`.

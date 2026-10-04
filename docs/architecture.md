@@ -226,7 +226,7 @@ flowchart TB
 | `job_name` | The run id: `--run-id`, or a generated UUIDv7 prefixed by `--run-label`. |
 | `n_attempts` | `3`. Repeats are separate runs; group them by cell. |
 | `tasks` | One `{path, source}` per task that was built; `source` is the run id. |
-| `agents` | One agent: the configuration's harness, model, and thinking kwarg (`variant` for OpenCode, `reasoning_effort` otherwise), or `oracle`; `env.TRACEBENCH_RUN_ID`. |
+| `agents` | One agent: the configuration's harness, model, harness version (`version`), and thinking kwarg (`variant` for OpenCode, `reasoning_effort` otherwise), or `oracle`; `env.TRACEBENCH_RUN_ID`. |
 | `verifier.env` | `TRACEBENCH_RUN_ID`. |
 
 ## Components
@@ -343,7 +343,7 @@ oracle). The verifier is copied into each task and runs inside the sandbox.
 | repository adaptation spec | `tracebench_corpus/repository_spec.py` | Test and build command per repository; first match wins; Go/Peasant default. |
 | skeleton builder | `tracebench_corpus/skeleton.py` | task.toml, instruction.md, environment upload, `test.sh`, verifier config and verifier copy. |
 | verifier | `tracebench_corpus/verifier.py` | In-sandbox grading: removes pre-PR tests, overlays the golden suite, runs the test command, writes `reward.txt` and `test-results.json`. |
-| target configuration | `tracebench_corpus/target_config.py` | Spec validation and the harness/model/thinking record. |
+| target configuration | `tracebench_corpus/target_config.py` | Spec validation and the harness/model/version/thinking record. |
 
 Relationships:
 

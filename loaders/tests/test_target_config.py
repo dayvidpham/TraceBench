@@ -17,13 +17,17 @@ def test_loads_testdata_matrix(target_config_spec) -> None:
     high = find_target_config(target_config_spec, "claude-code-sonnet-high")
     assert high.harness == "claude-code"
     assert high.model == "claude-sonnet-4-6"
+    assert high.version is None
     assert high.thinking == "high"
     assert high.to_dict() == {
         "name": "claude-code-sonnet-high",
         "harness": "claude-code",
         "model": "claude-sonnet-4-6",
+        "version": None,
         "thinking": "high",
     }
+    pinned = find_target_config(target_config_spec, "opencode-gpt-medium")
+    assert pinned.version == "1.18.34"
 
 
 def test_to_dict_stubs_absent_axes_as_null() -> None:
@@ -32,6 +36,7 @@ def test_to_dict_stubs_absent_axes_as_null() -> None:
         "name": "unknown-level",
         "harness": "codex",
         "model": "gpt-5.2",
+        "version": None,
         "thinking": None,
     }
 
@@ -48,6 +53,7 @@ def test_find_unknown_configuration_raises(target_config_spec) -> None:
         ("target_configurations:\n  - name: a\n  - name: a\n", "duplicate"),
         ("target_configurations:\n  - name: a\n    temperature: 0.2\n", "unknown keys"),
         ("target_configurations:\n  - name: a\n    harness: [x]\n", "must be a string"),
+        ("target_configurations:\n  - name: a\n    version: [x]\n", "must be a string"),
         ("target_configurations:\n  - just-a-string\n", "not a mapping"),
         ("target_configurations: []\n", "non-empty"),
         ("target_configurations:\n  - harness: claude-code\n", "non-empty name"),
