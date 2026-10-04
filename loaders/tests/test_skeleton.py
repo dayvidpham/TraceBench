@@ -55,6 +55,18 @@ def test_skeleton_ships_verifier_and_config(tmp_path, standard_dump, standard_in
     assert "verifier.py" in (tests / "test.sh").read_text()
 
 
+def test_skeleton_tolerates_an_unsampled_split(tmp_path, standard_dump, standard_index) -> None:
+    payload = make_payload(tmp_path, standard_dump, standard_index)
+    pr_path = payload / "pr.json"
+    pr = json.loads(pr_path.read_text())
+    pr["split"] = None
+    pr_path.write_text(json.dumps(pr))
+    build_skeleton(payload, tmp_path / "task")
+    task_toml = tomllib.loads((tmp_path / "task" / "task.toml").read_text())
+    assert task_toml["metadata"]["split"] == ""
+    assert "Benchmark split: unknown" in (tmp_path / "task" / "instruction.md").read_text()
+
+
 def test_skeleton_uses_shared_base_image_and_runtime_data(tmp_path, standard_dump, standard_index) -> None:
     payload = make_payload(tmp_path, standard_dump, standard_index)
     skeleton = build_skeleton(payload, tmp_path / "task")

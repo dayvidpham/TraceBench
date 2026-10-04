@@ -242,7 +242,7 @@ def _task_toml(
         f"repo = {_toml_string(pr['repo'])}",
         f"pr_url = {_toml_string(pr.get('url', ''))}",
         f"pr_number = {pr['number']}",
-        f"split = {_toml_string(pr.get('split', ''))}",
+        f"split = {_toml_string(pr.get('split') or '')}",
         f"prior_sessions = {int(summary.get('prior_sessions', 0))}",
         *(
             [f"target_configuration = {_toml_string(summary['target_configuration']['name'])}"]
@@ -291,7 +291,7 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
         f"- Pull request: {pr.get('url', pr['id'])}",
         f"- Merged: {pr.get('merged_at', 'unknown')}",
         f"- Size: +{pr.get('additions', 0)} / -{pr.get('deletions', 0)} lines",
-        f"- Benchmark split: {pr.get('split', 'unknown')}",
+        f"- Benchmark split: {pr.get('split') or 'unknown'}",
         "",
         "## Goal",
         "",
