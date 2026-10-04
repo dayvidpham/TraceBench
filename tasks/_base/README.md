@@ -9,14 +9,14 @@ full peasant history + warmed Go module/build caches. Task images build
 ```bash
 # 1. Base (one-time, ~5-8 min: full clone + go mod download + go build):
 podman build -f tasks/_base/peasant-base.Dockerfile \
-  -t tracebench/peasant-base:838a6dd0a73524db6ae96a931c224ff66090aa70 .
-
-#    Tag it :latest too; the runtime image builds FROM tracebench/peasant-base:latest.
-podman tag tracebench/peasant-base:838a6dd0a73524db6ae96a931c224ff66090aa70 \
-  tracebench/peasant-base:latest
+  -t tracebench/peasant-base:838a6dd0a73524db6ae96a931c224ff66090aa70 \
+  -t tracebench/peasant-base:latest \
+  -t tracebench/peasant-base:keep .
 
 # 2. Runtime (seconds; strips the clone and build cache, adds /workdir):
-podman build -f tasks/_base/task-runtime.Dockerfile -t tracebench/task-runtime:latest .
+podman build -f tasks/_base/task-runtime.Dockerfile \
+  -t tracebench/task-runtime:latest \
+  -t tracebench/task-runtime:keep .
 
 # 3. Task (Harbor builds this itself; incremental rebuild only):
 harbor run -p tasks/peasant-344 -a oracle -e podman
@@ -24,6 +24,14 @@ harbor run -p tasks/peasant-344 -a oracle -e podman
 
 Task Dockerfiles reference the base by pinned tag. Bump `SNAPSHOT_SHA`
 deliberately: it must postdate every task's base commit.
+
+### Surviving Harbor teardown
+
+Harbor's compose teardown runs `down --rmi local`, which removes the image
+referenced by the task — `tracebench/task-runtime:latest` can disappear after
+any run. The `:keep` aliases above hold the images across teardown; run
+`scripts/ensure-task-images.sh` before each Harbor run to re-tag `:latest`
+from them (it fails closed when the alias is gone and a rebuild is needed).
 
 ## Runtime image for generated tasks
 
