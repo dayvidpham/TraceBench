@@ -1,0 +1,344 @@
+scenarios:
+  - name: exact_worktree_path
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s1
+        worktree: /repo/peasant/peasant-5--feat--thing
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-05T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#10", session: s1, method: exact}
+
+  - name: branch_key_on_host_checkout
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s2
+        worktree: /repo/peasant
+        branch: peasant-5--feat--thing
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-06T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#10", session: s2, method: exact}
+
+  - name: nested_worktree_child
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s3
+        worktree: /repo/peasant/peasant-5--feat--thing/worktree/nested-b
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-04T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#10", session: s3, method: exact}
+
+  - name: subagent_inherits_parent_keys
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s1
+        worktree: /repo/peasant/peasant-5--feat--thing
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-05T00:00:00Z"
+      - id: s4
+        parent_id: s1
+        project_cwd: /repo/.claude/worktrees/agent-1
+        started_at: "2026-08-02T00:00:00Z"
+        ended_at: "2026-08-03T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#10", session: s1, method: exact}
+      - {pr: "peasant-labs/peasant#10", session: s4, method: exact}
+
+  - name: ignored_branch_only
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s5
+        worktree: /repo/peasant
+        branch: develop
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-05T00:00:00Z"
+    expect: []
+
+  - name: same_issue_next_merge
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 20
+        head_ref: peasant-7--feat--m1
+        created_at: "2026-08-14T00:00:00Z"
+        merged_at: "2026-08-15T00:00:00Z"
+      - repo: peasant-labs/peasant
+        number: 21
+        head_ref: peasant-7--feat--m2
+        created_at: "2026-08-24T00:00:00Z"
+        merged_at: "2026-08-25T00:00:00Z"
+    sessions:
+      - id: s6
+        worktree: /repo/peasant/peasant-7--feat--other
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-12T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#20", session: s6, method: next_merge}
+
+  - name: exact_named_pr_beats_earlier_merge
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 20
+        head_ref: peasant-7--feat--m1
+        created_at: "2026-08-14T00:00:00Z"
+        merged_at: "2026-08-15T00:00:00Z"
+      - repo: peasant-labs/peasant
+        number: 21
+        head_ref: peasant-7--feat--m2
+        created_at: "2026-08-24T00:00:00Z"
+        merged_at: "2026-08-25T00:00:00Z"
+    sessions:
+      - id: s7
+        worktree: /repo/peasant/peasant-7--feat--m2
+        started_at: "2026-08-16T00:00:00Z"
+        ended_at: "2026-08-20T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#21", session: s7, method: exact}
+
+  - name: latest_merge_fallback
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 20
+        head_ref: peasant-7--feat--m1
+        created_at: "2026-08-14T00:00:00Z"
+        merged_at: "2026-08-15T00:00:00Z"
+      - repo: peasant-labs/peasant
+        number: 21
+        head_ref: peasant-7--feat--m2
+        created_at: "2026-08-24T00:00:00Z"
+        merged_at: "2026-08-25T00:00:00Z"
+    sessions:
+      - id: s8
+        worktree: /repo/peasant/peasant-7--feat--other
+        started_at: "2026-08-26T00:00:00Z"
+        ended_at: "2026-08-30T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#21", session: s8, method: latest_merge}
+
+  - name: source_path_decode
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s9
+        source_path: /home/u/.claude/projects/-repo-peasant-peasant-5--feat--thing/abc.jsonl
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-07T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#10", session: s9, method: exact}
+
+  - name: source_path_nested_worktree
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s10
+        source_path: /home/u/.claude/projects/-repo-peasant-peasant-5--feat--thing-worktree-nested-b/abc.jsonl
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-07T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#10", session: s10, method: exact}
+
+  - name: no_keys
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s11
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-05T00:00:00Z"
+    expect: []
+
+  - name: cross_repo_issue_disambiguation
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant-prerelease-archive
+        number: 30
+        head_ref: peasant-9--feat--arch
+        created_at: "2026-06-25T00:00:00Z"
+        merged_at: "2026-07-01T00:00:00Z"
+      - repo: peasant-labs/peasant
+        number: 31
+        head_ref: peasant-9--feat--live
+        created_at: "2026-08-15T00:00:00Z"
+        merged_at: "2026-08-20T00:00:00Z"
+    sessions:
+      - id: s12
+        worktree: /repo/peasant/peasant-9--feat--arch
+        started_at: "2026-06-10T00:00:00Z"
+        ended_at: "2026-06-20T00:00:00Z"
+      - id: s13
+        worktree: /repo/peasant/peasant-9--feat--new
+        started_at: "2026-08-05T00:00:00Z"
+        ended_at: "2026-08-10T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant-prerelease-archive#30", session: s12, method: exact}
+      - {pr: "peasant-labs/peasant#31", session: s13, method: next_merge}
+
+  - name: dot_directory_is_not_a_key
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 10
+        head_ref: peasant-5--feat--thing
+        created_at: "2026-07-25T00:00:00Z"
+        merged_at: "2026-08-10T00:00:00Z"
+    sessions:
+      - id: s14
+        worktree: /repo/peasant/.claude/worktrees/agent-1
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-05T00:00:00Z"
+    expect: []
+
+  - name: multi_pr_shared_branch
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant-prerelease-archive
+        number: 40
+        head_ref: fix--shared
+        created_at: "2026-06-14T04:00:00Z"
+        merged_at: "2026-06-15T06:21:00Z"
+      - repo: peasant-labs/peasant-prerelease-archive
+        number: 41
+        head_ref: fix--shared
+        created_at: "2026-06-16T00:26:00Z"
+        merged_at: "2026-06-16T07:56:00Z"
+    sessions:
+      - id: s15
+        branch: fix--shared
+        started_at: "2026-06-15T02:00:00Z"
+        ended_at: "2026-06-15T09:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant-prerelease-archive#40", session: s15, method: exact}
+      - {pr: "peasant-labs/peasant-prerelease-archive#41", session: s15, method: exact}
+
+  - name: issue_window_overlap
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 50
+        head_ref: peasant-11--feat--a
+        created_at: "2026-08-05T00:00:00Z"
+        merged_at: "2026-08-20T00:00:00Z"
+      - repo: peasant-labs/peasant
+        number: 51
+        head_ref: peasant-11--feat--b
+        created_at: "2026-08-10T00:00:00Z"
+        merged_at: "2026-08-25T00:00:00Z"
+    sessions:
+      - id: s16
+        worktree: /repo/peasant/peasant-11--feat--other
+        started_at: "2026-08-08T00:00:00Z"
+        ended_at: "2026-08-15T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#50", session: s16, method: issue_window}
+      - {pr: "peasant-labs/peasant#51", session: s16, method: issue_window}
+
+  - name: commit_only_link
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 60
+        head_ref: peasant-12--feat--x
+        created_at: "2026-08-01T00:00:00Z"
+        merged_at: "2026-08-02T00:00:00Z"
+    commit_prs:
+      h1: ["peasant-labs/peasant#60"]
+    sessions:
+      - id: s17
+        worktree: /repo/peasant
+        branch: develop
+        source_path: /home/u/.codex/sessions/rollout-s17.jsonl
+        commits: [h1]
+        started_at: "2026-08-01T00:00:00Z"
+        ended_at: "2026-08-02T00:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#60", session: s17, method: commit}
+
+  - name: commit_plus_name_match
+    repo_host: /repo/peasant
+    ignored_branches: [main, develop]
+    prs:
+      - repo: peasant-labs/peasant
+        number: 70
+        head_ref: peasant-13--feat--a
+        created_at: "2026-09-01T00:00:00Z"
+        merged_at: "2026-09-02T00:00:00Z"
+      - repo: peasant-labs/peasant
+        number: 71
+        head_ref: peasant-13--feat--b
+        created_at: "2026-09-03T00:00:00Z"
+        merged_at: "2026-09-04T00:00:00Z"
+    commit_prs:
+      h2: ["peasant-labs/peasant#71"]
+    sessions:
+      - id: s18
+        worktree: /repo/peasant/peasant-13--feat--a
+        commits: [h2]
+        started_at: "2026-09-01T10:00:00Z"
+        ended_at: "2026-09-01T12:00:00Z"
+    expect:
+      - {pr: "peasant-labs/peasant#70", session: s18, method: exact}
+      - {pr: "peasant-labs/peasant#71", session: s18, method: commit}

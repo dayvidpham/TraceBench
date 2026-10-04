@@ -69,6 +69,47 @@ harbor view ./jobs
 | `tracebench/trace-propagation` | Fix W3C `traceparent` propagation across two services (trace-id, sampled flag, tracestate) | Medium: 3 files to read, reproduce, fix 1 function |
 | `tracebench/peasant-smoke` | Containerized Peasant codebase builds + fast unit tests pass (issue #1) | Smoke: no bug fix, proves image-origin and host cleanliness |
 
+## Corpus sampling
+
+`cmd/tracebench-sample` indexes merged `peasant-labs/peasant` pull requests,
+links them to agent sessions recorded in a local Peasant database (head-ref
+name matches, same-issue open windows, and commit associations; a session may
+link to several pull requests), closes over parent/child/fork session lineage
+so bundles carry their full session forest, and samples a time- and
+size-stratified train/val/test corpus with the raw transcripts:
+
+```bash
+go run ./cmd/tracebench-sample index
+go run ./cmd/tracebench-sample sample --train 30 --val 10 --test 9
+go run ./cmd/tracebench-sample dump
+```
+
+Indexes land in `corpus/index/`, the sampled dataset in `corpus/dataset/`, and
+`dump/` holds a flat, publishable dump: `metadata.jsonl` records in
+`schema.UnifiedMetadata`, `transcripts/` envelopes in
+`schema.TranscriptContent` (`session_detail`), plus `pull_requests.jsonl` and
+`traces.jsonl` indexes. Transcripts pass through the `redact` pipeline at the
+standard level, metadata omits machine-specific paths, and `--pin-prs FILE`
+reproduces a previous sample. `--source village-pull` builds the same dump
+from `peasant village pull` directories instead of the local database, with
+collective provenance in `village_pulls.jsonl`. `corpus/` is ignored by git.
+Sessions whose raw source is OpenCode's monolithic database are exported per
+entry from the Peasant full-content capture, and the manifests flag missing or
+partial transcripts.
+
+The published corpus lives at
+[huggingface.co/datasets/dayvidpham/TraceBench](https://huggingface.co/datasets/dayvidpham/TraceBench);
+the viewer's `session_pr_traces` table is the session-to-PR mapping
+(`pr`, `session_id`, `method`, `relation`, `split`). Consumers pull it with:
+
+```bash
+go run ./cmd/tracebench-sample fetch --dest data/tracebench
+```
+
+`fetch` downloads `metadata.jsonl`, the indexes, and every transcript, and
+verifies each transcript's SHA3-256 against its metadata `contentHash`
+(`--no-verify` to skip, `--revision` to pin a revision).
+
 ## Verification status
 
 * Test logic: buggy code fails 6/7 grading tests, oracle-fixed code passes 7/7.
