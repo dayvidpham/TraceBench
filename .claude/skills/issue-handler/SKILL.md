@@ -44,7 +44,7 @@ Use `gh ... -R "$GH_REPO"` for every issue, PR, comment, review, run, and merge 
 7. **Validate** - Run the repository gate and all focused gates required by the changed surface. Never weaken or remove tests to make a gate pass.
 8. **Evidence** - For a user-visible interface change (CLI output, file format, public API), capture the exact command and output from the branch. For a UI change, capture the mounted path in both themes. Otherwise write `not applicable` with a reason.
 9. **Sync base** - If `main` moved or the branch was open for about an hour, fetch and merge the base into the feature branch. Regenerate generated artifacts instead of hand-merging them. Re-run the gate.
-10. **Ship** - Inspect status, diff, and recent history. Stage intended files only. Commit with `git agent-commit`, push to `origin`, and open a focused PR against `main`.
+10. **Ship** - Inspect status, diff, and recent history. Stage intended files only. Commit with `git commit`, push to `origin`, and open a focused PR against `main`.
 11. **Review loop** - Run the required independent review wave on the current PR head. Post findings to the PR, fix blockers, and re-review every material new head.
 12. **CI** - Watch all checks on the reviewed head. Fix branch-caused failures, re-run local gates, push, and repeat review when merge-bound files changed.
 13. **Merge** - Merge only when the current head meets all review, CI, evidence, and repository gates.
@@ -137,7 +137,7 @@ Stage intended paths only. Do not stage unrelated user or agent changes.
 
 ```sh
 git add <intended-paths>
-git agent-commit -m "type(scope): concise summary"
+git commit -m "type(scope): concise summary"
 git push -u "$LIVE_REMOTE" HEAD
 ```
 
@@ -220,7 +220,7 @@ After any push that changes code, tests, fixtures, skills, workflows, generated 
 2. Fix every blocker. Fix important and minor findings when safe and in scope; otherwise create or link an approved follow-up issue and explain the deferral on the PR.
 3. Add or adjust tests when behavior changes.
 4. Re-run the full repository gate and focused checks.
-5. Commit with `git agent-commit`, push a new commit, and reply with the commit SHA and result.
+5. Commit with `git commit`, push a new commit, and reply with the commit SHA and result.
 6. Run a fresh three-axis review wave on the new `headRefOid`.
 
 ## CI and merge gate

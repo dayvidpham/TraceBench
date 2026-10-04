@@ -22,7 +22,7 @@ inside a task may instead live in that task's own module.
 | Python tests | `uv run pytest` (uv workspace at the repository root) |
 | Task pipeline | `uv run tracebench-corpus --corpus <dump> pipeline --prs <id-or-file> --repo-dir <clone> --index corpus/index/merged_prs.json --dest <dir> [--spec <spec>] [--run-id <id>]` |
 | Tidy | `go mod tidy` (must leave `go.mod` and `go.sum` unchanged) |
-| Commit | `git agent-commit -m "type(scope): summary"` (never plain `git commit`) |
+| Commit | `git commit -m "type(scope): summary"` |
 
 ## Gates
 
