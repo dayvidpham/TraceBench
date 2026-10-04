@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -12,13 +13,14 @@ import yaml
 from conftest import LIVE, TESTDATA, envelope, metadata
 from tracebench_corpus import Corpus, TaskBuilder, build_skeleton
 from tracebench_corpus.cli import main
+from tracebench_corpus import golden
 from tracebench_corpus.golden import (
     GoldenSuiteError,
     MANIFEST_NAME,
     matches_any,
     materialize_golden_tests,
 )
-from tracebench_corpus.task import DEFAULT_TEST_PATTERNS
+from tracebench_corpus.task import DEFAULT_TEST_PATTERNS, payload_test_patterns
 
 FIXTURES = yaml.safe_load((TESTDATA / "glob_patterns.yaml").read_text())
 BINARY = bytes(range(256)) + b"\0\r\n\xff"
@@ -67,6 +69,9 @@ def pr_repo(git_repo) -> tuple[Path, str, str]:
     for path in merge["delete"]:
         _git(repo, "rm", "-q", path)
     _write(repo, merge["binary"], BINARY)
+    for path in merge["executable"]:
+        _write(repo, path, "#!/bin/sh\nexit 0\n")
+        (repo / path).chmod(0o755)
     for link, target in merge["symlink"].items():
         (repo / link).symlink_to(target)
     merge_commit = commit("merge")
@@ -88,6 +93,8 @@ def test_extracts_exactly_the_merged_test_files(pr_repo, tmp_path) -> None:
     assert on_disk == sorted([*expected, MANIFEST_NAME])
     assert (dest / "keep_test.go").read_text() == "package main\n"
     assert (dest / "pkg/testdata/blob.bin").read_bytes() == BINARY
+    assert os.access(dest / "pkg/testdata/run.sh", os.X_OK)
+    assert not os.access(dest / "keep_test.go", os.X_OK)
     assert not (dest / "old_name_test.go").exists()
     assert not (dest / "deleted_test.go").exists()
     assert not (dest / "link_test.go").exists()
@@ -143,13 +150,13 @@ def test_task_cli_materialize_tests_and_skeleton(pr_repo, tmp_path, write_dump, 
         "--corpus", str(dump), "task", f"{LIVE}#22", "--dest", str(payload),
         "--index", str(index), "--repo-dir", str(repo), "--materialize-tests",
     ]) == 0
-    assert "golden tests: 7 files" in capsys.readouterr().out
-    assert json.loads((payload / "task.json").read_text())["golden_tests"] == 7
+    assert "golden tests: 8 files" in capsys.readouterr().out
+    assert json.loads((payload / "task.json").read_text())["golden_tests"] == 8
     assert (payload / "tests" / "new/name_test.go").is_file()
 
     task = tmp_path / "task"
     skeleton = build_skeleton(payload, task)
-    assert skeleton.golden_tests == 7
+    assert skeleton.golden_tests == 8
     assert (task / "tests" / MANIFEST_NAME).is_file()
     assert not (task / "tests" / "golden" / MANIFEST_NAME).exists()
     assert (task / "tests" / "golden" / "pkg/testdata/blob.bin").read_bytes() == BINARY
@@ -185,3 +192,55 @@ def test_task_build_fails_closed_on_empty_suite(git_repo, tmp_path, write_dump) 
     with pytest.raises(GoldenSuiteError, match=rf"{LIVE}#22"):
         builder.build(f"{LIVE}#22", tmp_path / "payload")
     assert not (tmp_path / "payload" / "task.json").exists()
+
+
+def test_root_manifest_collision_fails_closed(git_repo, tmp_path) -> None:
+    repo, commit = git_repo
+    _write(repo, "manifest.json", "{}\n")
+    _write(repo, "a_test.go", "package main\n")
+    merge = commit("merge")
+    dest = tmp_path / "tests"
+    with pytest.raises(GoldenSuiteError, match="'manifest.json'"):
+        materialize_golden_tests(repo, merge, ["*.json", "*_test.go"], dest)
+    assert not (dest / MANIFEST_NAME).exists()
+
+
+def test_git_not_runnable_says_install_git(monkeypatch, tmp_path) -> None:
+    def boom(*_args, **_kwargs):
+        raise OSError("No such file or directory: 'git'")
+
+    monkeypatch.setattr(golden.subprocess, "run", boom)
+    with pytest.raises(GoldenSuiteError, match="install git"):
+        materialize_golden_tests(tmp_path, "HEAD", DEFAULT_TEST_PATTERNS, tmp_path / "t")
+
+
+def test_path_traversal_entry_is_refused(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(
+        golden, "_ls_tree", lambda _repo, _commit: [("100644", "blob", "../escape_test.go")]
+    )
+    with pytest.raises(GoldenSuiteError, match="outside the golden suite"):
+        materialize_golden_tests(tmp_path, "HEAD", ["**/*_test.go", "../*"], tmp_path / "t")
+    assert not (tmp_path / "escape_test.go").exists()
+
+
+def test_cli_zero_matches_exits_2(git_repo, tmp_path, write_dump, capsys) -> None:
+    repo, commit = git_repo
+    commit("base")
+    merge = commit("merge")  # only .txt files: nothing matches
+    dump = _dump_for(tmp_path, write_dump)
+    index = tmp_path / "index.json"
+    index.write_text(json.dumps([{"repo": LIVE, "number": 22, "merge_commit": merge}]))
+    assert main([
+        "--corpus", str(dump), "task", f"{LIVE}#22", "--dest", str(tmp_path / "payload"),
+        "--index", str(index), "--repo-dir", str(repo), "--materialize-tests",
+    ]) == 2
+    assert "golden suite for pull request" in capsys.readouterr().err
+
+
+def test_payload_patterns_from_repo_request(tmp_path) -> None:
+    assert payload_test_patterns(tmp_path) == list(DEFAULT_TEST_PATTERNS)
+    (tmp_path / "repo-request.json").write_text(json.dumps({"test_patterns": ["**/*.rs"]}))
+    assert payload_test_patterns(tmp_path) == ["**/*.rs"]
+    (tmp_path / "repo-request.json").write_text("{not json")
+    with pytest.raises(ValueError, match="repo-request.json"):
+        payload_test_patterns(tmp_path)
