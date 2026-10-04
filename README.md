@@ -256,6 +256,16 @@ uv run tracebench-corpus --corpus data/tracebench pipeline \
   --run-id tracebench-smoke-1
 ```
 
+Corpus source (global flags, before the subcommand):
+
+* `--corpus DIR` reads a local dump, for example `corpus/dump`. Without it, the loader reads the
+  `TRACEBENCH_CORPUS` environment variable.
+* `--repo ID` downloads the dump from HuggingFace instead, for example `dayvidpham/TraceBench`.
+  `--corpus` and `--repo` are mutually exclusive. `--revision` pins the revision and
+  `--cache-dir` sets the cache directory.
+
+Command flags:
+
 * `--prs` takes a pull request id (`owner/repo#N`) or a file with one id per
   line (blank lines and `#` comments are skipped). Repeat it to add more.
 * `--spec FILE` selects a repository adaptation spec (the test and build
