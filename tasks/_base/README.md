@@ -30,7 +30,7 @@ deliberately: it must postdate every task's base commit.
 `task-runtime.Dockerfile` builds `tracebench/task-runtime:latest`, the default
 `docker_image` of every task the loader pipeline generates. Generated tasks
 build no per-task image: Harbor uploads `environment/repo/` (a truncated
-single-commit repo at the real base SHA) into `/workdir` at start.
+repo holding the full real history truncated at the base SHA) into `/workdir` at start.
 
 | Base-image content | Runtime image |
 |---|---|

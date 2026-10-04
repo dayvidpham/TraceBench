@@ -374,28 +374,37 @@ harbor run -c build/run-1/job-config.yaml
 
 `materialize_worktree(repo_dir, payload_dir, snapshot_bin=None)` reads
 `tree_commit` from `repo-request.json` (falling back to `merge_commit^`) and
-writes `repo/` as a **truncated single-commit git repository**:
+writes `repo/` as the project's **full real history truncated at the pre-PR
+commit**: every ancestor of `tree_commit` with its real SHA, and nothing at or
+after the PR. The PR's base branch comes from the payload's `base_ref`
+(`refs/heads/` stripped), defaulting to `main`.
 
 ```bash
+git -C <clone> pack-objects --revs --stdout > history.pack   # stdin: <tree_commit>
 git init -q repo
-GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=uploadpack.allowAnySHA1InWant GIT_CONFIG_VALUE_0=true \
-  git -c protocol.file.allow=always fetch --depth=1 --no-tags <clone> <tree_commit>
-git update-ref refs/heads/main FETCH_HEAD
-git symbolic-ref HEAD refs/heads/main
-git reset --hard -q
+git -C repo config core.logAllRefUpdates false
+git -C repo index-pack --stdin < history.pack
+git -C repo update-ref refs/heads/<base_ref> <tree_commit>
+git -C repo symbolic-ref HEAD refs/heads/<base_ref>
+git -C repo reset --hard -q
+git -C repo config core.logAllRefUpdates true
+rm -rf repo/.git/logs repo/.git/ORIG_HEAD repo/.git/FETCH_HEAD
 ```
 
-`FETCH_HEAD`/`ORIG_HEAD` are removed, a local `user.name`/`user.email` is set
-so the agent can commit, and no remote is configured. The source clone is only
-read; its refs and HEAD are unchanged. `snapshot_bin` is accepted for
+A local `user.name`/`user.email` (`TraceBench Agent <agent@tracebench.local>`)
+is set so the agent can commit, and no remote is configured. The source clone
+is only read; its refs and HEAD are unchanged. `snapshot_bin` is accepted for
 call-site compatibility and unused.
 
 The worktree fails closed, naming the commit and the failing check, when the
 commit does not exist, the destination is not empty, HEAD is not the real
 `tree_commit`, the HEAD tree differs from `git rev-parse <tree_commit>^{tree}`,
-`git rev-list --all --count` is not 1, `.git/shallow` does not name the commit,
-a remote exists, the PR's `merge_commit` is present, or the worktree is not
-clean. Errors are `WorktreeError` (a `ValueError`).
+`git rev-list --all --count` differs from the source's count for that commit
+(or is not greater than 1), `.git/shallow` exists, a remote exists, the PR's
+`merge_commit` is in the object store, `.git/logs`/`ORIG_HEAD`/`FETCH_HEAD`/
+`objects/info/alternates` exist, the worktree is not clean, `git fsck --full`
+reports anything, or the local identity is wrong. Errors are `WorktreeError`
+(a `ValueError`).
 
 The default task image is `tracebench/task-runtime:latest`
 (`tasks/_base/task-runtime.Dockerfile`): the shared toolchain base without the

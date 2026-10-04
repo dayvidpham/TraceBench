@@ -2,6 +2,9 @@
 # commits of the listed pull requests. Each commit writes `files` on top of the
 # previous tree.
 commits:
+  - name: initial
+    files:
+      README.md: "# demo\n"
   - name: base
     files:
       go.mod: "module example.com/demo\n"

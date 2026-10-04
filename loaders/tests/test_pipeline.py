@@ -114,8 +114,12 @@ def test_two_prs_build_two_runnable_tasks(pipeline_env, tmp_path, snapshot_bin, 
         for part in FIXTURE["required_parts"]:
             assert (task / part).exists(), f"{name} lacks {part}"
         repo_git = task / "environment" / "repo"
-        assert subprocess.run(["git", "-C", str(repo_git), "rev-list", "--all", "--count"],
-                              capture_output=True, text=True, check=True).stdout.strip() == "1"
+        count = subprocess.run(["git", "-C", str(repo_git), "rev-list", "--all", "--count"],
+                               capture_output=True, text=True, check=True).stdout.strip()
+        assert int(count) > 1, name
+        assert not (repo_git / ".git" / "shallow").exists(), name
+        assert subprocess.run(["git", "-C", str(repo_git), "remote"],
+                              capture_output=True, text=True, check=True).stdout.strip() == "", name
         assert (task / "tests" / "golden" / "greet_test.go").is_file()
     for name, sessions in FIXTURE["prior_traces"].items():
         transcripts = dest / "tasks" / name / "environment" / "prior-traces" / "transcripts"

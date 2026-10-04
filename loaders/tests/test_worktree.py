@@ -1,4 +1,4 @@
-"""Truncated single-commit repo materialization."""
+"""Full-history truncated repo materialization."""
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ from pathlib import Path
 import pytest
 
 from tracebench_corpus.worktree import WorktreeError, materialize_worktree
-
 
 
 def _git(repo: Path, *args: str, date: str | None = None) -> str:
@@ -34,9 +33,10 @@ def repo(tmp_path) -> dict:
     path = tmp_path / "src"
     path.mkdir()
     _git(path, "init", "-q")
+    root = _commit(path, "root.txt", "root", "2025-12-01T00:00:00+00:00")
     pre = _commit(path, "a.txt", "pre", "2026-01-01T00:00:00+00:00")
     merge = _commit(path, "pr.txt", "pr", "2026-02-01T00:00:00+00:00")
-    return {"path": path, "pre": pre, "merge": merge}
+    return {"path": path, "root": root, "pre": pre, "merge": merge}
 
 
 def _payload(tmp_path: Path, **request) -> Path:
@@ -59,17 +59,33 @@ def test_truncated_repo_at_tree_commit(tmp_path, repo):
     assert result.tree_sha == _git(repo["path"], "rev-parse", f"{repo['pre']}^{{tree}}")
     assert _git(out, "rev-parse", "HEAD") == repo["pre"]
     assert _git(out, "symbolic-ref", "HEAD") == "refs/heads/main"
-    assert _git(out, "rev-list", "--all", "--count") == "1"
-    assert (out / ".git" / "shallow").read_text().split() == [repo["pre"]]
+    expected = _git(repo["path"], "rev-list", "--count", repo["pre"])
+    assert int(expected) > 1
+    assert _git(out, "rev-list", "--all", "--count") == expected
+    # The real ancestors ship, with their real SHAs.
+    assert _git(out, "log", "--format=%H") == _git(
+        repo["path"], "log", "--format=%H", repo["pre"])
+    assert repo["root"] in _git(out, "log", "--format=%H").split()
+    assert not (out / ".git" / "shallow").exists()
     assert _git(out, "remote") == ""
     assert subprocess.run(["git", "-C", str(out), "cat-file", "-e", repo["merge"]],
                           capture_output=True).returncode != 0
     assert _git(out, "status", "--porcelain") == ""
-    assert not (out / ".git" / "FETCH_HEAD").exists()
-    assert not (out / ".git" / "ORIG_HEAD").exists()
-    assert _git(out, "config", "user.email")
-    assert sorted(p.name for p in out.iterdir()) == [".git", "a.txt"]
+    assert _git(out, "fsck", "--full") == ""
+    for name in ("FETCH_HEAD", "ORIG_HEAD", "logs", "objects/info/alternates"):
+        assert not (out / ".git" / name).exists(), name
+    assert _git(out, "config", "user.name") == "TraceBench Agent"
+    assert _git(out, "config", "user.email") == "agent@tracebench.local"
+    assert sorted(p.name for p in out.iterdir()) == [".git", "a.txt", "root.txt"]
     assert _state(repo["path"]) == before
+
+
+def test_base_ref_selects_branch(tmp_path, repo):
+    payload = _payload(tmp_path, tree_commit=repo["pre"], merge_commit=repo["merge"],
+                       base_ref="refs/heads/develop")
+    materialize_worktree(repo["path"], payload)
+    assert _git(payload / "repo", "symbolic-ref", "HEAD") == "refs/heads/develop"
+    assert _git(payload / "repo", "rev-parse", "refs/heads/develop") == repo["pre"]
 
 
 def test_source_refs_and_head_unchanged(tmp_path, repo):
@@ -95,8 +111,10 @@ def test_agent_can_commit(tmp_path, repo):
     out = payload / "repo"
     (out / "b.txt").write_text("b")
     subprocess.run(["git", "-C", str(out), "add", "b.txt"], check=True)
-    subprocess.run(["git", "-C", str(out), "-c", "commit.gpgsign=false", "commit", "-q", "-m", "b"], check=True,
+    subprocess.run(["git", "-C", str(out), "-c", "commit.gpgsign=false", "commit", "-q",
+                    "-m", "b"], check=True,
                    env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")})
+    assert _git(out, "log", "-1", "--format=%an <%ae>") == "TraceBench Agent <agent@tracebench.local>"
 
 
 def test_missing_commit_fails_closed(tmp_path, repo):
@@ -107,7 +125,7 @@ def test_missing_commit_fails_closed(tmp_path, repo):
 
 
 def test_fix_present_fails_closed(tmp_path, repo):
-    # tree_commit == merge commit: the "fix" is the fetched commit itself.
+    # tree_commit == merge commit: the "fix" is in the object store, so it fails closed.
     payload = _payload(tmp_path, tree_commit=repo["merge"], merge_commit=repo["merge"])
     with pytest.raises(WorktreeError, match="fix-absent") as err:
         materialize_worktree(repo["path"], payload)
@@ -168,7 +186,7 @@ def test_pre_existing_empty_dest_is_replaced(tmp_path, repo):
     payload = _payload(tmp_path, tree_commit=repo["pre"])
     (payload / "repo").mkdir()
     materialize_worktree(repo["path"], payload)
-    assert sorted(p.name for p in (payload / "repo").iterdir()) == [".git", "a.txt"]
+    assert sorted(p.name for p in (payload / "repo").iterdir()) == [".git", "a.txt", "root.txt"]
 
 
 def test_dest_symlink_to_empty_dir_fails_closed(tmp_path, repo):

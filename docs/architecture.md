@@ -169,7 +169,7 @@ flowchart TB
   loader -->|"writes runnable tasks<br/>(files)"| taskdir
   loader -->|"writes the job config<br/>(files)"| jobcfg
   loader -->|"extracts tests, diffs the oracle<br/>(git CLI)"| git
-  loader -->|"fetches the one-commit worktree<br/>(git CLI, read-only)"| git
+  loader -->|"packs the truncated history<br/>(git CLI, read-only)"| git
   snap -->|"reads commits and trees<br/>(git CLI)"| git
   snap -->|"resolves a PR start<br/>(exec)"| db
   snap -->|"writes history and trees<br/>(files)"| snapout
@@ -200,7 +200,7 @@ flowchart TB
 |---|---|
 | `pr.json` | The pull request, enriched from `--index` (`merge_commit`, `head_oid`, `base_ref`). |
 | `prior-traces/` | `traces.jsonl`, `metadata.jsonl`, `transcripts/`, and `manifest.json` for the prior context. |
-| `repo/` | A truncated single-commit git repo at `tree_commit` (the pre-PR state): shallow, no remotes, no later commits. Empty when built by `task` alone. |
+| `repo/` | The full real history truncated at `tree_commit` (the pre-PR state): every ancestor with real SHAs, no remotes, nothing at or after the PR. Empty when built by `task` alone. |
 | `tests/` | The golden suite: every file at `merge_commit` matching the test patterns, plus `tests/manifest.json` (commit, patterns, paths). Written by `task --materialize-tests` and by `pipeline`. |
 | `test-manifest.json` | The case catalog: every top-level Go test case at `merge_commit`; PR-changed cases flagged `golden`. |
 | `solution/` | `oracle.patch` (the merge diff) and `solve.sh` (apply, then build), written by `oracle` and by `pipeline`. |
@@ -337,7 +337,7 @@ oracle). The verifier is copied into each task and runs inside the sandbox.
 | task builder | `tracebench_corpus/task.py` | Boundary and cutoff resolution, prior-trace selection, session cuts, repo-request, destination hygiene. |
 | golden suite | `tracebench_corpus/golden.py` | Test files at `merge_commit` matching the test patterns; `tests/manifest.json`; the canonical doublestar matcher. |
 | case catalog | `tracebench_corpus/test_manifest.py` | Top-level Go test cases at `merge_commit`; PR-changed cases flagged `golden`. |
-| secure worktree | `tracebench_corpus/worktree.py` | Shallow-fetches `tree_commit` into a one-commit repo; asserts HEAD, tree, one commit, shallow entry, no remotes, fix absent. |
+| secure worktree | `tracebench_corpus/worktree.py` | Packs the ancestors of `tree_commit` into a fresh repo; asserts HEAD, tree, source-equal commit count, not shallow, no remotes, fix absent, clean `fsck`. |
 | oracle | `tracebench_corpus/oracle.py` | Merge diff, `solve.sh`, equivalence check against `merge_commit^{tree}`, the `task.json` oracle block. |
 | repository adaptation spec | `tracebench_corpus/repository_spec.py` | Test and build command per repository; first match wins; Go/Peasant default. |
 | skeleton builder | `tracebench_corpus/skeleton.py` | task.toml, instruction.md, environment upload, `test.sh`, verifier config and verifier copy. |
@@ -387,7 +387,7 @@ flowchart TB
     pipe["<b>pipeline driver</b><br/>[Component: Python]<br/>Per-PR build loop and<br/>Harbor job config."]:::component
     gold["<b>golden suite</b><br/>[Component: Python]<br/>Merged-state test files and<br/>the doublestar matcher."]:::component
     cat["<b>case catalog</b><br/>[Component: Python]<br/>Go test cases at merge_commit,<br/>golden flags."]:::component
-    wt["<b>secure worktree</b><br/>[Component: Python]<br/>Shallow one-commit repo,<br/>tree and history checks."]:::component
+    wt["<b>secure worktree</b><br/>[Component: Python]<br/>Truncated full history,<br/>tree and history checks."]:::component
     orc["<b>oracle</b><br/>[Component: Python]<br/>Merge diff, solve.sh,<br/>equivalence check."]:::component
     spec["<b>repository adaptation spec</b><br/>[Component: Python]<br/>Test and build command<br/>per repository."]:::component
     ver["<b>verifier</b><br/>[Component: Python, stdlib]<br/>Runs in the sandbox;<br/>reward.txt, test-results.json."]:::component
@@ -575,7 +575,7 @@ flowchart TB
   loader -->|"writes payloads<br/>(files)"| payload
   loader -->|"writes tasks<br/>(files)"| taskdir
   loader -->|"writes the job config<br/>(files)"| jobcfg
-  loader -->|"shallow-fetches tree_commit<br/>(git CLI, read-only)"| clone
+  loader -->|"packs tree_commit history<br/>(git CLI, read-only)"| clone
   snap -->|"reads history<br/>(git CLI)"| clone
   harbor -->|"builds the task image<br/>(container runtime)"| taskimg
   harbor -->|"starts the task run<br/>(container runtime)"| run
@@ -649,7 +649,7 @@ sequenceDiagram
     loader->>git: ls-tree and blobs at merge_commit matching the test patterns
     loader->>payload: writes pr.json, prior-traces/, tests/, test-manifest.json, repo-request.json
     loader->>git: fetch --depth=1 tree_commit into a fresh repo (source read-only)
-    loader->>loader: asserts HEAD tree == tree_commit^{tree}, one commit, shallow, no remotes, fix absent
+    loader->>loader: asserts HEAD tree == tree_commit^{tree}, source-equal count, not shallow, no remotes, fix absent
     loader->>payload: moves repo/ into the payload
     loader->>git: git diff tree_commit merge_commit, applies in a temporary worktree
     loader->>loader: asserts the applied tree == merge_commit^{tree}
@@ -792,8 +792,8 @@ sequenceDiagram
     bt->>tb: build(pr_id, payloads/name) with materialize_tests
     tb->>tb: build_test_manifest, materialize_golden_tests
     bt->>wt: materialize_worktree(repo_dir, payload)
-    wt->>wt: git init + fetch --depth=1 SHA from repo_dir, reset --hard
-    wt->>wt: HEAD tree == rev-parse tree_commit^{tree}, rev-list --all == 1, merge_commit absent
+    wt->>wt: pack-objects ancestors of SHA, init, index-pack, reset --hard
+    wt->>wt: HEAD tree == rev-parse tree_commit^{tree}, count == source count, no shallow, merge_commit absent
     bt->>orc: build_oracle(repo_dir, tree_commit, merge_commit, build_command)
     orc->>orc: git diff, worktree add --detach, apply --check, write-tree
     bt->>bt: write_oracle(payload, oracle)

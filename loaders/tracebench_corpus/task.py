@@ -322,8 +322,8 @@ class TaskBuilder:
             "glob_dialect": "doublestar globs relative to the repository root",
             "merge_commit_policy": "required; pass --index when the corpus record lacks one",
             "note": (
-                "repo/ is materialized by tracebench_corpus.worktree.materialize_worktree "
-                "using the snapshot commit mode at tree_commit, verified against "
+                "repo/ is materialized by tracebench_corpus.worktree.materialize_worktree as the "
+                "project's full real history truncated at tree_commit, verified against "
                 "tree_commit^{tree}; tests/ is materialized at merge_commit. The trace "
                 "cutoff is never used to select the tree."
             ),
