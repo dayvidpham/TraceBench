@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/nick/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/trial/trial.py", line 415, in run
+    await self._prepare()
+  File "/Users/nick/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/trial/trial.py", line 454, in _prepare
+    await self.agent_environment.run_healthcheck()
+  File "/Users/nick/.local/share/uv/tools/harbor/lib/python3.13/site-packages/harbor/environments/base.py", line 1385, in run_healthcheck
+    raise HealthcheckError(
+    ...<2 lines>...
+    )
+harbor.environments.base.HealthcheckError: Healthcheck failed after 2 consecutive retries: git config --system --add safe.directory /workdir/repo && cd /workdir/repo && GOPROXY=https://proxy.golang.org,direct go mod download && GOPROXY=https://proxy.golang.org,direct go build ./...
