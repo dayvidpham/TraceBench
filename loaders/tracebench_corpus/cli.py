@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from .corpus import Corpus, load_corpus
-from .oracle import build_oracle, payload_commits, write_oracle
+from .oracle import build_oracle, payload_commits, payload_request, write_oracle
 from .repository_spec import find_repository_spec, load_repository_specs
 from .skeleton import build_skeleton
 from .target_config import find_target_config, load_target_configs
@@ -245,21 +245,28 @@ def _test_manifest(args: argparse.Namespace) -> int:
     return 0
 
 
-def _spec_build_command(spec_path: str, pr_id: str) -> str | None:
-    """Build command for ``pr_id``'s repository from a repository adaptation spec."""
-    repo = pr_id.split("#", 1)[0]
-    return find_repository_spec(load_repository_specs(spec_path), repo).build_command
+def _spec_build_command(spec_path: str, repo: str) -> str:
+    """Build command for ``repo`` from a repository adaptation spec ("" when unset)."""
+    return find_repository_spec(load_repository_specs(spec_path), repo).build_command or ""
 
 
 def _oracle(args: argparse.Namespace) -> int:
     try:
+        request = payload_request(args.payload)
+        request_pr = request.get("pr")
+        if request_pr and request_pr != args.pr:
+            raise ValueError(
+                f"payload {args.payload} was assembled for {request_pr}, not {args.pr}; "
+                "pass the matching pull request id or the matching --payload"
+            )
+        repo = request.get("repo") or args.pr.split("#", 1)[0]
         build_command = args.build_command
         if args.spec:
-            build_command = _spec_build_command(args.spec, args.pr)
+            build_command = _spec_build_command(args.spec, repo)
         tree_commit, merge_commit = payload_commits(args.payload, args.repo_dir)
         oracle = build_oracle(args.repo_dir, tree_commit, merge_commit, build_command)
         solution = write_oracle(args.payload, oracle)
-    except (KeyError, ValueError, OSError) as exc:
+    except (ValueError, OSError) as exc:
         print(f"tracebench-corpus: oracle for {args.pr}: {exc}", file=sys.stderr)
         return 2
     print(

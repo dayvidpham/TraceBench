@@ -115,7 +115,7 @@ def build_oracle(
     diff_args = ("--binary", "--full-index", "--no-color", "--no-ext-diff", tree_sha, merge_sha)
     patch = _git(repo, "diff", *diff_args)
     names = _git(repo, "diff", "--name-only", "-z", "--no-renames", tree_sha, merge_sha)
-    changed = tuple(sorted(name for name in names.decode().split("\0") if name))
+    changed = tuple(sorted(name for name in names.decode(errors="surrogateescape").split("\0") if name))
     expected_tree = _git(repo, "rev-parse", f"{merge_sha}^{{tree}}").decode().strip()
     applied_tree = _verify(repo, tree_sha, merge_sha, patch, expected_tree)
     return Oracle(
@@ -129,10 +129,12 @@ def build_oracle(
     )
 
 
-def _verify(repo: Path, tree_sha: str, merge_sha: str, patch: bytes, expected_tree: str) -> str:
+def _verify(
+    repo: Path, base_commit: str, merge_sha: str, patch: bytes, expected_tree: str
+) -> str:
     with tempfile.TemporaryDirectory(prefix="tracebench-oracle-") as scratch:
         worktree = Path(scratch) / "tree"
-        _git(repo, "worktree", "add", "--detach", "-q", str(worktree), tree_sha)
+        _git(repo, "worktree", "add", "--detach", "-q", str(worktree), base_commit)
         try:
             if patch:
                 _git(worktree, "apply", "--check", "--index", input=patch)
@@ -145,7 +147,7 @@ def _verify(repo: Path, tree_sha: str, merge_sha: str, patch: bytes, expected_tr
             )
     if applied != expected_tree:
         raise ValueError(
-            f"oracle: equivalence check failed: applying the patch to tree_commit {tree_sha} "
+            f"oracle: equivalence check failed: applying the patch to tree_commit {base_commit} "
             f"yields tree {applied}, but merge_commit {merge_sha} has tree {expected_tree}; "
             "no oracle was written. Check that tree_commit is the merge's pre-PR parent."
         )
@@ -156,9 +158,11 @@ def write_oracle(payload_dir: str | Path, oracle: Oracle) -> Path:
     """Write ``solution/`` into a payload and record the ``task.json`` oracle block."""
     payload = Path(payload_dir)
     task_path = payload / "task.json"
-    summary: dict[str, Any] = {}
-    if task_path.is_file():
-        summary = json.loads(task_path.read_text())
+    if not task_path.is_file():
+        raise ValueError(
+            f"oracle: missing {task_path}; run the `task` subcommand to assemble the payload first"
+        )
+    summary: dict[str, Any] = json.loads(task_path.read_text())
     solution = payload / "solution"
     solution.mkdir(parents=True, exist_ok=True)
     (payload / PATCH_PATH).write_bytes(oracle.patch)
@@ -170,24 +174,38 @@ def write_oracle(payload_dir: str | Path, oracle: Oracle) -> Path:
     return solution
 
 
-def payload_commits(payload_dir: str | Path, repo_dir: str | Path) -> tuple[str, str]:
-    """``(tree_commit, merge_commit)`` from a payload's ``repo-request.json``.
-
-    A null ``tree_commit`` falls back to ``merge_commit^``.
-    """
-    request_path = Path(payload_dir) / "repo-request.json"
+def payload_request(payload_dir: str | Path) -> dict[str, Any]:
+    """Load and validate a payload's ``repo-request.json`` (and require ``task.json``)."""
+    payload = Path(payload_dir)
+    request_path = payload / "repo-request.json"
     if not request_path.is_file():
         raise ValueError(
             f"oracle: missing {request_path}; run the `task` subcommand to assemble the payload first"
+        )
+    task_path = payload / "task.json"
+    if not task_path.is_file():
+        raise ValueError(
+            f"oracle: missing {task_path}; run the `task` subcommand to assemble the payload first"
         )
     try:
         request = json.loads(request_path.read_text())
     except json.JSONDecodeError as exc:
         raise ValueError(f"oracle: {request_path} is not valid JSON: {exc}") from exc
-    merge_commit = request.get("merge_commit")
-    if not merge_commit:
+    if not isinstance(request, dict):
+        raise ValueError(f"oracle: {request_path} must hold a JSON object; rebuild the payload")
+    if not request.get("merge_commit"):
         raise ValueError(
             f"oracle: {request_path} has no merge_commit; rebuild the payload with --index"
         )
+    return request
+
+
+def payload_commits(payload_dir: str | Path, repo_dir: str | Path) -> tuple[str, str]:
+    """``(tree_commit, merge_commit)`` from a payload's ``repo-request.json``.
+
+    A null ``tree_commit`` falls back to ``merge_commit^``.
+    """
+    request = payload_request(payload_dir)
+    merge_commit = request["merge_commit"]
     tree_commit = request.get("tree_commit") or _rev(Path(repo_dir), f"{merge_commit}^")
     return tree_commit, merge_commit
