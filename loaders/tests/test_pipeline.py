@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -150,6 +151,9 @@ def test_index_only_pr_builds_a_task(pipeline_env, tmp_path, snapshot_bin, capsy
     assert sorted(p.stem for p in transcripts.glob("*.jsonl")) == ["s20"]
     config = yaml.safe_load((dest / "job-config-run-23.yaml").read_text())
     assert [Path(t["path"]).name for t in config["tasks"]] == ["peasant-pr-0023"]
+    # The environment healthcheck warms the pre-PR Go build before the offline phases.
+    environment = tomllib.loads((task / "task.toml").read_text())["environment"]
+    assert "go mod download" in environment["healthcheck"]["command"]
 
 
 @needs_go

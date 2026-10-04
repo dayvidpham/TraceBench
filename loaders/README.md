@@ -104,9 +104,6 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
   proxy for everything. The chosen basis is recorded as `cutoff.basis` in both
   manifests. A merge commit is required: pass `--index` when the published dump
   record lacks one.
-- **Family.** The codebase family pairs `peasant-labs/peasant` with
-  `peasant-labs/peasant-prerelease-archive`, so live tasks see archive traces
-  as prior context.
 - **Exclusions.** The pull request's own sessions are never prior context, and
   prior sessions whose end time is after the boundary are cut (recorded as
   `sessions_past_cutoff`).
@@ -114,7 +111,9 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
   `missing_sessions`; the payload distinguishes selected from materialized
   sessions.
 - **Scope.** Prior traces cover the sampled pull requests only; the corpus is a
-  sample, not the repository's full history.
+  sample, not the repository's full history. Prior context comes from the same
+  repository: the prerelease archive is frozen pre-launch history and provides
+  neither tasks nor context (an archive target fails closed).
 - **Target configuration.** `--target-config NAME` selects an entry from
   `--target-configs SPEC`. The payload records the harness, model, and
   thinking level for the runner. The configuration does **not** filter prior
@@ -209,7 +208,7 @@ tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
 
 | path | contents |
 |---|---|
-| `task.toml` | registry-safe name (`<org>/<repo-slug>-pr-<number>`), PR metadata, `[environment].docker_image` (the shared base image) and `workdir`, offline network policy for agent and verifier |
+| `task.toml` | registry-safe name (`<org>/<repo-slug>-pr-<number>`), PR metadata, `[environment].docker_image` (the shared base image) and `workdir`, offline network policy for agent and verifier, and the environment healthcheck that warms the pre-PR dependency and build caches while the environment network is still up (the agent and verifier phases stay offline) |
 | `instruction.md` | scaffolded from the pull request; task authors replace the TODO with the issue description |
 | `environment/repo/`, `environment/prior-traces/` | task data, uploaded into the container workdir at environment start; **no per-task image is built** |
 | `tests/golden/` | the payload's extracted merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |

@@ -25,7 +25,7 @@ from .corpus import Corpus
 from .golden import GoldenSuiteError
 from .oracle import build_oracle, payload_commits, payload_request, write_oracle
 from .repository_spec import RepositorySpec, find_repository_spec
-from .skeleton import build_skeleton, task_dir_name
+from .skeleton import DEFAULT_WORKDIR, build_skeleton, task_dir_name
 from .target_config import TargetConfiguration
 from .task import TaskBuilder
 from .worktree import materialize_worktree
@@ -49,6 +49,25 @@ REQUIRED_TASK_PARTS = (
 METRICS = ({"type": "mean"}, {"type": "min"}, {"type": "max"})
 #: Job config formats ``write_job_config`` accepts.
 JOB_CONFIG_FORMATS = ("yaml", "json")
+#: Public Go module proxy used by the environment-phase warm.
+GO_PROXY = "https://proxy.golang.org,direct"
+
+
+def warm_healthcheck(spec: RepositorySpec) -> str | None:
+    """The environment healthcheck that warms the pre-PR build.
+
+    The shared runtime image carries no per-task dependency cache. The
+    environment phase still has its network, so resolve the base state's
+    modules and build it once there; the agent and verifier phases then run
+    offline. Doubles as a readiness check on the pre-PR tree.
+    """
+    if spec.framework != "go":
+        return None
+    repo = f"{DEFAULT_WORKDIR}/repo"
+    return (
+        f"cd {repo} && GOPROXY={GO_PROXY} go mod download && "
+        f"GOPROXY={GO_PROXY} {spec.build_command}"
+    )
 
 STATUS_OK = "ok"
 STATUS_FAILED = "failed"
@@ -270,7 +289,13 @@ def build_task(
         write_oracle(payload_dir, build_oracle(repo_dir, tree_commit, merge_commit, spec.build_command))
 
         part = "task"
-        build_skeleton(payload_dir, task_dir, test_command=spec.test_command, force=force)
+        build_skeleton(
+            payload_dir,
+            task_dir,
+            test_command=spec.test_command,
+            healthcheck_command=warm_healthcheck(spec),
+            force=force,
+        )
         missing = _missing_parts(task_dir)
         if missing:
             part = missing[0]

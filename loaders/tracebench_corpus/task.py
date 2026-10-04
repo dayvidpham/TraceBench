@@ -112,10 +112,12 @@ _GIT_BINARY = "git"
 
 
 def repo_family(repo: str) -> set[str]:
-    """Return the repository and its codebase-family counterpart."""
-    if repo.endswith(ARCHIVE_SUFFIX):
-        return {repo, repo[: -len(ARCHIVE_SUFFIX)]}
-    return {repo, repo + ARCHIVE_SUFFIX}
+    """Repositories that may contribute prior context for ``repo``.
+
+    The prerelease archive is frozen pre-launch history: it never provides
+    tasks or prior context, so a repository is its own family.
+    """
+    return {repo}
 
 
 @dataclass(frozen=True)
@@ -174,8 +176,15 @@ class TaskBuilder:
 
         The published dump samples traced pull requests. A merged pull request
         with no traced sessions is still a valid target: its record comes from
-        the index, and prior context still comes from the sampled corpus.
+        the index, and prior context still comes from the sampled corpus. The
+        prerelease archive is excluded: it provides neither tasks nor context.
         """
+        repo = pr_id.partition("#")[0]
+        if repo.endswith(ARCHIVE_SUFFIX):
+            raise KeyError(
+                f"pull request {pr_id} belongs to the prerelease archive; "
+                "the archive provides neither tasks nor prior context"
+            )
         pr = self.corpus.pull_requests.get(pr_id)
         if pr is not None:
             return pr

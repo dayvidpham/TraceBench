@@ -50,6 +50,18 @@ podman run --rm -w / tracebench/task-runtime:latest sh -c \
 Expect `/workdir`, no `/peasant`, only Go's `README`/`trim.txt` markers in the
 build cache, and a populated module cache.
 
+### Dependency warm at environment start
+
+The runtime image's module cache is warmed at the snapshot commit, and a task's
+base commit can pin older dependency versions than the snapshot (`redact
+v0.1.5` vs `v0.1.6+`, for example). Generated tasks therefore carry an
+`[environment.healthcheck]` command that runs `go mod download` and the build
+command once, while the environment network is still up (the healthcheck runs
+after the task data is uploaded and before the agent phase). The agent and
+verifier phases keep `GOPROXY=off` and no-network, resolving everything from
+the warmed cache. The healthcheck doubles as a readiness check: the pre-PR tree
+must build before the agent starts.
+
 ## Leak model of hand-built tasks (what we truncate and why)
 
 The agent must find exactly the base tree — nothing that names or contains
@@ -64,7 +76,7 @@ fail the build if any trip):
 | dangling objects (`fsck --unreachable`) | `gc --prune=now` after ref deletion |
 | remotes (re-fetch the fix) | `git remote remove origin` (agent phase is offline anyway) |
 | Go build cache (export data names future functions) | `go clean -cache` + full rebuild at task build time |
-| Go module cache | safe: dependency sources only, no peasant code — but the base commit may pin *different dep versions* than the snapshot warmed, so task builds reopen `GOPROXY` for `go mod download` (build phase has network) and lock it back to `off` right after |
+| Go module cache | safe: dependency sources only, no peasant code — but the base commit may pin *different dep versions* than the snapshot warmed; generated tasks warm them at environment start (healthcheck, network public) and the agent/verifier phases stay offline |
 | `/solution`, `/tests` in container | Harbor copies them for oracle/verifier runs only — absent during agent phase |
 | Dockerfile `ARG`s / image history | base SHA is public task metadata; the patch never enters any image layer (mounted at oracle time) |
 
