@@ -101,7 +101,6 @@ type issueScenario struct {
 	Issues []ghIssue     `yaml:"issues"`
 	PRs    []issuePR     `yaml:"prs"`
 	Expect []issueExpect `yaml:"expect"`
-	Error  string        `yaml:"error"`
 }
 
 type issuePR struct {
@@ -125,7 +124,7 @@ func loadIssueFixtures(t *testing.T) issueFixtures {
 		t.Fatal("issue fixtures contain no scenarios")
 	}
 	names := map[string]bool{}
-	linked, unlinked, closed := false, false, false
+	linked, unlinked, skipped := false, false, false
 	for i, scenario := range fixtures.Scenarios {
 		if scenario.Name == "" {
 			t.Fatalf("scenario %d has no name", i)
@@ -137,8 +136,14 @@ func loadIssueFixtures(t *testing.T) issueFixtures {
 		if len(scenario.PRs) == 0 {
 			t.Fatalf("scenario %q has no pull requests", scenario.Name)
 		}
-		if scenario.Error != "" {
-			closed = true
+		fetched := map[int]bool{}
+		for _, issue := range scenario.Issues {
+			fetched[issue.Number] = true
+		}
+		for _, pr := range scenario.PRs {
+			if number, ok := corpus.IssueFromHeadRef(pr.HeadRef); ok && !fetched[number] {
+				skipped = true
+			}
 		}
 		for _, want := range scenario.Expect {
 			if want.IssueNumber == 0 {
@@ -148,16 +153,16 @@ func loadIssueFixtures(t *testing.T) issueFixtures {
 			}
 		}
 	}
-	if !linked || !unlinked || !closed {
-		t.Fatal("issue fixtures must cover a linked, an unlinked, and a failing scenario")
+	if !linked || !unlinked || !skipped {
+		t.Fatal("issue fixtures must cover a linked, an unlinked, and a number the fetch did not return")
 	}
 	return fixtures
 }
 
 // TestAttachIssuesFixtures verifies the production linking rule: a head
 // branch like "peasant-337--..." attaches issue 337, branches without an
-// issue number stay unlinked, and a named issue the fetch missed fails
-// closed instead of silently dropping context.
+// issue number stay unlinked, and a number the issue fetch did not return
+// (another pull request, a deleted issue) stays unlinked too.
 func TestAttachIssuesFixtures(t *testing.T) {
 	for _, scenario := range loadIssueFixtures(t).Scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
@@ -169,16 +174,7 @@ func TestAttachIssuesFixtures(t *testing.T) {
 			for _, pr := range scenario.PRs {
 				prs = append(prs, corpus.PullRequest{Number: pr.Number, HeadRef: pr.HeadRef})
 			}
-			err := attachIssues(prs, issues)
-			if scenario.Error != "" {
-				if err == nil || !strings.Contains(err.Error(), scenario.Error) {
-					t.Fatalf("attachIssues error %v, want substring %q", err, scenario.Error)
-				}
-				return
-			}
-			if err != nil {
-				t.Fatalf("attachIssues: %v", err)
-			}
+			attachIssues(prs, issues)
 			byNumber := make(map[int]corpus.PullRequest, len(prs))
 			for _, pr := range prs {
 				byNumber[pr.Number] = pr
