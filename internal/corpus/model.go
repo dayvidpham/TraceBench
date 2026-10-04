@@ -23,9 +23,12 @@ func (r RepoSlug) DirName() string {
 // PullRequest is one merged GitHub pull request. Body carries the pull
 // request description as published on GitHub; it stays raw (no redaction
 // pipeline) because it is already-public repository metadata, like Title
-// and URL. The redact engine covers private session transcripts and
-// metadata only. Older index and dump records without a body decode to an
-// empty Body.
+// and URL. This tool indexes public repositories only. The redact engine
+// covers private session transcripts and metadata only. Older index and
+// dump records without a body decode to an empty Body. Body uses
+// `json:"body,omitempty"`, so an empty Body encodes without the body key:
+// empty and absent are indistinguishable on the wire, and no reader
+// distinguishes them.
 type PullRequest struct {
 	Repo         RepoSlug     `json:"repo"`
 	Number       int          `json:"number"`

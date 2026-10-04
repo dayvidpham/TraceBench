@@ -3,7 +3,6 @@ package prindex
 import (
 	_ "embed"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -52,7 +51,11 @@ func loadFetchFixtures(t *testing.T) fetchFixtures {
 		if scenario.ExpectBody != "" {
 			seenBody = true
 		}
-		if !strings.Contains(scenario.Payload, `"body"`) {
+		var decoded map[string]any
+		if err := json.Unmarshal([]byte(scenario.Payload), &decoded); err != nil {
+			t.Fatalf("scenario %q has invalid payload: %v", scenario.Name, err)
+		}
+		if _, ok := decoded["body"]; !ok {
 			seenBare = true
 		}
 	}

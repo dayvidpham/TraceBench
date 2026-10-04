@@ -498,3 +498,15 @@ def test_unsampled_index_without_issue_loads_as_null(standard_dump, standard_ind
     payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#23", tmp_path / "task")
     pr = json.loads((payload.path / "pr.json").read_text())
     assert pr.get("issue") is None
+
+
+def test_enrich_empty_index_body_keeps_sampled_body(body_dump, standard_index, tmp_path) -> None:
+    from conftest import BODY_TEXT
+
+    corpus = Corpus(body_dump)
+    index = dict(standard_index)
+    index[f"{LIVE}#22"] = {**index[f"{LIVE}#22"], "body": ""}
+    payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#22", tmp_path / "task")
+    pr = json.loads((payload.path / "pr.json").read_text())
+    assert pr["body"] == BODY_TEXT
+    assert json.loads((payload.path / "repo-request.json").read_text())["merge_commit"] == "c22"
