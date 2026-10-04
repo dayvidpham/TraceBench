@@ -1,18 +1,10 @@
 #!/usr/bin/env bash
-# Shallow-fetch the OpenCode version in harness/config.json. One commit, then no .git.
-# Also fetch the linux release binary for this machine's arch.
-# Payload lands in harness/opencode/{src,REVISION,bin/opencode}.
+# Download the OpenCode release binary configured in harness/config.json.
+# The payload is only harness/opencode/bin/opencode; no source checkout exists.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-ref=$(go run harness/opencode/config-value.go harness/config.json version)
-git init harness/opencode/src
-git -C harness/opencode/src remote add origin https://github.com/anomalyco/opencode.git
-git -C harness/opencode/src fetch --depth 1 origin "$ref"
-git -C harness/opencode/src checkout --detach FETCH_HEAD
-test "$(git -C harness/opencode/src rev-list --count --all)" = 1
-git -C harness/opencode/src rev-parse HEAD > harness/opencode/REVISION
-rm -rf harness/opencode/src/.git
+ref=$(go run harness/opencode/configure.go version harness/config.json)
 
 case "$(uname -m)" in
   arm64|aarch64) asset=opencode-linux-arm64.tar.gz ;;
