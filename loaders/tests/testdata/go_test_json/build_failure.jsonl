@@ -1,0 +1,9 @@
+{"ImportPath":"example.com/demo/pkg/sub [example.com/demo/pkg/sub.test]","Action":"build-output","Output":"pkg/sub/b_test.go:3:1: undefined: Missing\n"}
+{"ImportPath":"example.com/demo/pkg/sub [example.com/demo/pkg/sub.test]","Action":"build-fail"}
+{"Action":"start","Package":"example.com/demo"}
+{"Action":"run","Package":"example.com/demo","Test":"TestA"}
+{"Action":"pass","Package":"example.com/demo","Test":"TestA","Elapsed":0.01}
+{"Action":"pass","Package":"example.com/demo","Elapsed":0.1}
+{"Action":"start","Package":"example.com/demo/pkg/sub"}
+{"Action":"output","Package":"example.com/demo/pkg/sub","Output":"FAIL\texample.com/demo/pkg/sub [build failed]\n"}
+{"Action":"fail","Package":"example.com/demo/pkg/sub","Elapsed":0,"FailedBuild":"example.com/demo/pkg/sub [example.com/demo/pkg/sub.test]"}

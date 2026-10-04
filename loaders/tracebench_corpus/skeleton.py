@@ -8,7 +8,9 @@ A skeleton is a Harbor task directory:
   container at environment start; no per-task image is built
 - ``solution/`` - the payload's oracle (``oracle.patch`` + ``solve.sh``) when
   generated, else a ``solve.sh`` placeholder that fails
-- ``tests/test.sh`` - verifier that overlays the golden suite and runs it
+- ``tests/test.sh`` - runs ``tests/verifier.py``, which removes the pre-PR test
+  files, overlays the golden suite, runs the test command, and writes the
+  reward and ``test-results.json``
 
 The environment references a shared base image from ``task.toml``
 (``[environment].docker_image``); Harbor uploads the non-spec files in
@@ -30,7 +32,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .golden import MANIFEST_NAME
+from . import verifier
+from .golden import MANIFEST_NAME, glob_to_regex
 from .task import GENERATED_ENTRIES, clear_generated, payload_test_patterns
 
 #: Tool-owned entries inside a generated task directory. ``--force`` clears
@@ -57,18 +60,6 @@ def task_slug(repo: str) -> str:
     return name.lower()
 
 
-def find_path_pattern(pattern: str) -> str:
-    """Translate a doublestar test glob into a ``find -path`` expression.
-
-    ``find`` matches ``*`` across directory separators, so ``**/`` collapses
-    to a leading ``*`` and ``**`` to ``*``.
-    """
-    translated = pattern
-    if translated.startswith("**/"):
-        translated = "*" + translated[3:]
-    return translated.replace("**", "*")
-
-
 def build_skeleton(
     payload_dir: str | Path,
     dest: str | Path,
@@ -79,6 +70,7 @@ def build_skeleton(
     task_version: str = "1.0.0",
     agent_timeout_sec: float = 3600.0,
     verifier_timeout_sec: float = 3600.0,
+    test_command: str = verifier.DEFAULT_TEST_COMMAND,
     force: bool = False,
 ) -> Skeleton:
     """Write a Harbor task skeleton from a task payload directory."""
@@ -134,8 +126,28 @@ def build_skeleton(
     if manifest.is_file():
         (dest / "tests" / "test-manifest.json").write_bytes(manifest.read_bytes())
 
+    request = payload / "repo-request.json"
+    if request.is_file():
+        (dest / "tests" / "repo-request.json").write_bytes(request.read_bytes())
     patterns = payload_test_patterns(payload)
-    _write_script(dest / "tests" / "test.sh", _test_sh(patterns))
+    (dest / "tests" / verifier.CONFIG_NAME).write_text(
+        json.dumps(
+            {
+                "pr": pr_id,
+                "test_command": test_command,
+                "remove_patterns": patterns,
+                # Compiled by the canonical doublestar matcher; the verifier only
+                # applies them, so deletion and golden extraction never disagree.
+                "remove_regexes": [glob_to_regex(pattern).pattern for pattern in patterns],
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+    (dest / "tests" / "verifier.py").write_bytes(Path(verifier.__file__).read_bytes())
+    # Leave headroom under Harbor's verifier timeout so a hung test run is
+    # recorded as killed instead of losing the report.
+    _write_script(dest / "tests" / "test.sh", _test_sh(max(verifier_timeout_sec - 60.0, verifier_timeout_sec * 0.9)))
     if (payload / "solution" / "solve.sh").is_file():
         _copy_tree(payload / "solution", dest / "solution")
         (dest / "solution" / "solve.sh").chmod(0o755)
@@ -302,37 +314,22 @@ exit 1
 """
 
 
-def _test_sh(patterns: list[str]) -> str:
-    lines = [
-        "#!/bin/bash",
-        "# Golden-suite verifier: remove the pre-PR test files the pull request",
-        "# deleted or renamed, overlay the merged-state suite, run it, and write",
-        "# the reward.",
-        "set -u",
-        'APP_DIR="${APP_DIR:-/workdir/repo}"',
-        'GOLDEN_DIR="${GOLDEN_DIR:-/tests/golden}"',
-        'LOG_DIR="${LOG_DIR:-/logs/verifier}"',
-        'mkdir -p "$LOG_DIR"',
-        'if [ ! -d "$GOLDEN_DIR" ] || [ -z "$(ls -A "$GOLDEN_DIR" 2>/dev/null)" ]; then',
-        '  echo "tracebench: golden tests are not materialized" >&2',
-        '  echo 0 > "$LOG_DIR/reward.txt"',
-        "  exit 0",
-        "fi",
-        "for pattern in \\",
-    ]
-    for pattern in patterns:
-        lines.append(f'  "{find_path_pattern(pattern)}" \\')
-    lines.extend(
-        [
-            "; do",
-            '  find "$APP_DIR" -path "${APP_DIR}/${pattern}" -type f -delete 2>/dev/null || true',
-            "done",
-            'cp -a "$GOLDEN_DIR/." "$APP_DIR/"',
-            "# TODO(task author): run the repository's test command and map the result:",
-            '#   echo 1 > "$LOG_DIR/reward.txt"   # pass',
-            '#   echo 0 > "$LOG_DIR/reward.txt"   # fail',
-            'echo 0 > "$LOG_DIR/reward.txt"',
-            "",
-        ]
-    )
-    return "\n".join(lines)
+def _test_sh(timeout_sec: float) -> str:
+    return f"""#!/bin/bash
+# Golden-suite verifier: remove the pre-PR test files, overlay the merged-state
+# suite, run the repository test command, and write the reward and report.
+# The grading logic lives in verifier.py next to this script.
+set -u
+TESTS_DIR="${{TESTS_DIR:-$(cd "$(dirname "$0")" && pwd)}}"
+APP_DIR="${{APP_DIR:-/workdir/repo}}"
+GOLDEN_DIR="${{GOLDEN_DIR:-$TESTS_DIR/golden}}"
+LOG_DIR="${{LOG_DIR:-/logs/verifier}}"
+mkdir -p "$LOG_DIR"
+if ! python3 "$TESTS_DIR/verifier.py" run \\
+    --tests-dir "$TESTS_DIR" --app-dir "$APP_DIR" --golden-dir "$GOLDEN_DIR" \\
+    --log-dir "$LOG_DIR" --timeout-sec {timeout_sec}; then
+  echo "tracebench: verifier.py crashed; reward 0 (see the traceback above)" >&2
+  echo 0 > "$LOG_DIR/reward.txt"
+fi
+exit 0
+"""
