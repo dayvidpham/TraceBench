@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 from .corpus import Corpus, load_corpus
+from .skeleton import build_skeleton
+from .task import TaskBuilder, load_pr_index
 
 _SPLITS = ("train", "val", "test")
 
@@ -36,8 +38,24 @@ def main(argv: list[str] | None = None) -> int:
     all_parser = commands.add_parser("bundle-all", help="materialize every pull request")
     all_parser.add_argument("--dest", required=True, help="destination directory")
     all_parser.add_argument("--split", choices=_SPLITS, default=None)
+    task_parser = commands.add_parser("task", help="assemble a task payload for one pull request")
+    task_parser.add_argument("pr", help="pull request id, e.g. peasant-labs/peasant#343")
+    task_parser.add_argument("--dest", required=True, help="destination directory")
+    task_parser.add_argument(
+        "--index",
+        default=None,
+        help="corpus/index/merged_prs.json to enrich records with merge commits and created_at",
+    )
+    skeleton_parser = commands.add_parser("skeleton", help="generate a Harbor task skeleton")
+    skeleton_parser.add_argument("--payload", required=True, help="task payload directory")
+    skeleton_parser.add_argument("--dest", required=True, help="destination task directory")
+    skeleton_parser.add_argument("--org", default="tracebench", help="Harbor task namespace")
+    skeleton_parser.add_argument("--base-image", default="ubuntu:24.04", help="environment base image")
+    skeleton_parser.add_argument("--task-version", default="1.0.0", help="task version")
 
     args = parser.parse_args(argv)
+    if args.command == "skeleton":
+        return _skeleton(args)
     try:
         corpus = load_corpus(
             path=args.corpus,
@@ -53,6 +71,8 @@ def main(argv: list[str] | None = None) -> int:
         return _list(corpus, args.split)
     if args.command == "bundle":
         return _bundle(corpus, args.pr, Path(args.dest))
+    if args.command == "task":
+        return _task(corpus, args.pr, Path(args.dest), args.index)
     return _bundle_all(corpus, Path(args.dest), args.split)
 
 
@@ -82,4 +102,39 @@ def _bundle(corpus: Corpus, pr_id: str, dest: Path) -> int:
 def _bundle_all(corpus: Corpus, dest: Path, split: str | None) -> int:
     written = corpus.materialize_all(dest, split=split)
     print(f"wrote {len(written)} bundles into {dest}")
+    return 0
+
+
+def _task(corpus: Corpus, pr_id: str, dest: Path, index_path: str | None) -> int:
+    index = load_pr_index(index_path) if index_path else None
+    builder = TaskBuilder(corpus, pr_index=index)
+    try:
+        payload = builder.build(pr_id, dest)
+    except KeyError as exc:
+        print(f"tracebench-corpus: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"wrote {payload.path}: {payload.prior_traces} prior traces from "
+        f"{payload.prior_pull_requests} pull requests ({payload.prior_sessions} sessions); "
+        "repo/ and tests/ await the repository tooling"
+    )
+    return 0
+
+
+def _skeleton(args: argparse.Namespace) -> int:
+    try:
+        skeleton = build_skeleton(
+            args.payload,
+            args.dest,
+            org=args.org,
+            base_image=args.base_image,
+            task_version=args.task_version,
+        )
+    except (ValueError, OSError) as exc:
+        print(f"tracebench-corpus: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"wrote {skeleton.path}: Harbor task {skeleton.task_name} "
+        f"with {skeleton.golden_tests} golden test files"
+    )
     return 0

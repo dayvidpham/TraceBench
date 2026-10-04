@@ -47,6 +47,59 @@ tracebench-corpus --repo dayvidpham/TraceBench bundle "peasant-labs/peasant#343"
 tracebench-corpus --corpus corpus/dump bundle-all --dest bundles --split test
 ```
 
+## Task payloads
+
+`task` assembles the payload for one benchmark task: the pull request, the
+traces of the codebase merged before it (excluding the PR's own sessions), and
+integration points for the repository tooling.
+
+```bash
+tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
+  --index corpus/index/merged_prs.json --dest task-343
+```
+
+| path | contents |
+|---|---|
+| `pr.json` | the pull request; enriched with `merge_commit`, `created_at`, and `base_ref` when `--index` is passed |
+| `prior-traces/` | `traces.jsonl`, `metadata.jsonl`, `transcripts/`, and `manifest.json` for every pull request of the same codebase family merged before this PR's start, excluding this PR's own sessions |
+| `repo/` | **integration point**: the working tree at the pre-PR state; empty until the repository tooling fills it |
+| `tests/` | **integration point**: every test file at the merged state (the golden suite); empty until filled |
+| `repo-request.json` | exactly what the repository tooling must materialize: repo, merge commit, base-commit rule, cutoff, and test patterns |
+| `task.json` | payload summary (cutoff, prior trace/session/PR counts) |
+
+The codebase family pairs `peasant-labs/peasant` with
+`peasant-labs/peasant-prerelease-archive`, so a live task sees archive traces
+as prior context. The repository integration point matches the `snapshot/`
+module (issue #2), which resolves the same PR cutoff and materializes
+repository trees.
+
+Python API: `TaskBuilder(corpus, pr_index=...).build(pr_id, dest)`.
+
+## Harbor task skeletons
+
+`skeleton` turns a task payload into a Harbor task directory:
+
+```bash
+tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343
+```
+
+| path | contents |
+|---|---|
+| `task.toml` | task name (`<org>/<repo-slug>-pr-<number>`), metadata (PR url/number/split), timeouts, network policy (agent and verifier offline, environment baseline public) |
+| `instruction.md` | scaffolded from the pull request; task authors replace the TODO with the issue description |
+| `environment/Dockerfile` | base image; copies `repo/` to `/app` and `prior-traces/` to `/prior-traces`; TODO for the repository toolchain |
+| `environment/repo/`, `environment/prior-traces/` | copied from the payload |
+| `tests/golden/` | the merged-state test suite from the payload, verifier-only (the agent never sees it) |
+| `tests/test.sh` | overlays `tests/golden/` onto `/app`, runs the suite, writes `/logs/verifier/reward.txt`; fails closed when golden tests are missing |
+| `solution/solve.sh` | oracle placeholder (exits non-zero until implemented) |
+
+The oracle and the test command are explicit TODO placeholders: a skeleton is
+structure, not a solvable task, until a task author fills them in. Task names
+are registry-safe and distinguish the archive (`peasant-archive-pr-0021`) from
+the live repository (`peasant-pr-0021`).
+
+Python API: `build_skeleton(payload_dir, dest, org=..., base_image=...)`.
+
 ## Harbor integration
 
 `materialize` writes a directory that can be copied into a task's
