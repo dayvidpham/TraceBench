@@ -1,0 +1,7 @@
+# Repository spec for the oracle --spec test: the build command proves solve.sh
+# ran it by writing a marker after the patch is applied.
+repositories:
+  - match: peasant-labs/peasant
+    framework: go
+    test_command: "true"
+    build_command: "grep -q 'return 2' keep.go && touch spec-build-ran"

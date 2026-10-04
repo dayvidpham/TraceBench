@@ -15,7 +15,7 @@ from tracebench_corpus import (
     Corpus,
     TaskBuilder,
     build_skeleton,
-    find_path_pattern,
+    glob_to_regex,
     find_target_config,
     task_slug,
 )
@@ -43,11 +43,16 @@ def test_task_slug() -> None:
     assert task_slug("Some/Repo") == "repo"
 
 
-def test_find_path_pattern() -> None:
-    assert find_path_pattern("**/*_test.go") == "*_test.go"
-    assert find_path_pattern("**/testdata/**") == "*testdata/*"
-    assert find_path_pattern("**/*.test.ts") == "*.test.ts"
-    assert find_path_pattern("*.spec.ts") == "*.spec.ts"
+def test_skeleton_ships_verifier_and_config(tmp_path, standard_dump, standard_index) -> None:
+    payload = make_payload(tmp_path, standard_dump, standard_index)
+    build_skeleton(payload, tmp_path / "task", test_command="go test -json -count=1 ./internal/...")
+    tests = tmp_path / "task" / "tests"
+    assert (tests / "verifier.py").is_file()
+    config = json.loads((tests / "verifier-config.json").read_text())
+    assert config["pr"] == f"{LIVE}#22"
+    assert config["test_command"] == "go test -json -count=1 ./internal/..."
+    assert config["remove_regexes"] == [glob_to_regex(p).pattern for p in config["remove_patterns"]]
+    assert "verifier.py" in (tests / "test.sh").read_text()
 
 
 def test_skeleton_uses_shared_base_image_and_runtime_data(tmp_path, standard_dump, standard_index) -> None:
@@ -130,7 +135,10 @@ def test_verifier_removes_stale_tests_and_copies_golden(tmp_path, standard_dump,
     assert not (app / "old_test.go").exists()
     assert (app / "pkg" / "keep.go").read_text() == "keep"
     assert (app / "greeting_test.go").is_file()
-    assert (log / "reward.txt").read_text().strip() == "0"
+    # The stub manifest has no schema_version, so the verifier fails closed.
+    assert float((log / "reward.txt").read_text()) == 0.0
+    report = json.loads((log / "test-results.json").read_text())
+    assert any("schema_version" in reason for reason in report["fail_closed_reasons"])
 
 
 def test_verifier_fails_closed_without_golden(tmp_path, standard_dump, standard_index) -> None:
@@ -144,7 +152,7 @@ def test_verifier_fails_closed_without_golden(tmp_path, standard_dump, standard_
     result = run_verifier(script, app, tmp_path / "task" / "tests" / "golden", log)
     assert result.returncode == 0
     assert "not materialized" in result.stderr
-    assert (log / "reward.txt").read_text().strip() == "0"
+    assert float((log / "reward.txt").read_text()) == 0.0
 
 
 def test_oracle_placeholder_exits_nonzero(tmp_path, standard_dump, standard_index) -> None:
@@ -180,3 +188,12 @@ def test_skeleton_cli(tmp_path, standard_dump, standard_index, capsys) -> None:
 
     assert main(["skeleton", "--payload", str(tmp_path / "missing"), "--dest", str(tmp_path / "x")]) == 2
     assert "not a task payload" in capsys.readouterr().err
+
+
+def test_skeleton_rejects_non_object_task_json(tmp_path) -> None:
+    payload = tmp_path / "payload"
+    payload.mkdir()
+    (payload / "pr.json").write_text(json.dumps({"id": f"{LIVE}#1", "repo": LIVE, "number": 1}))
+    (payload / "task.json").write_text("[]")
+    with pytest.raises(ValueError, match="task.json"):
+        build_skeleton(payload, tmp_path / "task")

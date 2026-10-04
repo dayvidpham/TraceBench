@@ -13,6 +13,9 @@ import (
 const (
 	CutoffDate = "date"
 	CutoffPR   = "pr"
+	// CutoffCommit selects the exact tree of one commit; history is that
+	// commit's full ancestry (ListAncestors), with no date filter.
+	CutoffCommit = "commit"
 )
 
 // Cutoff is either an absolute date (inclusive) or a PR number whose start
@@ -21,6 +24,16 @@ type Cutoff struct {
 	Kind     string
 	Date     time.Time
 	PRNumber int
+	Commit   string
+}
+
+// ByCommit builds a commit cutoff: the tree is exactly <sha>^{tree}.
+func ByCommit(sha string) (Cutoff, error) {
+	sha = strings.TrimSpace(sha)
+	if sha == "" {
+		return Cutoff{}, fmt.Errorf("snapshot: commit cutoff needs a commit (pass --commit <sha>)")
+	}
+	return Cutoff{Kind: CutoffCommit, Commit: sha}, nil
 }
 
 // ByDate builds an inclusive date cutoff.
@@ -89,6 +102,9 @@ func (c Cutoff) Resolve(peasant PeasantClient, prStartOverride string) (time.Tim
 			return time.Time{}, err
 		}
 		return t.UTC(), nil
+	case CutoffCommit:
+		return time.Time{}, fmt.Errorf(
+			"snapshot: commit cutoff %q resolves against a repository; use SnapshotRepo", c.Commit)
 	default:
 		return time.Time{}, fmt.Errorf("snapshot: unknown cutoff kind %q", c.Kind)
 	}

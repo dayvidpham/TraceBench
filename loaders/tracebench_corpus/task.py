@@ -10,7 +10,9 @@ A task payload contains:
    at the pre-PR state. Left empty here; ``repo-request.json`` states exactly
    what must be materialized.
 4. ``tests/`` - integration point for the repository tooling: every test file
-   at the merged state. Left empty here. The manifest identifies PR-changed
+   at the merged state. Left empty unless ``materialize_tests`` is set, in
+   which case the files are read from ``merge_commit`` and
+   ``tests/manifest.json`` lists them. The test manifest identifies PR-changed
    cases within that full suite when a local repo is available.
 
 The prior traces cover the sampled pull requests only: the corpus is a sample,
@@ -35,6 +37,7 @@ from pathlib import Path
 from typing import Any
 
 from .corpus import Corpus
+from .golden import materialize_golden_tests
 from .target_config import TargetConfiguration
 from .test_manifest import build_test_manifest
 
@@ -59,6 +62,44 @@ DEFAULT_TEST_PATTERNS = (
     "**/*.spec.js",
     "**/*.spec.jsx",
 )
+
+def payload_test_patterns(payload: str | Path) -> list[str]:
+    """The test patterns of a payload: ``repo-request.json`` when present.
+
+    Falls back to :data:`DEFAULT_TEST_PATTERNS` when the payload has no
+    ``repo-request.json`` or it lists no patterns. Raises :class:`ValueError`
+    naming the file when it is corrupt.
+    """
+    request = Path(payload) / "repo-request.json"
+    if not request.exists() and not request.is_symlink():
+        return list(DEFAULT_TEST_PATTERNS)
+    if not request.is_file():
+        raise ValueError(
+            f"cannot read test patterns: {request} exists but is not a file. "
+            "Remove it or regenerate the payload with `tracebench-corpus task ... --force`."
+        )
+    try:
+        data = json.loads(request.read_text())
+    except OSError as exc:
+        raise ValueError(
+            f"cannot read test patterns: {request} could not be read ({exc}). "
+            "Check its permissions or regenerate the payload."
+        ) from exc
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise ValueError(
+            f"cannot read test patterns: {request} is not valid JSON ({exc}). "
+            "Regenerate the payload with `tracebench-corpus task ... --force`."
+        ) from exc
+    patterns = data.get("test_patterns") if isinstance(data, dict) else None
+    if patterns is None or patterns == []:
+        return list(DEFAULT_TEST_PATTERNS)
+    if not isinstance(patterns, list) or not all(isinstance(p, str) for p in patterns):
+        raise ValueError(
+            f"cannot read test patterns: {request} field test_patterns must be a list of "
+            f"strings, got {patterns!r}. Fix the field or regenerate the payload."
+        )
+    return list(patterns)
+
 
 #: Entries this tool owns inside a payload or task directory. ``--force``
 #: clears exactly these; caller-authored files elsewhere are never touched.
@@ -93,6 +134,7 @@ class TaskPayload:
     sessions_past_cutoff: int
     missing_sessions: int
     target_config: str | None = None
+    golden_tests: int | None = None
 
 
 class TaskBuilder:
@@ -114,10 +156,17 @@ class TaskBuilder:
         corpus: Corpus,
         pr_index: dict[str, dict[str, Any]] | None = None,
         repo_dir: str | Path | None = None,
+        materialize_tests: bool = False,
     ):
+        if materialize_tests and repo_dir is None:
+            raise ValueError(
+                "--materialize-tests requires --repo-dir: the golden suite is read from "
+                "the merge commit in a local clone; pass --repo-dir <clone>"
+            )
         self.corpus = corpus
         self.pr_index = pr_index or {}
         self.repo_dir = str(repo_dir) if repo_dir is not None else None
+        self.materialize_tests = materialize_tests
 
     def enrich(self, pr: dict[str, Any]) -> dict[str, Any]:
         """Overlay the richer index record (merge commits, dates) on the
@@ -154,7 +203,10 @@ class TaskBuilder:
         *,
         force: bool = False,
         target_config: TargetConfiguration | None = None,
+        test_patterns: list[str] | tuple[str, ...] | None = None,
     ) -> TaskPayload:
+        # Resolved once: extraction and repo-request.json use the same list.
+        patterns = list(test_patterns) if test_patterns else list(DEFAULT_TEST_PATTERNS)
         pr = self.corpus.pull_requests.get(pr_id)
         if pr is None:
             raise KeyError(f"pull request {pr_id} is not in the corpus")
@@ -176,6 +228,12 @@ class TaskBuilder:
             build_test_manifest(self.repo_dir, boundary_commit, merge_commit)
             if self.repo_dir and boundary_commit else None
         )
+        golden_tests: list[str] | None = None
+        if self.materialize_tests:
+            golden_tests = materialize_golden_tests(
+                self.repo_dir, merge_commit, patterns, dest / "tests",
+                pr_id=pr_id,
+            )
         cutoff_ms = _iso_to_ms(cutoff_time)
         family = repo_family(pr["repo"])
         own_sessions = {trace.session_id for trace in self.corpus.sessions_for_pr(pr_id)}
@@ -260,13 +318,14 @@ class TaskBuilder:
                 "repo/": "working tree at tree_commit (the pre-PR state)",
                 "tests/": "every test file at merge_commit (the merged state)",
             },
-            "test_patterns": list(DEFAULT_TEST_PATTERNS),
+            "test_patterns": list(patterns),
             "glob_dialect": "doublestar globs relative to the repository root",
             "merge_commit_policy": "required; pass --index when the corpus record lacks one",
             "note": (
-                "Adapter required: the snapshot module resolves trees by cutoff time. "
-                "Materialize repo/ from tree_commit and tests/ from merge_commit; do not "
-                "reuse the trace cutoff for the tree."
+                "repo/ is materialized by tracebench_corpus.worktree.materialize_worktree "
+                "using the snapshot commit mode at tree_commit, verified against "
+                "tree_commit^{tree}; tests/ is materialized at merge_commit. The trace "
+                "cutoff is never used to select the tree."
             ),
         }
         _write_json(dest / "repo-request.json", repo_request)
@@ -286,6 +345,7 @@ class TaskBuilder:
                 "missing_sessions": len(missing),
                 "repo_request": "repo-request.json",
                 "test_manifest": "test-manifest.json" if test_manifest is not None else None,
+                "golden_tests": len(golden_tests) if golden_tests is not None else None,
             },
         )
         return TaskPayload(
@@ -301,6 +361,7 @@ class TaskBuilder:
             sessions_past_cutoff=len(past_cutoff),
             missing_sessions=len(missing),
             target_config=target_config.name if target_config else None,
+            golden_tests=len(golden_tests) if golden_tests is not None else None,
         )
 
     def _prior_pull_requests(

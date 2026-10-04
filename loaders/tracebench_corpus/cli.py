@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 
 from .corpus import Corpus, load_corpus
+from .oracle import build_oracle, payload_commits, payload_request, write_oracle
+from .repository_spec import find_repository_spec, load_repository_specs
 from .skeleton import build_skeleton
 from .target_config import find_target_config, load_target_configs
 from .task import TaskBuilder, load_pr_index
@@ -55,6 +57,11 @@ def main(argv: list[str] | None = None) -> int:
         help="local clone used to resolve the develop boundary by commit ancestry",
     )
     task_parser.add_argument(
+        "--materialize-tests",
+        action="store_true",
+        help="extract the merged-state golden suite into tests/ (requires --repo-dir)",
+    )
+    task_parser.add_argument(
         "--target-configs",
         default=None,
         help="target-configuration spec (YAML or JSON) with harness/model/thinking entries",
@@ -95,7 +102,23 @@ def main(argv: list[str] | None = None) -> int:
     manifest_parser.add_argument("--merge-commit", required=True, help="merged PR commit")
     manifest_parser.add_argument("--dest", required=True, help="output JSON file")
 
+    oracle_parser = commands.add_parser(
+        "oracle", help="generate and verify the oracle patch and solve.sh for a payload"
+    )
+    oracle_parser.add_argument("pr", help="pull request id, e.g. peasant-labs/peasant#343")
+    oracle_parser.add_argument("--repo-dir", required=True, help="local repository clone")
+    oracle_parser.add_argument("--payload", required=True, help="task payload directory")
+    build_source = oracle_parser.add_mutually_exclusive_group()
+    build_source.add_argument(
+        "--build-command", default=None, help="build command run by solve.sh after the patch"
+    )
+    build_source.add_argument(
+        "--spec", default=None, help="repository adaptation spec supplying the build command"
+    )
+
     args = parser.parse_args(argv)
+    if args.command == "oracle":
+        return _oracle(args)
     if args.command == "skeleton":
         return _skeleton(args)
     if args.command == "test-manifest":
@@ -159,7 +182,12 @@ def _task(corpus: Corpus, args: argparse.Namespace) -> int:
             target_config = find_target_config(
                 load_target_configs(args.target_configs), args.target_config
             )
-        builder = TaskBuilder(corpus, pr_index=index, repo_dir=args.repo_dir)
+        builder = TaskBuilder(
+            corpus,
+            pr_index=index,
+            repo_dir=args.repo_dir,
+            materialize_tests=args.materialize_tests,
+        )
         payload = builder.build(
             args.pr, Path(args.dest), force=args.force, target_config=target_config
         )
@@ -171,6 +199,8 @@ def _task(corpus: Corpus, args: argparse.Namespace) -> int:
         f"{payload.prior_pull_requests} pull requests ({payload.prior_sessions} sessions, "
         f"cutoff basis {payload.cutoff_basis} at {payload.cutoff_time})"
     )
+    if payload.golden_tests is not None:
+        print(f"  golden tests: {payload.golden_tests} files at {payload.merge_commit}")
     if payload.target_config:
         print(f"  target configuration: {payload.target_config}")
     if payload.sessions_past_cutoff or payload.missing_sessions:
@@ -212,4 +242,35 @@ def _test_manifest(args: argparse.Namespace) -> int:
         print(f"tracebench-corpus: {exc}", file=sys.stderr)
         return 2
     print(f"wrote {destination}: {len(manifest['suites'])} test suites")
+    return 0
+
+
+def _spec_build_command(spec_path: str, repo: str) -> str:
+    """Build command for ``repo`` from a repository adaptation spec ("" when unset)."""
+    return find_repository_spec(load_repository_specs(spec_path), repo).build_command or ""
+
+
+def _oracle(args: argparse.Namespace) -> int:
+    try:
+        request = payload_request(args.payload)
+        request_pr = request.get("pr")
+        if request_pr and request_pr != args.pr:
+            raise ValueError(
+                f"payload {args.payload} was assembled for {request_pr}, not {args.pr}; "
+                "pass the matching pull request id or the matching --payload"
+            )
+        repo = request.get("repo") or args.pr.split("#", 1)[0]
+        build_command = args.build_command
+        if args.spec:
+            build_command = _spec_build_command(args.spec, repo)
+        tree_commit, merge_commit = payload_commits(args.payload, args.repo_dir, request)
+        oracle = build_oracle(args.repo_dir, tree_commit, merge_commit, build_command)
+        solution = write_oracle(args.payload, oracle)
+    except (ValueError, OSError) as exc:
+        print(f"tracebench-corpus: oracle for {args.pr}: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"wrote {solution}: oracle for {args.pr} changes {len(oracle.changed_files)} files; "
+        f"applied tree {oracle.applied_tree} verified"
+    )
     return 0

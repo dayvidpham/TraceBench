@@ -1,0 +1,67 @@
+# Grading cases for `go test -json` streams. Each case names a stream file in
+# this directory and grades it against a manifest with two top-level cases:
+#   main_test.go::TestA          (package_dir ".",       golden false)
+#   pkg/sub/b_test.go::TestB     (package_dir "pkg/sub", golden true)
+# The module path is example.com/demo. `required_names` guards against silent
+# case deletion.
+module: example.com/demo
+manifest_cases:
+  - {id: "main_test.go::TestA", golden: false}
+  - {id: "pkg/sub/b_test.go::TestB", golden: true}
+required_names:
+  - all-pass
+  - one-fail
+  - one-skip
+  - subtests-out-of-count
+  - package-build-failure
+  - truncated-no-package-result
+  - truncated-mid-line
+  - unknown-action
+  - unparsable-line
+  - missing-case
+
+cases:
+  - name: all-pass
+    stream: pass.jsonl
+    outcomes: {TestA: pass, TestB: pass}
+    reward: 1.0
+  - name: one-fail
+    stream: fail.jsonl
+    outcomes: {TestA: pass, TestB: fail}
+    reward: 0.5
+  - name: one-skip
+    stream: skip.jsonl
+    outcomes: {TestA: skip, TestB: pass}
+    reward: 0.5
+  # Subtest results never override their parent and never enter the count.
+  - name: subtests-out-of-count
+    stream: subtests.jsonl
+    outcomes: {TestA: pass, TestB: pass}
+    reward: 1.0
+  - name: package-build-failure
+    stream: build_failure.jsonl
+    outcomes: {TestA: pass, TestB: fail}
+    reward: 0.5
+  - name: truncated-no-package-result
+    stream: truncated.jsonl
+    outcomes: {TestA: pass, TestB: missing}
+    reward: 0.0
+    reason: truncated test stream
+  - name: truncated-mid-line
+    stream: truncated_midline.jsonl
+    outcomes: {TestA: missing, TestB: missing}
+    reward: 0.0
+    reason: truncated test stream
+  - name: unknown-action
+    stream: unknown_action.jsonl
+    outcomes: {TestA: pass, TestB: fail}
+    reward: 0.5
+  - name: unparsable-line
+    stream: unparsable.jsonl
+    outcomes: {TestA: pass, TestB: missing}
+    reward: 0.0
+    reason: unparsable test stream line 4
+  - name: missing-case
+    stream: missing.jsonl
+    outcomes: {TestA: pass, TestB: missing}
+    reward: 0.5

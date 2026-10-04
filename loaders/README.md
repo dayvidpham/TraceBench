@@ -53,6 +53,13 @@ corpus.materialize_all("bundles", split="train")
 tracebench-corpus --corpus corpus/dump list --split train
 tracebench-corpus --repo dayvidpham/TraceBench bundle "peasant-labs/peasant#343" --dest bundle/pr-0343
 tracebench-corpus --corpus corpus/dump bundle-all --dest bundles --split test
+tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" --dest task-343 \
+  --index corpus/index/merged_prs.json --repo-dir /path/to/clone --materialize-tests
+tracebench-corpus oracle "peasant-labs/peasant#343" --payload task-343 \
+  --repo-dir /path/to/clone --spec repository_specs.yaml   # or --build-command CMD
+tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343
+tracebench-corpus test-manifest --repo-dir /path/to/clone \
+  --base-commit BASE_SHA --merge-commit MERGE_SHA --dest test-manifest.json
 ```
 
 ## Task payloads
@@ -74,10 +81,12 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
 |---|---|
 | `pr.json` | the pull request, enriched from `--index` (`merge_commit`, `head_oid`, `base_ref`) |
 | `prior-traces/` | `traces.jsonl`, `metadata.jsonl`, `transcripts/`, and `manifest.json` for the prior context (below) |
-| `repo/` | **integration point**: the working tree at the pre-PR state; empty until the repository tooling fills it |
-| `tests/` | **integration point**: every test file at the merged state; empty until filled |
-| `test-manifest.json` | with `--repo-dir`, every merged-state Go test file and case, with PR-changed cases tagged `golden` and all cases initially `accept` |
-| `repo-request.json` | the contract for the repository tooling: `tree_commit`, `trace_cutoff`, test patterns, glob dialect, merge-commit policy |
+| `repo/` | the working tree at the pre-PR state (`tree_commit`); materialized by `worktree.materialize_worktree`, which verifies the result against `tree_commit^{tree}` |
+| `tests/` | with `--materialize-tests` (requires `--repo-dir`), every file at `merge_commit` matching the payload's test patterns, read from the git object database (executable bits kept, symlinks skipped); empty otherwise. Zero matches, or a root-level `manifest.json` colliding with the manifest, fail closed |
+| `tests/manifest.json` | the extracted golden suite: `commit`, `patterns`, sorted `paths` |
+| `solution/` | written by `oracle`: `oracle.patch` (the merge diff) and `solve.sh` (apply the patch, run the build command), verified to reproduce the merged tree |
+| `test-manifest.json` | with `--repo-dir`, the **case catalog**: every merged-state Go test file and case, with PR-changed cases tagged `golden` and all cases initially `accept`. Distinct from `tests/manifest.json`, which lists the extracted files |
+| `repo-request.json` | the contract for the repository tooling: `tree_commit`, `trace_cutoff`, `test_patterns` (read by extraction and `tests/test.sh`; defaults apply when absent), glob dialect, merge-commit policy |
 | `task.json` | payload summary: cutoff, target configuration, counts, exclusions |
 
 ### Prior context rules
@@ -153,7 +162,7 @@ current extractor does not classify JavaScript or TypeScript test cases.
 Without `--repo-dir`, task generation cannot classify PR changes and does
 not write a manifest.
 The existing `tests/golden/` directory name predates this classification: it
-holds the full merged-state suite, while the manifest's `golden` flags identify
+holds the extracted merged-state suite, while the manifest's `golden` flags identify
 the PR-added or PR-modified cases within it.
 
 ### Target configurations
@@ -199,13 +208,14 @@ tracebench-corpus skeleton --payload task-343 --dest tasks/pr-0343 \
 | `task.toml` | registry-safe name (`<org>/<repo-slug>-pr-<number>`), PR metadata, `[environment].docker_image` (the shared base image) and `workdir`, offline network policy for agent and verifier |
 | `instruction.md` | scaffolded from the pull request; task authors replace the TODO with the issue description |
 | `environment/repo/`, `environment/prior-traces/` | task data, uploaded into the container workdir at environment start; **no per-task image is built** |
-| `tests/golden/` | the full merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |
-| `tests/test-manifest.json` | verifier-only copy of the manifest when the payload has one |
-| `tests/test.sh` | removes pre-PR test files matching the payload's test patterns, overlays the golden suite, runs it, writes `/logs/verifier/reward.txt`; fails closed when golden tests are missing |
-| `solution/solve.sh` | oracle placeholder (exits non-zero until implemented) |
+| `tests/golden/` | the payload's extracted merged-state test suite, verifier-only (Harbor copies `tests/` to `/tests` for the verifier; the agent never sees it) |
+| `tests/manifest.json` | verifier-side golden-suite manifest (commit, patterns, paths) |
+| `tests/test-manifest.json` | verifier-only copy of the case catalog when the payload has one |
+| `tests/test.sh` | removes pre-PR test files matching the payload's test patterns, overlays the golden suite, runs it, writes `/logs/verifier/reward.txt`; fails closed when golden tests are missing. (target contract: today `test.sh` still writes `0` to `reward.txt` until the verifier runner lands) |
+| `solution/` | the payload's `solution/` (oracle patch and generated `solve.sh`) when `oracle` has run; otherwise a placeholder `solve.sh` that exits non-zero |
 
-The oracle and the test command are explicit TODO placeholders: a skeleton is
-structure, not a solvable task, until a task author fills them in. Task names
+Without `oracle` output the oracle is an explicit placeholder: such a skeleton
+is structure, not a solvable task. Task names
 are registry-safe and distinguish the archive (`peasant-archive-pr-0021`) from
 the live repository (`peasant-pr-0021`).
 

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -188,6 +189,97 @@ func TestDeterminism(t *testing.T) {
 	if string(ra) != string(rb) {
 		t.Fatal("snapshots differ")
 	}
+	if a.TreeSHA == "" || a.TreeSHA != revParse(t, repo, a.RepoSHA+"^{tree}") {
+		t.Fatalf("tree_sha %q does not match %s^{tree}", a.TreeSHA, a.RepoSHA)
+	}
+}
+
+func revParse(t *testing.T, repo, rev string) string {
+	t.Helper()
+	out, err := exec.Command("git", "-C", repo, "rev-parse", rev).Output()
+	if err != nil {
+		t.Fatalf("rev-parse %s: %v", rev, err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func TestCommitCutoffPinsExactTree(t *testing.T) {
+	repo := testRepo(t)
+	// Pin a side-branch commit unreachable from HEAD. Time selection at its
+	// committer date would pick b.txt's commit from HEAD; the exact tree wins.
+	git(t, repo, nil, "checkout", "-q", "-b", "side", "HEAD~1")
+	commitAt(t, repo, "e.txt", "side", "2026-02-15T00:00:00+00:00")
+	pinned := revParse(t, repo, "HEAD")
+	git(t, repo, nil, "checkout", "-q", "-")
+	c, err := ByCommit(pinned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := SnapshotRepo(repo, c, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.RepoSHA != pinned {
+		t.Fatalf("repo_sha %s, want pinned %s", s.RepoSHA, pinned)
+	}
+	if s.TreeSHA != revParse(t, repo, pinned+"^{tree}") {
+		t.Fatalf("tree_sha %s mismatch", s.TreeSHA)
+	}
+	equalStr(t, filePaths(s.Files), []string{"a.txt", "b.txt", "e.txt"})
+	if !s.CutoffTime.Equal(time.Date(2026, 2, 15, 0, 0, 0, 0, time.UTC)) {
+		t.Fatalf("cutoff_time %s, want the commit's committer date", s.CutoffTime)
+	}
+	if s.CutoffKind != CutoffCommit {
+		t.Fatalf("cutoff_kind %q", s.CutoffKind)
+	}
+}
+
+func TestCommitCutoffMissingCommitFailsClosed(t *testing.T) {
+	repo := testRepo(t)
+	bogus := "0123456789abcdef0123456789abcdef01234567"
+	c, err := ByCommit(bogus)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = SnapshotRepo(repo, c, Options{})
+	if err == nil || !strings.Contains(err.Error(), bogus) {
+		t.Fatalf("want error naming %s, got %v", bogus, err)
+	}
+	if _, err := ByCommit(" "); err == nil {
+		t.Fatal("empty commit must be rejected")
+	}
+}
+
+func TestCLICommitMaterialize(t *testing.T) {
+	repo := testRepo(t)
+	pinned := revParse(t, repo, "HEAD~1")
+	out := filepath.Join(t.TempDir(), "out")
+	cmd := exec.Command("go", "run", "./cmd/snapshot",
+		"--repo", repo, "--cutoff-type", "commit", "--commit", pinned,
+		"--out", out, "--materialize")
+	if b, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("cli: %v\n%s", err, b)
+	}
+	raw, err := os.ReadFile(filepath.Join(out, "history.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload struct {
+		RepoSHA string `json:"repo_sha"`
+		TreeSHA string `json:"tree_sha"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.RepoSHA != pinned || payload.TreeSHA != revParse(t, repo, pinned+"^{tree}") {
+		t.Fatalf("unexpected payload: %s", raw)
+	}
+	if _, err := os.Stat(filepath.Join(out, "repo", "b.txt")); err != nil {
+		t.Fatalf("materialized tree missing b.txt: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(out, "repo", "c.txt")); err == nil {
+		t.Fatal("materialized tree contains c.txt from after the pinned commit")
+	}
 }
 
 func writeFakePeasant(t *testing.T, script string) string {
@@ -259,11 +351,87 @@ func TestCLIEndToEnd(t *testing.T) {
 			Subject string `json:"subject"`
 		} `json:"commits"`
 		Manifest string `json:"manifest_sha256"`
+		TreeSHA  string `json:"tree_sha"`
 	}
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		t.Fatal(err)
 	}
-	if len(payload.Commits) != 2 || payload.Manifest == "" {
+	if len(payload.Commits) != 2 || payload.Manifest == "" || payload.TreeSHA == "" {
 		t.Fatalf("unexpected payload: %s", raw)
 	}
+}
+
+func TestCommitCutoffPinnedOlderThanHEADHistory(t *testing.T) {
+	repo := testRepo(t)
+	// An orphan commit dated before every HEAD commit, unreachable from HEAD.
+	head, err := exec.Command("git", "-C", repo, "symbolic-ref", "--short", "HEAD").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	branch := strings.TrimSpace(string(head))
+	git(t, repo, nil, "checkout", "-q", "--orphan", "old")
+	git(t, repo, nil, "rm", "-rqf", ".")
+	commitAt(t, repo, "old.txt", "old", "2020-01-01T00:00:00+00:00")
+	pinned := revParse(t, repo, "HEAD")
+	git(t, repo, nil, "checkout", "-q", "-f", branch)
+	c, err := ByCommit(pinned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := SnapshotRepo(repo, c, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.RepoSHA != pinned || s.TreeSHA != revParse(t, repo, pinned+"^{tree}") {
+		t.Fatalf("repo_sha %s tree_sha %s, want pinned %s", s.RepoSHA, s.TreeSHA, pinned)
+	}
+	equalStr(t, filePaths(s.Files), []string{"old.txt"})
+	equalStr(t, subjects(s.Commits), []string{"old.txt"})
+}
+
+func TestCommitCutoffKeepsAncestorCommittedAfterPin(t *testing.T) {
+	repo := testRepo(t)
+	// Parent committed with a future committer date; its child is older.
+	commitAt(t, repo, "future.txt", "f", "2030-01-01T00:00:00+00:00")
+	commitAt(t, repo, "child.txt", "c", "2026-04-01T00:00:00+00:00")
+	pinned := revParse(t, repo, "HEAD")
+	c, err := ByCommit(pinned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := SnapshotRepo(repo, c, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, subj := range subjects(s.Commits) {
+		if subj == "future.txt" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("ancestor with later committer date missing from commits: %v", subjects(s.Commits))
+	}
+}
+
+func TestCommitCutoffBareCloneUnbornHEAD(t *testing.T) {
+	src := testRepo(t)
+	pinned := revParse(t, src, "HEAD~1")
+	bare := filepath.Join(t.TempDir(), "bare.git")
+	if out, err := exec.Command("git", "init", "-q", "--bare", bare).CombinedOutput(); err != nil {
+		t.Fatalf("git init --bare: %v\n%s", err, out)
+	}
+	git(t, bare, nil, "fetch", "-q", src, "+refs/heads/*:refs/remotes/src/*")
+	c, err := ByCommit(pinned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := SnapshotRepo(bare, c, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.RepoSHA != pinned || s.TreeSHA != revParse(t, src, pinned+"^{tree}") {
+		t.Fatalf("repo_sha %s tree_sha %s, want pinned %s", s.RepoSHA, s.TreeSHA, pinned)
+	}
+	equalStr(t, filePaths(s.Files), []string{"a.txt", "b.txt"})
 }
