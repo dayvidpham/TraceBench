@@ -56,28 +56,15 @@ prior_traces:
   peasant-pr-0022: [s20]
   peasant-pr-0020: []
 
-# Run-id derivation cases at revision "rev1". Each case names a target
-# configuration (harness/model/thinking inline), the label, and the golden run
-# id: <label>-<first 12 hex of sha256("harness|model|thinking|rev1")>. A
-# provider prefix stays inside the model name, so it changes the digest.
+# Run-id label cases. A run id is a UUIDv7 (unique per run); --run-label
+# prefixes it. The default has no prefix.
 run_ids:
-  - config: opencode-gpt-medium
-    harness: opencode
-    model: gpt-5.2-codex
-    thinking: medium
+  - name: unlabelled
     label: null
-    run_id: tracebench-opencode-gpt-medium-3e97f5ddddb1
-  - config: claude-code-sonnet-high
-    harness: claude-code
-    model: claude-sonnet-4-6
-    thinking: high
+  - name: labelled
     label: nightly
-    run_id: nightly-0d5c05bd0ef9
-  - config: claude-code-anthropic-sonnet
-    harness: claude-code
-    model: anthropic/claude-sonnet-5
-    thinking: high
-    label: null
+  - name: labelled-long
+    label: tracebench-smoke
     run_id: tracebench-claude-code-anthropic-sonnet-5106de3a77b1
 
 # Task-set revision: sha256 of "<pr id>@<merge commit>" lines in PR-list order.

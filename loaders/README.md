@@ -291,9 +291,9 @@ tracebench-corpus --corpus corpus/dump pipeline \
 | `--index` | `corpus/index/merged_prs.json`, the source of `merge_commit` |
 | `--dest` | output directory: `payloads/`, `tasks/`, and the job config |
 | `--spec` | repository adaptation spec; the shipped Go/Peasant default when absent |
-| `--run-id` | the run id; when absent it is derived from the target configuration |
+| `--run-id` | the run id; when absent a UUIDv7 is generated (requires `--target-configs` and `--target-config`) |
 | `--target-configs`, `--target-config` | the target configuration; together, or not at all |
-| `--run-label` | label of a derived run id (default `tracebench-<configuration name>`) |
+| `--run-label` | prefix of the generated UUIDv7 run id (default: none) |
 | `--job-config-format` | `yaml` (default when PyYAML is installed) or `json` |
 | `--force` | rebuild existing payload and task directories |
 
@@ -347,11 +347,10 @@ verifier:
   env: {TRACEBENCH_RUN_ID: <run id>}
 ```
 
-A derived run id is `<label>-<12 hex>`: the first 12 hex digits of
-`sha256(harness|provider|model|thinking|revision)`, where `provider` is the
-`provider/` prefix of the model name and `revision` hashes the ordered pull
-request ids with their merge commits. The same configuration and the same
-pull request list give the same run id.
+A generated run id is a UUIDv7 (RFC 9562): unique per run and ordered by start time. `--run-label`
+prefixes it (`<label>-<uuid>`); the default has no prefix. Repeats of one cell are separate runs;
+group them by the configuration and the task-set revision (the ordered pull request ids with their
+merge commits).
 
 Verify a built task with Harbor (when Harbor is installed):
 

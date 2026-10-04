@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys
 import tomllib
+import uuid
 from pathlib import Path
 
 import pytest
@@ -21,7 +21,7 @@ from tracebench_corpus.pipeline import (
     REQUIRED_TASK_PARTS,
     RUN_ID_ENV,
     PipelineError,
-    derive_run_id,
+    new_run_id,
     read_pr_list,
     run_pipeline,
     task_set_revision,
@@ -173,7 +173,8 @@ def test_job_config_carries_run_id_attempts_and_env(pipeline_env, tmp_path) -> N
     config = json.loads(path.read_text())
     run_id = config["job_name"]
     assert path.name == f"job-config-{run_id}.json"
-    assert run_id.startswith("tracebench-opencode-gpt-medium-")
+    parsed_run_id = uuid.UUID(run_id)
+    assert parsed_run_id.version == 7
     assert config["n_attempts"] == N_ATTEMPTS == 3
     assert config["metrics"] == [{"type": "mean"}, {"type": "min"}, {"type": "max"}]
     assert config["tasks"] == [{"path": str((dest / "tasks" / "peasant-pr-0020").resolve()), "source": run_id}]
@@ -185,25 +186,15 @@ def test_job_config_carries_run_id_attempts_and_env(pipeline_env, tmp_path) -> N
     assert RUN_ID_ENV == "TRACEBENCH_RUN_ID"
 
 
-def _case_config(case: dict) -> TargetConfiguration:
-    return TargetConfiguration(case["config"], case["harness"], case["model"], case["thinking"])
-
-
-@pytest.mark.parametrize("case", FIXTURE["run_ids"], ids=lambda c: c["config"])
-def test_derived_run_id(case) -> None:
-    config = _case_config(case)
-    run_id = derive_run_id(config, "rev1", case["label"])
-    assert run_id == case["run_id"]
-    key = f"{config.harness}|{config.model}|{config.thinking}|rev1"
-    assert run_id.endswith("-" + hashlib.sha256(key.encode()).hexdigest()[:12])
-    assert derive_run_id(config, "rev2", case["label"]) != run_id
-
-
-def test_provider_prefix_changes_the_run_id() -> None:
-    by_name = {case["config"]: _case_config(case) for case in FIXTURE["run_ids"]}
-    prefixed = by_name["claude-code-anthropic-sonnet"]
-    bare = TargetConfiguration(prefixed.name, prefixed.harness, "claude-sonnet-5", prefixed.thinking)
-    assert derive_run_id(prefixed, "rev1") != derive_run_id(bare, "rev1")
+@pytest.mark.parametrize("case", FIXTURE["run_ids"], ids=lambda c: c["name"])
+def test_new_run_id_is_a_unique_uuid7(case) -> None:
+    prefix = f"{case['label']}-" if case["label"] else ""
+    run_id = new_run_id(case["label"])
+    assert run_id.startswith(prefix)
+    parsed = uuid.UUID(run_id[len(prefix):])
+    assert parsed.version == 7
+    assert parsed.variant == uuid.RFC_4122
+    assert run_id != new_run_id(case["label"])
 
 
 def test_task_set_revision_is_stable_and_sensitive() -> None:
