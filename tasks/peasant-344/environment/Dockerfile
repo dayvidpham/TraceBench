@@ -13,16 +13,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends git ca-certific
 ARG PEASANT_REPO=https://github.com/peasant-labs/peasant.git
 # Base commit of peasant#344 (pre-PR, post-#337 on develop). Task starts here.
 ARG BASE_SHA=d3bc07f6568291ee70afb146409aae98d4f8e3d7
-# PR head ref, fetched at build time so the oracle works offline.
-ARG PR_REF=pull/344/head
 
-# Full clone pinned to base. History is kept intentionally: the oracle
-# checks out the 6 PR files from the fetched head without network.
-RUN git clone "${PEASANT_REPO}" /peasant \
+# Base tree ONLY (issue #27): init an empty repo and fetch just the base
+# commit by SHA, then drop the remote. The image contains exactly one commit,
+# zero refs, and no oracle material — the answer key is not discoverable via
+# `git log --all`, tags, branches, or fetches (a plain `--depth 1` clone
+# would still pull the default-branch tip, which postdates the fix).
+# The oracle patch ships in solution/oracle.patch, which Harbor copies into
+# the container for oracle runs only (never visible to the agent).
+RUN git init /peasant \
     && cd /peasant \
+    && git remote add origin "${PEASANT_REPO}" \
+    && git fetch --depth 1 origin "${BASE_SHA}" \
     && git checkout "${BASE_SHA}" \
-    && git fetch origin "${PR_REF}:pr-344" \
-    && git log --oneline -1 && git log --oneline pr-344 -1
+    && git remote remove origin \
+    && git log --oneline -1 && git for-each-ref
 
 WORKDIR /peasant
 

@@ -5,8 +5,8 @@ Base: `d3bc07f6568291ee70afb146409aae98d4f8e3d7` (merge-base, post-#337).
 Head: `a3f5cf89297e1c33214aee96e534585641129919` (+99/-22, 6 files).
 
 The Peasant codebase lives at `/peasant` **inside the container image** at the
-base commit. The PR head ref (`pr-344`) is baked into the image history for the
-oracle only — do not expect network access.
+base commit (base tree only — no other branches, tags, or remotes exist in
+there). Do not expect network access.
 
 ## Your task
 
