@@ -54,3 +54,10 @@ cases:
   - {pattern: "**/*.spec.jsx", path: "web/src/ui/app.spec.jsx", match: true}
   - {pattern: "**/*.spec.jsx", path: "web/src/ui/app.spec.jsx.snap", match: false}
   - {pattern: "**/*.spec.jsx", path: "web/src/ui/app.ts", match: false}
+
+# Intentional divergences: the canonical doublestar matcher anchors `**/` at a
+# path-segment boundary, while the retired `find -path` translation let `*`
+# cross into a segment. The canonical result is the contract; the retired
+# result is recorded so the divergence stays deliberate and visible.
+divergences:
+  - {pattern: "**/testdata/**", path: "pkg/mytestdata/x.go", canonical: false, retired: true}
