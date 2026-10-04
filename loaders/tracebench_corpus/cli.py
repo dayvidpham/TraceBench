@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from .corpus import Corpus, load_corpus
+from .oracle import build_oracle, payload_commits, write_oracle
 from .skeleton import build_skeleton
 from .target_config import find_target_config, load_target_configs
 from .task import TaskBuilder, load_pr_index
@@ -100,7 +101,23 @@ def main(argv: list[str] | None = None) -> int:
     manifest_parser.add_argument("--merge-commit", required=True, help="merged PR commit")
     manifest_parser.add_argument("--dest", required=True, help="output JSON file")
 
+    oracle_parser = commands.add_parser(
+        "oracle", help="generate and verify the oracle patch and solve.sh for a payload"
+    )
+    oracle_parser.add_argument("pr", help="pull request id, e.g. peasant-labs/peasant#343")
+    oracle_parser.add_argument("--repo-dir", required=True, help="local repository clone")
+    oracle_parser.add_argument("--payload", required=True, help="task payload directory")
+    build_source = oracle_parser.add_mutually_exclusive_group()
+    build_source.add_argument(
+        "--build-command", default=None, help="build command run by solve.sh after the patch"
+    )
+    build_source.add_argument(
+        "--spec", default=None, help="repository adaptation spec supplying the build command"
+    )
+
     args = parser.parse_args(argv)
+    if args.command == "oracle":
+        return _oracle(args)
     if args.command == "skeleton":
         return _skeleton(args)
     if args.command == "test-manifest":
@@ -224,4 +241,38 @@ def _test_manifest(args: argparse.Namespace) -> int:
         print(f"tracebench-corpus: {exc}", file=sys.stderr)
         return 2
     print(f"wrote {destination}: {len(manifest['suites'])} test suites")
+    return 0
+
+
+def _spec_build_command(spec_path: str, pr_id: str) -> str | None:
+    """Build command for ``pr_id``'s repository from a repository adaptation spec."""
+    try:
+        from . import repository_spec
+    except ImportError as exc:
+        raise ValueError(
+            "--spec requires the repository adaptation spec module "
+            "(tracebench_corpus.repository_spec), which is not installed; "
+            "pass --build-command instead"
+        ) from exc
+    repo = pr_id.split("#", 1)[0]
+    specs = repository_spec.load_repository_specs(spec_path)
+    spec = repository_spec.select_repository_spec(specs, repo)
+    return getattr(spec, "build_command", None)
+
+
+def _oracle(args: argparse.Namespace) -> int:
+    try:
+        build_command = args.build_command
+        if args.spec:
+            build_command = _spec_build_command(args.spec, args.pr)
+        tree_commit, merge_commit = payload_commits(args.payload, args.repo_dir)
+        oracle = build_oracle(args.repo_dir, tree_commit, merge_commit, build_command)
+        solution = write_oracle(args.payload, oracle)
+    except (KeyError, ValueError, OSError) as exc:
+        print(f"tracebench-corpus: oracle for {args.pr}: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"wrote {solution}: oracle for {args.pr} changes {len(oracle.changed_files)} files; "
+        f"applied tree {oracle.applied_tree} verified"
+    )
     return 0

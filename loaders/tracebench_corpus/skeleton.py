@@ -6,7 +6,8 @@ A skeleton is a Harbor task directory:
 - ``instruction.md`` - agent instructions (scaffolded from the pull request)
 - ``environment/`` - the pre-PR repository and prior traces, uploaded into the
   container at environment start; no per-task image is built
-- ``solution/solve.sh`` - oracle placeholder
+- ``solution/`` - the payload's oracle (``oracle.patch`` + ``solve.sh``) when
+  generated, else a ``solve.sh`` placeholder that fails
 - ``tests/test.sh`` - verifier that overlays the golden suite and runs it
 
 The environment references a shared base image from ``task.toml``
@@ -130,7 +131,11 @@ def build_skeleton(
 
     patterns = _test_patterns(payload)
     _write_script(dest / "tests" / "test.sh", _test_sh(patterns))
-    _write_script(dest / "solution" / "solve.sh", _solve_sh(pr_id))
+    if (payload / "solution" / "solve.sh").is_file():
+        _copy_tree(payload / "solution", dest / "solution")
+        (dest / "solution" / "solve.sh").chmod(0o755)
+    else:
+        _write_script(dest / "solution" / "solve.sh", _solve_sh(pr_id))
 
     (dest / "task-payload.json").write_text(
         json.dumps({"pr": pr, "summary": summary}, indent=2) + "\n"
