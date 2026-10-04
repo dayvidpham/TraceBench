@@ -143,7 +143,7 @@ func (c *config) register(fs *flag.FlagSet) {
 	fs.StringVar(&c.liveRepo, "live-repo", "peasant-labs/peasant",
 		"canonical GitHub repository")
 	fs.StringVar(&c.archiveRepo, "archive-repo", "peasant-labs/peasant-prerelease-archive",
-		"pre-launch archive GitHub repository (empty to skip)")
+		"pre-launch archive GitHub repository (indexed for reference; never sampled; empty to skip)")
 	fs.StringVar(&c.gh, "gh", "gh", "gh CLI binary")
 	fs.StringVar(&c.ignored, "ignored-branches", strings.Join(prindex.DefaultIgnoredBranches, ","),
 		"comma-separated branch names never treated as pull request work")
@@ -651,9 +651,9 @@ func loadSessionCommits(ctx context.Context, dbPath string) (map[string][]string
 }
 
 func sampleAndCollect(ctx context.Context, cfg config, flags sampleFlags, idx prindex.Index) error {
-	candidates := candidatesFromIndex(idx)
+	candidates := sampler.ExcludeRepos(candidatesFromIndex(idx), cfg.archiveRepo)
 	if len(candidates) == 0 {
-		return errors.New("sample: index contains no traced pull requests")
+		return errors.New("sample: index contains no traced pull requests outside the excluded repositories")
 	}
 	if flags.pinPRs != "" {
 		pinned, err := readPinnedPRs(flags.pinPRs)

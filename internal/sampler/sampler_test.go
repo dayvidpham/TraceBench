@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"reflect"
 	"sort"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +16,9 @@ import (
 
 //go:embed testdata/selection.yaml
 var selectionYAML []byte
+
+//go:embed testdata/exclusions.yaml
+var exclusionsYAML []byte
 
 type selectionFixtures struct {
 	Scenarios []selectionScenario `yaml:"scenarios"`
@@ -192,4 +197,52 @@ func parseSelectionTime(t *testing.T, value string) time.Time {
 		t.Fatalf("parse fixture time %q: %v", value, err)
 	}
 	return parsed.UTC()
+}
+
+type exclusionFixtures struct {
+	Scenarios []exclusionScenario `yaml:"scenarios"`
+}
+
+type exclusionScenario struct {
+	Name       string   `yaml:"name"`
+	Candidates []string `yaml:"candidates"`
+	Exclude    []string `yaml:"exclude"`
+	Expect     []string `yaml:"expect"`
+}
+
+func TestExcludeReposFixtures(t *testing.T) {
+	var fixtures exclusionFixtures
+	if err := yaml.Unmarshal(exclusionsYAML, &fixtures); err != nil {
+		t.Fatalf("decode exclusion fixtures: %v", err)
+	}
+	if len(fixtures.Scenarios) == 0 {
+		t.Fatal("exclusion fixtures contain no scenarios")
+	}
+	for _, scenario := range fixtures.Scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			candidates := make([]Candidate, 0, len(scenario.Candidates))
+			for _, id := range scenario.Candidates {
+				repo, number, ok := strings.Cut(id, "#")
+				if !ok {
+					t.Fatalf("candidate id %q has no #", id)
+				}
+				n, err := strconv.Atoi(number)
+				if err != nil {
+					t.Fatalf("candidate id %q has a non-numeric number: %v", id, err)
+				}
+				candidates = append(candidates, Candidate{
+					PR:           corpus.PullRequest{Repo: corpus.RepoSlug(repo), Number: n},
+					SessionCount: 1,
+				})
+			}
+			kept := ExcludeRepos(candidates, scenario.Exclude...)
+			ids := make([]string, 0, len(kept))
+			for _, candidate := range kept {
+				ids = append(ids, candidate.PR.ID())
+			}
+			if !reflect.DeepEqual(ids, scenario.Expect) {
+				t.Fatalf("kept %v, want %v", ids, scenario.Expect)
+			}
+		})
+	}
 }

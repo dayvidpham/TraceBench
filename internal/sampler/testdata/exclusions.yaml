@@ -1,0 +1,44 @@
+# Scenarios for ExcludeRepos. The prerelease archive is frozen pre-launch
+# history: it is indexed for reference but never sampled, so its pull requests
+# must never reach Select.
+scenarios:
+  - name: archive-is-dropped
+    candidates:
+      - peasant-labs/peasant#344
+      - peasant-labs/peasant-prerelease-archive#73
+      - peasant-labs/peasant#406
+    exclude:
+      - peasant-labs/peasant-prerelease-archive
+    expect:
+      - peasant-labs/peasant#344
+      - peasant-labs/peasant#406
+
+  - name: empty-exclusion-keeps-every-candidate
+    candidates:
+      - peasant-labs/peasant#344
+      - peasant-labs/peasant-prerelease-archive#73
+    exclude: []
+    expect:
+      - peasant-labs/peasant#344
+      - peasant-labs/peasant-prerelease-archive#73
+
+  - name: multiple-exclusions
+    candidates:
+      - peasant-labs/peasant#344
+      - other/repo#1
+      - peasant-labs/peasant-prerelease-archive#73
+    exclude:
+      - peasant-labs/peasant-prerelease-archive
+      - other/repo
+    expect:
+      - peasant-labs/peasant#344
+
+  - name: blank-exclusion-is-ignored
+    candidates:
+      - peasant-labs/peasant#344
+      - peasant-labs/peasant-prerelease-archive#73
+    exclude:
+      - ""
+    expect:
+      - peasant-labs/peasant#344
+      - peasant-labs/peasant-prerelease-archive#73
