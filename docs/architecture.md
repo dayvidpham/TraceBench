@@ -169,7 +169,7 @@ flowchart TB
   loader -->|"writes runnable tasks<br/>(files)"| taskdir
   loader -->|"writes the job config<br/>(files)"| jobcfg
   loader -->|"extracts tests, diffs the oracle<br/>(git CLI)"| git
-  loader -->|"materializes the worktree<br/>in commit mode (exec)"| snap
+  loader -->|"fetches the one-commit worktree<br/>(git CLI, read-only)"| git
   snap -->|"reads commits and trees<br/>(git CLI)"| git
   snap -->|"resolves a PR start<br/>(exec)"| db
   snap -->|"writes history and trees<br/>(files)"| snapout
@@ -200,7 +200,7 @@ flowchart TB
 |---|---|
 | `pr.json` | The pull request, enriched from `--index` (`merge_commit`, `head_oid`, `base_ref`). |
 | `prior-traces/` | `traces.jsonl`, `metadata.jsonl`, `transcripts/`, and `manifest.json` for the prior context. |
-| `repo/` | The tree of `tree_commit` (the pre-PR state), written by the snapshot tool in commit mode; no `.git`. Empty when built by `task` alone. |
+| `repo/` | A truncated single-commit git repo at `tree_commit` (the pre-PR state): shallow, no remotes, no later commits. Empty when built by `task` alone. |
 | `tests/` | The golden suite: every file at `merge_commit` matching the test patterns, plus `tests/manifest.json` (commit, patterns, paths). Written by `task --materialize-tests` and by `pipeline`. |
 | `test-manifest.json` | The case catalog: every top-level Go test case at `merge_commit`; PR-changed cases flagged `golden`. |
 | `solution/` | `oracle.patch` (the merge diff) and `solve.sh` (apply, then build), written by `oracle` and by `pipeline`. |
@@ -337,7 +337,7 @@ oracle). The verifier is copied into each task and runs inside the sandbox.
 | task builder | `tracebench_corpus/task.py` | Boundary and cutoff resolution, prior-trace selection, session cuts, repo-request, destination hygiene. |
 | golden suite | `tracebench_corpus/golden.py` | Test files at `merge_commit` matching the test patterns; `tests/manifest.json`; the canonical doublestar matcher. |
 | case catalog | `tracebench_corpus/test_manifest.py` | Top-level Go test cases at `merge_commit`; PR-changed cases flagged `golden`. |
-| secure worktree | `tracebench_corpus/worktree.py` | Runs the snapshot tool in commit mode; asserts `tree_sha == tree_commit^{tree}` and no `.git`. |
+| secure worktree | `tracebench_corpus/worktree.py` | Shallow-fetches `tree_commit` into a one-commit repo; asserts HEAD, tree, one commit, shallow entry, no remotes, fix absent. |
 | oracle | `tracebench_corpus/oracle.py` | Merge diff, `solve.sh`, equivalence check against `merge_commit^{tree}`, the `task.json` oracle block. |
 | repository adaptation spec | `tracebench_corpus/repository_spec.py` | Test and build command per repository; first match wins; Go/Peasant default. |
 | skeleton builder | `tracebench_corpus/skeleton.py` | task.toml, instruction.md, environment upload, `test.sh`, verifier config and verifier copy. |
@@ -387,7 +387,7 @@ flowchart TB
     pipe["<b>pipeline driver</b><br/>[Component: Python]<br/>Per-PR build loop and<br/>Harbor job config."]:::component
     gold["<b>golden suite</b><br/>[Component: Python]<br/>Merged-state test files and<br/>the doublestar matcher."]:::component
     cat["<b>case catalog</b><br/>[Component: Python]<br/>Go test cases at merge_commit,<br/>golden flags."]:::component
-    wt["<b>secure worktree</b><br/>[Component: Python]<br/>Snapshot in commit mode,<br/>tree_sha check, no .git."]:::component
+    wt["<b>secure worktree</b><br/>[Component: Python]<br/>Shallow one-commit repo,<br/>tree and history checks."]:::component
     orc["<b>oracle</b><br/>[Component: Python]<br/>Merge diff, solve.sh,<br/>equivalence check."]:::component
     spec["<b>repository adaptation spec</b><br/>[Component: Python]<br/>Test and build command<br/>per repository."]:::component
     ver["<b>verifier</b><br/>[Component: Python, stdlib]<br/>Runs in the sandbox;<br/>reward.txt, test-results.json."]:::component
@@ -519,7 +519,7 @@ flowchart TB
 Everything builds and runs on the developer workstation. The sampler, the loader, and the
 snapshot CLI run as local commands. The peasant database lives at
 `$XDG_DATA_HOME/peasant/peasant.db` and is opened read-only. Harbor builds the task image
-`FROM` the shared base image `tracebench/peasant-base` (task Dockerfiles pin a snapshot tag),
+`FROM` the runtime image `tracebench/task-runtime` (the `tracebench/peasant-base` toolchain without the peasant clone or Go build cache),
 starts the sandbox, uploads `environment/` into the workdir, and runs three phases:
 
 - **environment**: public network, for the image build and task-data upload;
@@ -556,7 +556,7 @@ flowchart TB
       clone[("<b>target git clone</b><br/>[Container: git working tree]<br/>commits and trees")]:::container
     end
     subgraph sandbox["task sandbox [Deployment Node: Docker or Podman]"]
-      taskimg[("<b>task image</b><br/>[Container: FROM tracebench/peasant-base]")]:::container
+      taskimg[("<b>task image</b><br/>[Container: FROM tracebench/task-runtime]")]:::container
       run["<b>task run</b><br/>[Container: environment,<br/>agent, verifier phases]"]:::container
     end
     harbor["<b>harbor CLI</b><br/>[Container: Python]"]:::external
@@ -575,7 +575,7 @@ flowchart TB
   loader -->|"writes payloads<br/>(files)"| payload
   loader -->|"writes tasks<br/>(files)"| taskdir
   loader -->|"writes the job config<br/>(files)"| jobcfg
-  loader -->|"runs commit mode<br/>(exec)"| snap
+  loader -->|"shallow-fetches tree_commit<br/>(git CLI, read-only)"| clone
   snap -->|"reads history<br/>(git CLI)"| clone
   harbor -->|"builds the task image<br/>(container runtime)"| taskimg
   harbor -->|"starts the task run<br/>(container runtime)"| run
@@ -635,7 +635,6 @@ sequenceDiagram
   participant corpus as corpus tree
   participant loader as tracebench-corpus pipeline
   participant git as target git clone
-  participant snap as snapshot (Go)
   participant payload as task payload
   participant task as Harbor task
   participant job as Harbor job config
@@ -649,10 +648,8 @@ sequenceDiagram
     loader->>loader: selects prior traces, excludes own sessions, cuts at the boundary
     loader->>git: ls-tree and blobs at merge_commit matching the test patterns
     loader->>payload: writes pr.json, prior-traces/, tests/, test-manifest.json, repo-request.json
-    loader->>snap: --cutoff-type commit --commit tree_commit --materialize (exec)
-    snap->>git: git archive of the tree_commit tree
-    snap-->>loader: repo/ and history.json with tree_sha
-    loader->>loader: asserts tree_sha == tree_commit^{tree}, no .git
+    loader->>git: fetch --depth=1 tree_commit into a fresh repo (source read-only)
+    loader->>loader: asserts HEAD tree == tree_commit^{tree}, one commit, shallow, no remotes, fix absent
     loader->>payload: moves repo/ into the payload
     loader->>git: git diff tree_commit merge_commit, applies in a temporary worktree
     loader->>loader: asserts the applied tree == merge_commit^{tree}
@@ -674,7 +671,7 @@ sequenceDiagram
   participant sandbox as task sandbox
   participant api as model API
   dev->>harbor: harbor run -p tasks/name -a agent -e podman (or -c job-config.yaml)
-  harbor->>img: builds FROM tracebench/peasant-base (environment phase, public)
+  harbor->>img: builds FROM tracebench/task-runtime (environment phase, public)
   harbor->>sandbox: starts the task, uploads environment/ into the workdir
   alt oracle agent
     harbor->>sandbox: copies solution/, runs solve.sh (git apply, build)
@@ -784,7 +781,6 @@ sequenceDiagram
   participant bt as build_task
   participant tb as TaskBuilder
   participant wt as materialize_worktree
-  participant snap as snapshot CLI
   participant orc as build_oracle
   participant sk as build_skeleton
   cli->>cli: read_pr_list(--prs), load_pr_index, load_repository_specs(--spec)
@@ -796,8 +792,8 @@ sequenceDiagram
     bt->>tb: build(pr_id, payloads/name) with materialize_tests
     tb->>tb: build_test_manifest, materialize_golden_tests
     bt->>wt: materialize_worktree(repo_dir, payload)
-    wt->>snap: --cutoff-type commit --commit SHA --out tmp --materialize
-    wt->>wt: history.json tree_sha == rev-parse tree_commit^{tree}, no .git
+    wt->>wt: git init + fetch --depth=1 SHA from repo_dir, reset --hard
+    wt->>wt: HEAD tree == rev-parse tree_commit^{tree}, rev-list --all == 1, merge_commit absent
     bt->>orc: build_oracle(repo_dir, tree_commit, merge_commit, build_command)
     orc->>orc: git diff, worktree add --detach, apply --check, write-tree
     bt->>bt: write_oracle(payload, oracle)
@@ -875,6 +871,6 @@ sequenceDiagram
 | `internal/fetch` | HuggingFace download and content-hash verification. | `fetch` |
 | `loaders/tracebench_corpus` | Python loader: corpus, bundles, task payloads, golden suite, case catalog, secure worktree, oracle, repository adaptation spec, skeletons, verifier, pipeline driver and job config, target configurations. | task authors, Harbor |
 | `snapshot` | Go module: cutoff resolution (date, PR start, or exact commit), repo tree and history materialization, `tree_sha`, trace collection. | snapshot users, the loader's secure worktree |
-| `tasks/_base` | Shared base-image Dockerfile with warmed Go caches. | task image builds |
+| `tasks/_base` | Shared base-image Dockerfile with warmed Go caches, and the task-runtime image that strips the clone and build cache. | task image builds |
 | `tasks/<name>` | Harbor task definitions: instruction, task.toml, environment, solution, tests. | `harbor run` |
 | `scripts/verify-issue-*.sh` | Acceptance checks for the containerized codebase and the snapshot API. | developers |
