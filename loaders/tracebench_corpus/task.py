@@ -224,6 +224,10 @@ class TaskBuilder:
         enriched = dict(pr)
         for key, value in self.pr_index.get(pr["id"], {}).items():
             if value is not None:
+                # A stale index can carry an empty body; it must not wipe a
+                # sampled body.
+                if key == "body" and value == "":
+                    continue
                 enriched[key] = value
         return enriched
 
