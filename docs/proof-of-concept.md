@@ -16,7 +16,7 @@ Both were last validated on 2026-10-04 (see the PR #51 review report).
 |---|---|---|
 | podman ≥ 5 | container runtime (Harbor's `podman` environment) | system package |
 | Harbor ≥ 0.23 | task runner (`harbor run`) | `uv tool install harbor` |
-| docker-compose v2 | Harbor's podman provider shells out to `docker compose` | **in the devShell** (`nix develop` / direnv); otherwise `nix shell nixpkgs#docker-compose` |
+| docker-compose v2 | Harbor's podman provider shells out to `docker compose` | your package manager; Nix users get it from the devShell |
 | git | the loader resolves boundaries and packs the secure worktree | devShell |
 | Go ≥ 1.25 | `tracebench-sample` index/dump and the `snapshot` module (not needed to run tasks) | devShell |
 | a `peasant-labs/peasant` clone | source of `tree_commit` / `merge_commit` | `git clone` |

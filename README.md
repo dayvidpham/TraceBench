@@ -50,13 +50,13 @@ tasks/<name>/
 
 ## Quickstart
 
-Enter the dev shell (Go, uv, and the `docker-compose` that Harbor's podman provider needs) and
-install Harbor:
+Install Harbor:
 
 ```bash
-nix develop            # or: direnv allow
 uv tool install harbor
 ```
+
+You also need docker-compose v2 on the PATH. Harbor's podman provider calls `docker compose`.
 
 Our runner is `tracebench-corpus pipeline`: it turns a list of merged pull requests into runnable
 Harbor tasks plus one Harbor job config, and `harbor run` executes the job. Two jobs are ready to
@@ -98,6 +98,71 @@ harbor run -p tasks/peasant-344 -a claude-code -m anthropic/claude-haiku-4-5 -e 
 For the full proof-of-concept runbook — dependencies, image setup with the `:keep` re-tag step,
 the jobs above end to end, and troubleshooting — see
 [`docs/proof-of-concept.md`](docs/proof-of-concept.md).
+
+## How a run works
+
+The diagram shows the C4 container view of one eval run. You give a list of pull requests. The
+loader writes the tasks and the job config. Harbor runs each task in the shared image. The
+verifier writes the reward.
+
+```mermaid
+flowchart TB
+    prs["PR list<br/>owner/repo#N"]
+    dump[("corpus dump + index<br/>[Container: JSONL]")]
+    clone[("repository clone<br/>[Container: git]")]
+    loader["tracebench-corpus pipeline<br/>[Container: Python]"]
+    task[("Harbor task<br/>[Container: files]")]
+    job[("Harbor job config<br/>[Container: YAML]")]
+    harbor["Harbor<br/>[Container: Go]"]
+    sandbox["task container<br/>[Container: task-runtime image]"]
+    agent["agent<br/>[Component: oracle or model harness]"]
+    verifier["verifier<br/>[Component: Python]"]
+    reward["reward.txt + test-results.json"]
+
+    prs --> loader
+    dump --> loader
+    clone --> loader
+    loader --> task
+    loader --> job
+    task --> harbor
+    job --> harbor
+    harbor --> sandbox
+    sandbox -- "agent phase, no network" --> agent
+    agent -- "verifier phase, no network" --> verifier
+    verifier --> reward
+```
+
+## Runtime flags
+
+The generated task sets these flags and policies. The agent and the verifier stay offline. The
+loader flags (`--prs`, `--repo-dir`, `--index`, `--dest`, `--run-id`) are in
+[Build a task from the corpus](#build-a-task-from-the-corpus).
+
+| Setting | What it does | Why it is set |
+|---|---|---|
+| `GOPROXY=off` | Go does not download modules. | The agent and the verifier must stay offline. |
+| `GOFLAGS=-mod=readonly -buildvcs=false` | Go reads the module cache only. Go does not stamp VCS data. | The build needs no network. The uploaded repository belongs to another user, so VCS stamping fails. |
+| Healthcheck: `GOPROXY=https://proxy.golang.org,direct go mod download` | The healthcheck downloads the modules of the base commit. | The shared image has no module cache for the base commit. The environment phase has network. |
+| Healthcheck: `go build ./...` | The healthcheck builds the pre-PR tree. | The tree must build before the agent starts. |
+| Healthcheck: `git config --system --add safe.directory /workdir/repo` | Git accepts the uploaded repository. | Harbor keeps the host user ID during the upload. |
+| `[environment] network_mode = "public"` | The environment phase can use the network. | The healthcheck needs the Go proxy. |
+| `[agent]`, `[verifier] network_mode = "no-network"` | The agent and the verifier cannot use the network. | The agent cannot fetch the fix. |
+| `workdir = "/workdir"` | The container starts in `/workdir`. | Harbor uploads the task data to this directory. |
+| `docker_image = "tracebench/task-runtime:latest"` | Every task uses the shared image. | The pipeline does not build an image for each task. |
+
+## Harbor flags
+
+| Flag | What it does |
+|---|---|
+| `-p <task>` | Run one task directory. |
+| `-c <file>` | Run every task in a job config file. |
+| `-a <agent>` | Select the agent. Use `oracle` for the reference solution. |
+| `-e <provider>` | Select the container environment. Use `podman` on this machine. |
+| `-k <n>` | Set the number of attempts for each task. Use `1` for a quick run. |
+| `-m <provider/model>` | Select the model for a real agent run. |
+| `--job-name <name>` | Name the job directory under `jobs/`. |
+
+`harbor view ./jobs` shows the trajectories and the verifier logs.
 
 ## Tasks
 
