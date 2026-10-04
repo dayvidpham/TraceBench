@@ -204,7 +204,9 @@ The corpus does not carry a thinking level yet; the upstream work is tracked in
 the tool-owned entries (`prior-traces/`, `repo/`, `tests/`, `repo-request.json`,
 `pr.json`, `task.json`, `test-manifest.json`; the task directory's `environment/`, `tests/`,
 `solution/`, `task.toml`, `instruction.md`, `task-payload.json`) and rebuilds
-them; caller-authored files elsewhere are never touched.
+them; caller-authored files elsewhere are never touched. The pipeline is the
+happy-path exception: re-running it over a built destination without `--force`
+refreshes each task's `instruction.md` from its payload and keeps the rest.
 
 ## Harbor task skeletons
 
@@ -301,7 +303,12 @@ tracebench-corpus --corpus corpus/dump pipeline \
 | `--target-configs`, `--target-config` | the target configuration; together, or not at all |
 | `--run-label` | prefix of the generated UUIDv7 run id (default: none) |
 | `--job-config-format` | `yaml` (default when PyYAML is installed) or `json` |
-| `--force` | rebuild existing payload and task directories |
+| `--force` | rebuild existing payload and task directories; without it, an existing task has its `instruction.md` refreshed |
+
+Re-running over a built destination is the happy path for template changes:
+without `--force`, each existing task's `instruction.md` is re-rendered from
+its payload and every other part is kept. A task that lacks a required part
+fails, naming the part; `--force` rebuilds the payload and task from scratch.
 
 A target may be a merged pull request that the published dump does not sample
 (for example, one with no traced sessions): `TaskBuilder.resolve_pull_request`

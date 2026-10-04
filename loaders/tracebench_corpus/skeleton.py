@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import stat
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -78,6 +79,23 @@ def task_dir_name(repo: str, number: Any) -> str:
     return f"{task_slug(repo)}-pr-{number:04d}"
 
 
+def _load_payload(payload: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Load ``pr.json`` and the optional ``task.json`` summary of a payload."""
+    pr_path = payload / "pr.json"
+    if not pr_path.is_file():
+        raise ValueError(f"not a task payload: missing {pr_path}")
+    pr: dict[str, Any] = json.loads(pr_path.read_text())
+    summary: dict[str, Any] = {}
+    if (payload / "task.json").is_file():
+        summary = json.loads((payload / "task.json").read_text())
+        if not isinstance(summary, dict):
+            raise ValueError(
+                f"{payload / 'task.json'} must hold a JSON object, got "
+                f"{type(summary).__name__}; regenerate the payload with --force"
+            )
+    return pr, summary
+
+
 def build_skeleton(
     payload_dir: str | Path,
     dest: str | Path,
@@ -94,18 +112,7 @@ def build_skeleton(
 ) -> Skeleton:
     """Write a Harbor task skeleton from a task payload directory."""
     payload = Path(payload_dir)
-    pr_path = payload / "pr.json"
-    if not pr_path.is_file():
-        raise ValueError(f"not a task payload: missing {pr_path}")
-    pr: dict[str, Any] = json.loads(pr_path.read_text())
-    summary: dict[str, Any] = {}
-    if (payload / "task.json").is_file():
-        summary = json.loads((payload / "task.json").read_text())
-        if not isinstance(summary, dict):
-            raise ValueError(
-                f"{payload / 'task.json'} must hold a JSON object, got "
-                f"{type(summary).__name__}; regenerate the payload with --force"
-            )
+    pr, summary = _load_payload(payload)
 
     dest = Path(dest)
     if dest.exists() and any(dest.iterdir()):
@@ -178,6 +185,28 @@ def build_skeleton(
         json.dumps({"pr": pr, "summary": summary}, indent=2) + "\n"
     )
     return Skeleton(pr_id=pr_id, task_name=task_name, path=dest, golden_tests=golden_tests)
+
+
+def refresh_instruction(payload_dir: str | Path, task_dir: str | Path) -> Path:
+    """Rewrite a built task's ``instruction.md`` from its payload.
+
+    The instruction is the only agent-facing output that changes with the
+    template; the task's environment, tests, and solution stay untouched.
+    ``workdir`` comes from the task's ``task.toml`` so rendered paths match
+    the built task.
+    """
+    payload = Path(payload_dir)
+    task = Path(task_dir)
+    pr, summary = _load_payload(payload)
+    workdir = DEFAULT_WORKDIR
+    task_toml = task / "task.toml"
+    if task_toml.is_file():
+        environment = tomllib.loads(task_toml.read_text()).get("environment")
+        if isinstance(environment, dict):
+            workdir = environment.get("workdir") or DEFAULT_WORKDIR
+    path = task / "instruction.md"
+    path.write_text(_instruction(pr, summary, workdir))
+    return path
 
 
 def _copy_tree(source: Path, dest: Path, exclude: frozenset[str] | set[str] = frozenset()) -> int:

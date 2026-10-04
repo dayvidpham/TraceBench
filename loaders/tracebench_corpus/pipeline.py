@@ -28,7 +28,7 @@ from .corpus import Corpus
 from .golden import GoldenSuiteError
 from .oracle import build_oracle, payload_commits, payload_request, write_oracle
 from .repository_spec import RepositorySpec, find_repository_spec
-from .skeleton import DEFAULT_WORKDIR, build_skeleton, task_dir_name
+from .skeleton import DEFAULT_WORKDIR, build_skeleton, refresh_instruction, task_dir_name
 from .target_config import TargetConfiguration
 from .task import TaskBuilder
 from .worktree import materialize_worktree
@@ -299,6 +299,20 @@ def build_task(
             ) from None
         payload_dir = result.payload_dir = dest / "payloads" / name
         task_dir = result.task_dir = dest / "tasks" / name
+        if not force and task_dir.exists() and any(task_dir.iterdir()):
+            # Re-running over a built task is the happy path: the template may
+            # have changed, so re-render the agent-facing instruction from the
+            # payload and keep every other part. --force rebuilds the task.
+            part = "instruction"
+            refresh_instruction(payload_dir, task_dir)
+            missing = _missing_parts(task_dir)
+            if missing:
+                part = missing[0]
+                raise ValueError(
+                    f"task {task_dir} lacks {', '.join(missing)}; rebuild it with --force"
+                )
+            result.status = STATUS_OK
+            return result
         part = "repository spec"
         spec = find_repository_spec(specs, pr["repo"])
         part = "payload"
