@@ -1,5 +1,7 @@
 # Captured Podman provider-banner shape; the reset shares the container-ID line.
 container_resolution: "\u001b[4m>>>> Executing external compose provider <<<<\n\n\u001b[0maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+resolution_timeout_sec: 0.1
+resolution_block_sec: 30
 required_names:
   - default-variable
   - override-variable
@@ -34,8 +36,8 @@ cases:
     error: invalid OpenCode credential variable name
   - name: output-nondisclosure
     agents: [opencode]
-    variables: {OPENCODE_API_KEY: "tracebench-fake\nmultiline-key"}
-    expected: "tracebench-fake\nmultiline-key"
+    variables: {OPENCODE_API_KEY: "tracebench-fake\nmultiline-é\"\\key"}
+    expected: "tracebench-fake\nmultiline-é\"\\key"
     failure: true
   - name: passthrough-to-opencode
     agents: [opencode]
@@ -50,12 +52,16 @@ host_shell_prefix: 'stdbuf() { shift; "$@"; }; '
 stream_boundary: 65530
 fake_server: |
   #!/usr/bin/env python3
-  import os, pathlib, sys
+  import json, os, pathlib, sys
   key = os.environ.get('OPENCODE_API_KEY')
   root = pathlib.Path(os.environ['FAKE_ARTIFACT_DIR'])
   (root / 'receipt.txt').write_text('received' if key == os.environ['FAKE_EXPECTED_KEY'] else 'wrong')
   (root / 'downloaded.txt').write_text('downloaded: ' + key)
   (root / 'downloaded.bin').write_bytes(b'\0' + key.encode() + b'\0')
+  for ascii in (True, False):
+      event = json.dumps({'type': 'text', 'part': {'text': 'routine JSON output: ' + key}}, ensure_ascii=ascii)
+      (root / ('downloaded-' + str(ascii) + '.json')).write_text(event)
+      print(event, flush=True)
   print('routine server output: ' + key, flush=True)
   print('routine server error: ' + key, file=sys.stderr, flush=True)
   sys.exit(int(os.environ['FAKE_EXIT_CODE']))
