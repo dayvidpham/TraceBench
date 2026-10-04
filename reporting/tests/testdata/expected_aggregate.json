@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "run_id": "fixture-job",
+  "tasks": {
+    "tracebench/peasant-pr-0343": {
+      "attempts": 1,
+      "reward": {"mean": 0.9, "min": 0.9, "max": 0.9},
+      "passed": {"mean": 18.0, "min": 18, "max": 18},
+      "failed": {"mean": 2.0, "min": 2, "max": 2},
+      "skipped": {"mean": 0.0, "min": 0, "max": 0},
+      "missing": {"mean": 0.0, "min": 0, "max": 0},
+      "total_cases": {"mean": 20.0, "min": 20, "max": 20},
+      "rejected_cases": {"mean": 1.0, "min": 1, "max": 1},
+      "n_input_tokens": {"mean": 10000.0, "min": 10000, "max": 10000},
+      "n_cache_tokens": {"mean": 2000.0, "min": 2000, "max": 2000},
+      "n_output_tokens": {"mean": 1500.0, "min": 1500, "max": 1500},
+      "cost_usd": {"mean": 0.05, "min": 0.05, "max": 0.05},
+      "tokens_per_turn": {"mean": 300.0, "min": 300.0, "max": 300.0},
+      "turns": {"mean": 5.0, "min": 5, "max": 5},
+      "time_to_verification_seconds": {"mean": 90.0, "min": 90.0, "max": 90.0},
+      "exception_info": []
+    },
+    "tracebench/peasant-pr-0344": {
+      "attempts": 1,
+      "reward": {"mean": 0.5, "min": 0.5, "max": 0.5},
+      "passed": {"mean": 10.0, "min": 10, "max": 10},
+      "failed": {"mean": 10.0, "min": 10, "max": 10},
+      "skipped": {"mean": 0.0, "min": 0, "max": 0},
+      "missing": {"mean": 0.0, "min": 0, "max": 0},
+      "total_cases": {"mean": 20.0, "min": 20, "max": 20},
+      "rejected_cases": {"mean": 0.0, "min": 0, "max": 0},
+      "n_input_tokens": {"mean": null, "min": null, "max": null},
+      "n_cache_tokens": {"mean": null, "min": null, "max": null},
+      "n_output_tokens": {"mean": null, "min": null, "max": null},
+      "cost_usd": {"mean": null, "min": null, "max": null},
+      "tokens_per_turn": {"mean": null, "min": null, "max": null},
+      "turns": {"mean": null, "min": null, "max": null},
+      "time_to_verification_seconds": {"mean": 42.0, "min": 42.0, "max": 42.0},
+      "exception_info": []
+    }
+  },
+  "overall": {
+    "tasks": 2,
+    "trials": 2,
+    "reward": {"mean": 0.7, "min": 0.5, "max": 0.9}
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "total_cases": 20,
+  "passed": 18,
+  "failed": 2,
+  "skipped": 0,
+  "missing": 0,
+  "rejected_cases": 0,
+  "reward": 0.9
+}

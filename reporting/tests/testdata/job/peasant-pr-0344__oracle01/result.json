@@ -1,0 +1,19 @@
+{
+  "task_name": "tracebench/peasant-pr-0344",
+  "trial_name": "peasant-pr-0344__oracle01",
+  "agent_result": {
+    "n_input_tokens": null,
+    "n_cache_tokens": null,
+    "n_output_tokens": null,
+    "cost_usd": null
+  },
+  "agent_execution": {
+    "started_at": "2026-10-04T16:03:53.782622Z",
+    "finished_at": "2026-10-04T16:03:58.855193Z"
+  },
+  "verifier": {
+    "started_at": "2026-10-04T16:04:35.782622Z",
+    "finished_at": "2026-10-04T16:05:33.192828Z"
+  },
+  "exception_info": null
+}
