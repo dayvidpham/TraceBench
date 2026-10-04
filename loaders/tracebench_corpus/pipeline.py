@@ -182,6 +182,13 @@ def _uuid7() -> uuid.UUID:
     )
 
 
+#: kwargs key that carries the thinking level, by harness. Harbor's built-in
+#: OpenCode agent selects a model variant; harnesses without an entry take a
+#: reasoning effort (Claude Code, Codex).
+THINKING_KWARG_BY_HARNESS = {"opencode": "variant"}
+DEFAULT_THINKING_KWARG = "reasoning_effort"
+
+
 def job_agent(config: TargetConfiguration | None) -> dict[str, Any]:
     """The Harbor agent block for ``config`` (the ``oracle`` agent when absent)."""
     if config is not None:
@@ -190,10 +197,11 @@ def job_agent(config: TargetConfiguration | None) -> dict[str, Any]:
                 f"pipeline: target configuration {config.name!r} has no harness; the job "
                 "config needs an agent name. Add `harness:` to the target-configuration spec."
             )
+        thinking_kwarg = THINKING_KWARG_BY_HARNESS.get(config.harness, DEFAULT_THINKING_KWARG)
         agent: dict[str, Any] = {
             "name": config.harness,
             "model_name": config.model,
-            "kwargs": {"reasoning_effort": config.thinking} if config.thinking else {},
+            "kwargs": {thinking_kwarg: config.thinking} if config.thinking else {},
         }
     else:
         agent = {"name": "oracle", "model_name": None, "kwargs": {}}

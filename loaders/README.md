@@ -341,7 +341,7 @@ tasks:
 agents:
   - name: oracle                   # or the configuration's harness
     model_name: null               # or the configuration's model
-    kwargs: {}                     # {reasoning_effort: <thinking>} when set
+    kwargs: {}                     # {variant|reasoning_effort: <thinking>} when set
     env: {TRACEBENCH_RUN_ID: <run id>}
 verifier:
   env: {TRACEBENCH_RUN_ID: <run id>}
@@ -512,7 +512,8 @@ toolchain.
 `--target-configs SPEC --target-config NAME` selects the harness, model, and
 thinking level (see [Target configurations](#target-configurations)). In the
 pipeline, the configuration fills `agents[0]` of the job config (`name` =
-harness, `model_name` = model, `kwargs.reasoning_effort` = thinking) and
+harness, `model_name` = model, the harness's thinking kwarg = thinking:
+`variant` for OpenCode, `reasoning_effort` otherwise) and
 derives the run id; without one, the job config uses the `oracle` agent and
 `--run-id` is required. A configuration used for a job config must name a
 harness.
