@@ -368,6 +368,7 @@ harbor run -c build/run-1/job-config.yaml
 | `task.py` | payload assembly: develop boundary, prior traces, session cuts, `repo-request.json`, destination hygiene |
 | `golden.py` | golden suite: files at `merge_commit` matching the test patterns, `tests/manifest.json`; owns the canonical doublestar matcher (`glob_to_regex`) |
 | `test_manifest.py` | case catalog: top-level Go test cases at `merge_commit`, PR-changed cases flagged `golden` |
+| `blobs.py` | batched git object reads: one `git cat-file --batch` process per commit for the golden suite and the case catalog |
 | `worktree.py` | secure worktree: packs the ancestry of `tree_commit` into a fresh repo; asserts HEAD, tree, source-equal count, not shallow, no remotes, fix absent, clean `fsck` |
 | `oracle.py` | oracle: merge diff, `solve.sh`, equivalence check, the `task.json` `oracle` block |
 | `repository_spec.py` | repository adaptation spec: test and build command per repository |

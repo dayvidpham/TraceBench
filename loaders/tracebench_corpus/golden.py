@@ -15,6 +15,8 @@ import subprocess
 from pathlib import Path, PurePosixPath
 from typing import Iterable
 
+from .blobs import read_blobs
+
 MANIFEST_NAME = "manifest.json"
 
 _GIT_BINARY = "git"
@@ -138,6 +140,7 @@ def materialize_golden_tests(
             )
     dest.mkdir(parents=True, exist_ok=True)
     root = dest.resolve()
+    resolved: list[tuple[str, Path]] = []
     for path in selected:
         target = (dest / PurePosixPath(path)).resolve()
         if root not in target.parents:
@@ -145,8 +148,16 @@ def materialize_golden_tests(
                 f"refusing to write test file {path!r} from {merge_commit}: it resolves "
                 f"outside the golden suite directory {dest}"
             )
+        resolved.append((path, target))
+    try:
+        contents = read_blobs(repo_dir, merge_commit, selected)
+    except ValueError as exc:
+        raise GoldenSuiteError(
+            f"golden suite for pull request {pr_id or '<unknown>'}: {exc}"
+        ) from exc
+    for path, target in resolved:
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(_git_bytes(repo_dir, "show", f"{merge_commit}:{path}"))
+        target.write_bytes(contents[path])
         if modes[path] == _EXECUTABLE_MODE:
             target.chmod(0o755)
     (dest / MANIFEST_NAME).write_text(
