@@ -1,0 +1,111 @@
+# Doublestar glob cases for golden-suite extraction. Paths are relative to the
+# repository root. `required_names` guards against silent case deletion.
+required_names:
+  - go-test-root
+  - go-test-nested
+  - go-test-suffix-only
+  - testdata-root
+  - testdata-nested-deep
+  - testdata-name-prefix
+  - star-does-not-cross-slash
+  - question-single-char
+  - question-not-slash
+  - char-class
+  - negated-char-class
+  - ts-spec
+  - non-test-source
+  - non-ascii-path
+  - default-patterns-skip-readme
+
+cases:
+  - name: go-test-root
+    patterns: ["**/*_test.go"]
+    path: main_test.go
+    match: true
+  - name: go-test-nested
+    patterns: ["**/*_test.go"]
+    path: internal/api/server_test.go
+    match: true
+  - name: go-test-suffix-only
+    patterns: ["**/*_test.go"]
+    path: internal/api/server_test.go.orig
+    match: false
+  - name: testdata-root
+    patterns: ["**/testdata/**"]
+    path: testdata/case.yaml
+    match: true
+  - name: testdata-nested-deep
+    patterns: ["**/testdata/**"]
+    path: pkg/x/testdata/a/b/c.bin
+    match: true
+  - name: testdata-name-prefix
+    patterns: ["**/testdata/**"]
+    path: pkg/mytestdata/a.yaml
+    match: false
+  - name: star-does-not-cross-slash
+    patterns: ["pkg/*_test.go"]
+    path: pkg/sub/a_test.go
+    match: false
+  - name: question-single-char
+    patterns: ["a?_test.go"]
+    path: ab_test.go
+    match: true
+  - name: question-not-slash
+    patterns: ["a?b_test.go"]
+    path: a/b_test.go
+    match: false
+  - name: char-class
+    patterns: ["v[12]_test.go"]
+    path: v2_test.go
+    match: true
+  - name: negated-char-class
+    patterns: ["v[!12]_test.go"]
+    path: v2_test.go
+    match: false
+  - name: ts-spec
+    patterns: ["**/*.spec.ts", "**/*.test.tsx"]
+    path: web/src/App.test.tsx
+    match: true
+  - name: non-test-source
+    patterns: ["**/*_test.go", "**/testdata/**"]
+    path: internal/api/server.go
+    match: false
+  - name: non-ascii-path
+    patterns: ["**/*_test.go"]
+    path: "pkg/ünïcode \"q\"\tt/x_test.go"
+    match: true
+  - name: default-patterns-skip-readme
+    patterns: default
+    path: README.md
+    match: false
+
+# Fixture repository for extraction: files at the pre-PR commit, then the PR's
+# changes. `expected` is the exact golden suite at the merge commit.
+extraction:
+  base:
+    keep_test.go: "package main\n"
+    old_name_test.go: "package main // renamed by the PR\n"
+    deleted_test.go: "package main // deleted by the PR\n"
+    main.go: "package main\n"
+    pkg/testdata/case.yaml: "a: 1\n"
+  merge:
+    add:
+      added_test.go: "package main // added\n"
+      "pkg/ünï \"q\"\tx/odd_test.go": "package pkg\n"
+      web/src/App.test.tsx: "test('x', () => {})\n"
+      web/src/App.tsx: "export {}\n"
+    rename:
+      old_name_test.go: new/name_test.go
+    delete:
+      - deleted_test.go
+    binary: pkg/testdata/blob.bin
+    symlink:
+      link_test.go: keep_test.go
+  expected:
+    - added_test.go
+    - keep_test.go
+    - new/name_test.go
+    - "pkg/testdata/blob.bin"
+    - pkg/testdata/case.yaml
+    - "pkg/ünï \"q\"\tx/odd_test.go"
+    - web/src/App.test.tsx
