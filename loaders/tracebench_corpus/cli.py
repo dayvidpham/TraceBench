@@ -55,6 +55,11 @@ def main(argv: list[str] | None = None) -> int:
         help="local clone used to resolve the develop boundary by commit ancestry",
     )
     task_parser.add_argument(
+        "--materialize-tests",
+        action="store_true",
+        help="extract the merged-state golden suite into tests/ (requires --repo-dir)",
+    )
+    task_parser.add_argument(
         "--target-configs",
         default=None,
         help="target-configuration spec (YAML or JSON) with harness/model/thinking entries",
@@ -159,7 +164,12 @@ def _task(corpus: Corpus, args: argparse.Namespace) -> int:
             target_config = find_target_config(
                 load_target_configs(args.target_configs), args.target_config
             )
-        builder = TaskBuilder(corpus, pr_index=index, repo_dir=args.repo_dir)
+        builder = TaskBuilder(
+            corpus,
+            pr_index=index,
+            repo_dir=args.repo_dir,
+            materialize_tests=args.materialize_tests,
+        )
         payload = builder.build(
             args.pr, Path(args.dest), force=args.force, target_config=target_config
         )
@@ -171,6 +181,8 @@ def _task(corpus: Corpus, args: argparse.Namespace) -> int:
         f"{payload.prior_pull_requests} pull requests ({payload.prior_sessions} sessions, "
         f"cutoff basis {payload.cutoff_basis} at {payload.cutoff_time})"
     )
+    if payload.golden_tests is not None:
+        print(f"  golden tests: {payload.golden_tests} files at {payload.merge_commit}")
     if payload.target_config:
         print(f"  target configuration: {payload.target_config}")
     if payload.sessions_past_cutoff or payload.missing_sessions:

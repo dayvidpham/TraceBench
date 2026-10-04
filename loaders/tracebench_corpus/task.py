@@ -10,7 +10,9 @@ A task payload contains:
    at the pre-PR state. Left empty here; ``repo-request.json`` states exactly
    what must be materialized.
 4. ``tests/`` - integration point for the repository tooling: every test file
-   at the merged state. Left empty here. The manifest identifies PR-changed
+   at the merged state. Left empty unless ``materialize_tests`` is set, in
+   which case the files are read from ``merge_commit`` and
+   ``tests/manifest.json`` lists them. The test manifest identifies PR-changed
    cases within that full suite when a local repo is available.
 
 The prior traces cover the sampled pull requests only: the corpus is a sample,
@@ -35,6 +37,7 @@ from pathlib import Path
 from typing import Any
 
 from .corpus import Corpus
+from .golden import materialize_golden_tests
 from .target_config import TargetConfiguration
 from .test_manifest import build_test_manifest
 
@@ -93,6 +96,7 @@ class TaskPayload:
     sessions_past_cutoff: int
     missing_sessions: int
     target_config: str | None = None
+    golden_tests: int | None = None
 
 
 class TaskBuilder:
@@ -114,10 +118,17 @@ class TaskBuilder:
         corpus: Corpus,
         pr_index: dict[str, dict[str, Any]] | None = None,
         repo_dir: str | Path | None = None,
+        materialize_tests: bool = False,
     ):
+        if materialize_tests and repo_dir is None:
+            raise ValueError(
+                "--materialize-tests requires --repo-dir: the golden suite is read from "
+                "the merge commit in a local clone; pass --repo-dir <clone>"
+            )
         self.corpus = corpus
         self.pr_index = pr_index or {}
         self.repo_dir = str(repo_dir) if repo_dir is not None else None
+        self.materialize_tests = materialize_tests
 
     def enrich(self, pr: dict[str, Any]) -> dict[str, Any]:
         """Overlay the richer index record (merge commits, dates) on the
@@ -176,6 +187,11 @@ class TaskBuilder:
             build_test_manifest(self.repo_dir, boundary_commit, merge_commit)
             if self.repo_dir and boundary_commit else None
         )
+        golden_tests: list[str] | None = None
+        if self.materialize_tests:
+            golden_tests = materialize_golden_tests(
+                self.repo_dir, merge_commit, DEFAULT_TEST_PATTERNS, dest / "tests", pr_id=pr_id
+            )
         cutoff_ms = _iso_to_ms(cutoff_time)
         family = repo_family(pr["repo"])
         own_sessions = {trace.session_id for trace in self.corpus.sessions_for_pr(pr_id)}
@@ -286,6 +302,7 @@ class TaskBuilder:
                 "missing_sessions": len(missing),
                 "repo_request": "repo-request.json",
                 "test_manifest": "test-manifest.json" if test_manifest is not None else None,
+                "golden_tests": len(golden_tests) if golden_tests is not None else None,
             },
         )
         return TaskPayload(
@@ -301,6 +318,7 @@ class TaskBuilder:
             sessions_past_cutoff=len(past_cutoff),
             missing_sessions=len(missing),
             target_config=target_config.name if target_config else None,
+            golden_tests=len(golden_tests) if golden_tests is not None else None,
         )
 
     def _prior_pull_requests(

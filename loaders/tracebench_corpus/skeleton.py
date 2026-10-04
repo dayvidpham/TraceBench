@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .golden import MANIFEST_NAME
 from .task import GENERATED_ENTRIES, clear_generated
 
 #: Tool-owned entries inside a generated task directory. ``--force`` clears
@@ -118,7 +119,11 @@ def build_skeleton(
     (dest / "instruction.md").write_text(_instruction(pr, summary, workdir))
     _copy_tree(payload / "repo", dest / "environment" / "repo")
     _copy_tree(payload / "prior-traces", dest / "environment" / "prior-traces")
-    golden_tests = _copy_tree(payload / "tests", dest / "tests" / "golden")
+    golden_tests = _copy_tree(payload / "tests", dest / "tests" / "golden", exclude={MANIFEST_NAME})
+    golden_manifest = payload / "tests" / MANIFEST_NAME
+    if golden_manifest.is_file():
+        # Verifier-only record of the extracted paths; never part of the overlay.
+        (dest / "tests" / MANIFEST_NAME).write_bytes(golden_manifest.read_bytes())
     manifest = payload / "test-manifest.json"
     if manifest.is_file():
         (dest / "tests" / "test-manifest.json").write_bytes(manifest.read_bytes())
@@ -147,8 +152,11 @@ def _test_patterns(payload: Path) -> list[str]:
     return list(DEFAULT_TEST_PATTERNS)
 
 
-def _copy_tree(source: Path, dest: Path) -> int:
-    """Copy a payload directory if it exists; return the number of source files."""
+def _copy_tree(source: Path, dest: Path, exclude: frozenset[str] | set[str] = frozenset()) -> int:
+    """Copy a payload directory if it exists; return the number of copied files.
+
+    ``exclude`` names top-level entries of ``source`` that are not copied.
+    """
     if not source.is_dir():
         dest.mkdir(parents=True, exist_ok=True)
         return 0
@@ -157,6 +165,8 @@ def _copy_tree(source: Path, dest: Path) -> int:
         if not path.is_file():
             continue
         relative = path.relative_to(source)
+        if relative.parts[0] in exclude:
+            continue
         target = dest / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(path.read_bytes())
