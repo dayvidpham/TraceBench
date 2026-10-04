@@ -353,6 +353,8 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
         f"Implement the changes to fulfill the description within the <pull_request_body> tags. "
         f"The repository is at `{workdir}/repo`.",
         "",
+        "Run the repository's tests without the `-race` flag.",
+        "",
         f"Agent traces for work on this repository before this pull request are",
         f"available at `{workdir}/prior-traces` as context.",
         "",
