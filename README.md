@@ -71,7 +71,7 @@ scripts/ensure-task-images.sh
 # and the verifier runs the fail-to-pass tests. Expect reward 1.0.
 harbor run -p tasks/peasant-344 -a oracle -e podman
 
-# Our three-PR generated job (peasant#344, #406, #527): build it, then run the job config.
+# Our three-PR generated job (peasant-labs/peasant#344, peasant-labs/peasant#406, peasant-labs/peasant#527): build it, then run the job config.
 # The corpus dump and index live under corpus/ (see Corpus sampling).
 printf 'peasant-labs/peasant#344\npeasant-labs/peasant#406\npeasant-labs/peasant#527\n' > /tmp/prs.txt
 uv sync
