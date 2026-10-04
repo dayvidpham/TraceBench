@@ -280,9 +280,10 @@ class TaskBuilder:
             "glob_dialect": "doublestar globs relative to the repository root",
             "merge_commit_policy": "required; pass --index when the corpus record lacks one",
             "note": (
-                "Adapter required: the snapshot module resolves trees by cutoff time. "
-                "Materialize repo/ from tree_commit and tests/ from merge_commit; do not "
-                "reuse the trace cutoff for the tree."
+                "repo/ is materialized by tracebench_corpus.worktree.materialize_worktree "
+                "using the snapshot commit mode at tree_commit, verified against "
+                "tree_commit^{tree}; tests/ is materialized at merge_commit. The trace "
+                "cutoff is never used to select the tree."
             ),
         }
         _write_json(dest / "repo-request.json", repo_request)
