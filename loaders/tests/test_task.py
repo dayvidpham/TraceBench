@@ -65,6 +65,36 @@ def test_task_payload_prior_traces_exclude_own_sessions(standard_dump, standard_
     assert not (payload.path / "prior-traces" / "transcripts" / "l2.jsonl").exists()
 
 
+def test_task_target_from_index_without_sampled_sessions(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    index = dict(standard_index)
+    index[f"{LIVE}#23"] = {"repo": LIVE, "number": 23, "merge_commit": "c23",
+                           "merged_at": "2026-09-05T00:00:00Z"}
+    payload = TaskBuilder(corpus, pr_index=index).build(f"{LIVE}#23", tmp_path / "task")
+
+    pr = json.loads((payload.path / "pr.json").read_text())
+    assert pr["id"] == f"{LIVE}#23"
+    assert pr["repo"] == LIVE
+    assert pr["number"] == 23
+    assert pr["sampled"] is False
+    # The target itself is not part of the sampled corpus...
+    assert f"{LIVE}#23" not in corpus.pull_requests
+    # ...but prior context still comes from it.
+    assert payload.prior_pull_requests == 4
+    assert payload.prior_sessions == 4
+    traces = [json.loads(line) for line in (payload.path / "prior-traces" / "traces.jsonl").read_text().splitlines()]
+    assert sorted({trace["session_id"] for trace in traces}) == ["a1", "l1", "l2", "own1"]
+    task = json.loads((payload.path / "task.json").read_text())
+    assert task["split"] is None
+    assert json.loads((payload.path / "repo-request.json").read_text())["merge_commit"] == "c23"
+
+
+def test_task_target_absent_from_corpus_and_index_fails_closed(standard_dump, standard_index, tmp_path) -> None:
+    corpus = Corpus(standard_dump)
+    with pytest.raises(KeyError, match="not in the corpus or the index"):
+        TaskBuilder(corpus, pr_index=standard_index).build(f"{LIVE}#99", tmp_path / "task")
+
+
 def test_task_payload_layout_and_integration_point(standard_dump, standard_index, tmp_path) -> None:
     corpus = Corpus(standard_dump)
     payload = TaskBuilder(corpus, pr_index=standard_index).build(f"{LIVE}#22", tmp_path / "task")

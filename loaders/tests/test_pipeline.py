@@ -85,7 +85,9 @@ def pipeline_env(git_repo, tmp_path, write_dump) -> dict:
         metadata_records=[metadata("s20", "2026-05-01T00:00:00Z")],
         transcripts={"s20": envelope("s20")},
     )
-    index = [{"repo": LIVE, "number": n, "merge_commit": merges[n]} for n in numbers]
+    # PR 23 is index-only: it has no sampled sessions, so the dump omits it.
+    index = [{"repo": LIVE, "number": n, "merge_commit": merges[n]}
+             for n in (*numbers, 23)]
     index_path = tmp_path / "merged_prs.json"
     index_path.write_text(json.dumps(index))
     return {"repo": repo, "dump": dump, "index": index_path, "merges": merges}
@@ -132,6 +134,22 @@ def test_two_prs_build_two_runnable_tasks(pipeline_env, tmp_path, snapshot_bin, 
     assert "hello" in (dest / "tasks" / "peasant-pr-0022" / "tests" / "golden" / "greet_test.go").read_text()
     patch = (dest / "tasks" / "peasant-pr-0022" / "solution" / "oracle.patch").read_text()
     assert "greet.go" in patch
+
+
+@needs_go
+def test_index_only_pr_builds_a_task(pipeline_env, tmp_path, snapshot_bin, capsys) -> None:
+    dest = tmp_path / "out"
+    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#23", "--run-id", "run-23") == 0
+    out = capsys.readouterr().out
+    assert f"ok     {LIVE}#23" in out
+    task = dest / "tasks" / "peasant-pr-0023"
+    for part in FIXTURE["required_parts"]:
+        assert (task / part).exists(), f"peasant-pr-0023 lacks {part}"
+    # Prior context still comes from the sampled corpus: s20 is linked to PR 20.
+    transcripts = task / "environment" / "prior-traces" / "transcripts"
+    assert sorted(p.stem for p in transcripts.glob("*.jsonl")) == ["s20"]
+    config = yaml.safe_load((dest / "job-config-run-23.yaml").read_text())
+    assert [Path(t["path"]).name for t in config["tasks"]] == ["peasant-pr-0023"]
 
 
 @needs_go

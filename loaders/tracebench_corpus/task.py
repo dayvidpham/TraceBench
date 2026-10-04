@@ -167,6 +167,41 @@ class TaskBuilder:
         self.pr_index = pr_index or {}
         self.repo_dir = str(repo_dir) if repo_dir is not None else None
         self.materialize_tests = materialize_tests
+        self._unsampled: dict[str, dict[str, Any]] = {}
+
+    def resolve_pull_request(self, pr_id: str) -> dict[str, Any]:
+        """Return the record for ``pr_id``, sampled or index-only.
+
+        The published dump samples traced pull requests. A merged pull request
+        with no traced sessions is still a valid target: its record comes from
+        the index, and prior context still comes from the sampled corpus.
+        """
+        pr = self.corpus.pull_requests.get(pr_id)
+        if pr is not None:
+            return pr
+        cached = self._unsampled.get(pr_id)
+        if cached is not None:
+            return cached
+        record = self.pr_index.get(pr_id)
+        if record is None:
+            raise KeyError(f"pull request {pr_id} is not in the corpus or the index")
+        pr = {
+            "id": pr_id,
+            "repo": record["repo"],
+            "number": record["number"],
+            "title": record.get("title"),
+            "url": record.get("url"),
+            "author": record.get("author"),
+            "head_ref": record.get("head_ref"),
+            "merged_at": record.get("merged_at"),
+            "additions": record.get("additions"),
+            "deletions": record.get("deletions"),
+            "lines_changed": (record.get("additions") or 0) + (record.get("deletions") or 0),
+            "split": None,
+            "sampled": False,
+        }
+        self._unsampled[pr_id] = pr
+        return pr
 
     def enrich(self, pr: dict[str, Any]) -> dict[str, Any]:
         """Overlay the richer index record (merge commits, dates) on the
@@ -207,10 +242,7 @@ class TaskBuilder:
     ) -> TaskPayload:
         # Resolved once: extraction and repo-request.json use the same list.
         patterns = list(test_patterns) if test_patterns else list(DEFAULT_TEST_PATTERNS)
-        pr = self.corpus.pull_requests.get(pr_id)
-        if pr is None:
-            raise KeyError(f"pull request {pr_id} is not in the corpus")
-        pr = self.enrich(pr)
+        pr = self.enrich(self.resolve_pull_request(pr_id))
         dest = Path(dest)
         if dest.exists() and any(dest.iterdir()):
             if not force:

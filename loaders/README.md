@@ -296,6 +296,12 @@ tracebench-corpus --corpus corpus/dump pipeline \
 | `--job-config-format` | `yaml` (default when PyYAML is installed) or `json` |
 | `--force` | rebuild existing payload and task directories |
 
+A target may be a merged pull request that the published dump does not sample
+(for example, one with no traced sessions): `TaskBuilder.resolve_pull_request`
+resolves it from `--index`, and prior context still comes from the sampled
+corpus. Only a pull request absent from both the corpus and the index fails
+closed.
+
 For each pull request, in order:
 
 1. **payload** — `TaskBuilder.build` with the golden suite materialized:

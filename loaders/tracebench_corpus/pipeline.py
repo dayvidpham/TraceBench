@@ -237,9 +237,7 @@ def build_task(
     part = "payload"
     result = TaskResult(pr_id, STATUS_FAILED)
     try:
-        pr = builder.corpus.pull_requests.get(pr_id)
-        if pr is None:
-            raise KeyError(f"pull request {pr_id} is not in the corpus; check the PR list")
+        pr = builder.resolve_pull_request(pr_id)
         try:
             name = task_dir_name(pr["repo"], pr["number"])
         except (KeyError, TypeError, ValueError) as exc:
