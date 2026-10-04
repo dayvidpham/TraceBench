@@ -41,10 +41,6 @@ from .task import GENERATED_ENTRIES, clear_generated, payload_test_patterns
 SKELETON_ENTRIES = ("environment", "tests", "solution", "task.toml", "instruction.md", "task-payload.json")
 #: Container working directory; the task payload lands under it.
 DEFAULT_WORKDIR = "/workdir"
-#: Maximum pull request body characters rendered into ``instruction.md``.
-#: Longer bodies are cut at this cap with a marker stating the rule; the
-#: full body stays in the payload's ``pr.json``.
-MAX_BODY_CHARS = 4000
 
 
 @dataclass(frozen=True)
@@ -331,16 +327,7 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
     else:
         body = raw_body.strip()
     if body:
-        lines.append(_truncate_body(body))
-    else:
-        lines.extend(
-            [
-                "## TODO(task author)",
-                "",
-                "Replace this section with the issue description. This pull request",
-                "carries no body, so this skeleton starts from the title only.",
-            ]
-        )
+        lines.append(body)
     lines.extend(["</pull_request_body>", ""])
     if summary.get("prior_sessions"):
         lines.append(
@@ -349,20 +336,6 @@ def _instruction(pr: dict[str, Any], summary: dict[str, Any], workdir: str) -> s
         )
         lines.append("")
     return "\n".join(lines)
-
-
-def _truncate_body(body: str) -> str:
-    """Render a pull request body for ``instruction.md``.
-
-    Bodies longer than :data:`MAX_BODY_CHARS` are cut at the cap with a
-    marker stating the rule.
-    """
-    if len(body) <= MAX_BODY_CHARS:
-        return body
-    return (
-        body[:MAX_BODY_CHARS].rstrip()
-        + f"\n\n[truncated: pull request body exceeded {MAX_BODY_CHARS} characters]"
-    )
 
 
 def _solve_sh(pr_id: str) -> str:

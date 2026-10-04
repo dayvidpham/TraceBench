@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from tracebench_corpus import MAX_BODY_CHARS, load_target_configs
+from tracebench_corpus import load_target_configs
 
 ARCHIVE = "peasant-labs/peasant-prerelease-archive"
 LIVE = "peasant-labs/peasant"
@@ -167,8 +167,8 @@ def body_dump(tmp_path: Path, write_dump) -> Path:
 
 @pytest.fixture
 def long_body_dump(tmp_path: Path, write_dump) -> Path:
-    """Standard dump whose task pull request carries an over-long PR body."""
-    return _dump_with_body(write_dump, tmp_path / "dump", "word " * (MAX_BODY_CHARS // 5 + 200))
+    """Standard dump whose task pull request carries a very long PR body."""
+    return _dump_with_body(write_dump, tmp_path / "dump", "word " * 1200)
 
 
 @pytest.fixture
