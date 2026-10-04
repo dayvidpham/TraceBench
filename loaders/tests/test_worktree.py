@@ -1,18 +1,16 @@
-"""Secure worktree materialization through the Go snapshot tool."""
+"""Truncated single-commit repo materialization."""
 
 from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 from pathlib import Path
 
 import pytest
 
-from tracebench_corpus.worktree import SNAPSHOT_MODULE, WorktreeError, materialize_worktree
+from tracebench_corpus.worktree import WorktreeError, materialize_worktree
 
-pytestmark = pytest.mark.skipif(shutil.which("go") is None, reason="needs the Go toolchain")
 
 
 def _git(repo: Path, *args: str, date: str | None = None) -> str:
@@ -29,14 +27,6 @@ def _commit(repo: Path, name: str, content: str, date: str) -> str:
     _git(repo, "add", name)
     _git(repo, "commit", "-q", "-m", name, date=date)
     return _git(repo, "rev-parse", "HEAD")
-
-
-@pytest.fixture(scope="session")
-def snapshot_bin(tmp_path_factory) -> Path:
-    out = tmp_path_factory.mktemp("bin") / "snapshot"
-    subprocess.run(["go", "build", "-o", str(out), "./cmd/snapshot"],
-                   cwd=SNAPSHOT_MODULE, check=True)
-    return out
 
 
 @pytest.fixture
@@ -56,29 +46,42 @@ def _payload(tmp_path: Path, **request) -> Path:
     return payload
 
 
-def _wrapper(tmp_path: Path, real: Path, post: str) -> Path:
-    """A snapshot binary that runs the real one, then tampers with its output."""
-    script = tmp_path / "fake-snapshot"
-    script.write_text(
-        "#!/bin/sh\nset -e\n"
-        f'"{real}" "$@"\n'
-        'while [ $# -gt 0 ]; do [ "$1" = --out ] && OUT="$2"; shift; done\n'
-        f"{post}\n"
-    )
-    script.chmod(0o755)
-    return script
+def _state(repo: Path) -> tuple[str, str]:
+    return (_git(repo, "for-each-ref"), _git(repo, "rev-parse", "HEAD"))
 
 
-def test_exact_tree_at_tree_commit(tmp_path, repo, snapshot_bin):
+def test_truncated_repo_at_tree_commit(tmp_path, repo):
+    before = _state(repo["path"])
     payload = _payload(tmp_path, tree_commit=repo["pre"], merge_commit=repo["merge"])
-    result = materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+    result = materialize_worktree(repo["path"], payload)
+    out = payload / "repo"
     assert result.tree_commit == repo["pre"]
     assert result.tree_sha == _git(repo["path"], "rev-parse", f"{repo['pre']}^{{tree}}")
-    assert sorted(p.name for p in (payload / "repo").iterdir()) == ["a.txt"]
-    assert not (payload / "repo" / ".git").exists()
+    assert _git(out, "rev-parse", "HEAD") == repo["pre"]
+    assert _git(out, "symbolic-ref", "HEAD") == "refs/heads/main"
+    assert _git(out, "rev-list", "--all", "--count") == "1"
+    assert (out / ".git" / "shallow").read_text().split() == [repo["pre"]]
+    assert _git(out, "remote") == ""
+    assert subprocess.run(["git", "-C", str(out), "cat-file", "-e", repo["merge"]],
+                          capture_output=True).returncode != 0
+    assert _git(out, "status", "--porcelain") == ""
+    assert not (out / ".git" / "FETCH_HEAD").exists()
+    assert not (out / ".git" / "ORIG_HEAD").exists()
+    assert _git(out, "config", "user.email")
+    assert sorted(p.name for p in out.iterdir()) == [".git", "a.txt"]
+    assert _state(repo["path"]) == before
 
 
-def test_default_go_run_and_merge_parent_fallback(tmp_path, repo):
+def test_source_refs_and_head_unchanged(tmp_path, repo):
+    _git(repo["path"], "update-ref", "refs/tags/v1", repo["pre"])
+    before = _state(repo["path"])
+    payload = _payload(tmp_path, tree_commit=repo["pre"], merge_commit=repo["merge"])
+    materialize_worktree(repo["path"], payload)
+    assert _state(repo["path"]) == before
+    assert _git(payload / "repo", "tag") == ""
+
+
+def test_merge_parent_fallback(tmp_path, repo):
     payload = _payload(tmp_path, tree_commit=None, merge_commit=repo["merge"])
     result = materialize_worktree(repo["path"], payload)
     assert result.tree_commit == repo["pre"]
@@ -86,40 +89,30 @@ def test_default_go_run_and_merge_parent_fallback(tmp_path, repo):
     assert not (payload / "repo" / "pr.txt").exists()
 
 
-def test_tree_drift_fails_closed(tmp_path, repo, snapshot_bin):
-    bogus = "f" * 40
-    fake = _wrapper(tmp_path, snapshot_bin,
-                    f"sed -i.bak 's/\"tree_sha\": \"[0-9a-f]*\"/\"tree_sha\": \"{bogus}\"/' "
-                    '"$OUT/history.json"')
-    payload = _payload(tmp_path, tree_commit=repo["pre"], merge_commit=repo["merge"])
-    with pytest.raises(WorktreeError) as err:
-        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
-    expected = _git(repo["path"], "rev-parse", f"{repo['pre']}^{{tree}}")
-    assert repo["pre"] in str(err.value)
-    assert bogus in str(err.value) and expected in str(err.value)
-    assert not (payload / "repo").exists()
+def test_agent_can_commit(tmp_path, repo):
+    payload = _payload(tmp_path, tree_commit=repo["pre"])
+    materialize_worktree(repo["path"], payload)
+    out = payload / "repo"
+    (out / "b.txt").write_text("b")
+    subprocess.run(["git", "-C", str(out), "add", "b.txt"], check=True)
+    subprocess.run(["git", "-C", str(out), "-c", "commit.gpgsign=false", "commit", "-q", "-m", "b"], check=True,
+                   env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")})
 
 
-def test_missing_commit_fails_closed(tmp_path, repo, snapshot_bin):
+def test_missing_commit_fails_closed(tmp_path, repo):
     missing = "0123456789abcdef0123456789abcdef01234567"
     payload = _payload(tmp_path, tree_commit=missing, merge_commit=repo["merge"])
     with pytest.raises(WorktreeError, match=missing):
-        materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+        materialize_worktree(repo["path"], payload)
 
 
-def test_git_metadata_in_tree_fails_closed(tmp_path, repo, snapshot_bin):
-    fake = _wrapper(tmp_path, snapshot_bin, 'mkdir "$OUT/repo/.git"')
-    payload = _payload(tmp_path, tree_commit=repo["pre"], merge_commit=repo["merge"])
-    with pytest.raises(WorktreeError, match=r"\.git"):
-        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
+def test_fix_present_fails_closed(tmp_path, repo):
+    # tree_commit == merge commit: the "fix" is the fetched commit itself.
+    payload = _payload(tmp_path, tree_commit=repo["merge"], merge_commit=repo["merge"])
+    with pytest.raises(WorktreeError, match="fix-absent") as err:
+        materialize_worktree(repo["path"], payload)
+    assert repo["merge"] in str(err.value)
     assert not (payload / "repo").exists()
-
-
-def test_empty_tree_fails_closed(tmp_path, repo, snapshot_bin):
-    fake = _wrapper(tmp_path, snapshot_bin, 'rm -rf "$OUT/repo" && mkdir "$OUT/repo"')
-    payload = _payload(tmp_path, tree_commit=repo["pre"], merge_commit=repo["merge"])
-    with pytest.raises(WorktreeError, match="empty"):
-        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
 
 
 def test_worktree_error_is_value_error():
@@ -155,74 +148,34 @@ def test_neither_commit_fails_closed(tmp_path, repo):
         materialize_worktree(repo["path"], payload)
 
 
-def test_non_empty_dest_fails_closed(tmp_path, repo, snapshot_bin):
+def test_non_empty_dest_fails_closed(tmp_path, repo):
     payload = _payload(tmp_path, tree_commit=repo["pre"])
     (payload / "repo").mkdir()
     (payload / "repo" / "stale.txt").write_text("x")
     with pytest.raises(WorktreeError, match=r"repo is not empty"):
-        materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+        materialize_worktree(repo["path"], payload)
 
 
-def test_dest_is_file_fails_closed(tmp_path, repo, snapshot_bin):
+def test_dest_is_file_fails_closed(tmp_path, repo):
     payload = _payload(tmp_path, tree_commit=repo["pre"])
     (payload / "repo").write_text("x")
     with pytest.raises(WorktreeError) as err:
-        materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+        materialize_worktree(repo["path"], payload)
     assert str(payload / "repo") in str(err.value) and repo["pre"] in str(err.value)
 
 
-def test_pre_existing_empty_dest_is_replaced(tmp_path, repo, snapshot_bin):
+def test_pre_existing_empty_dest_is_replaced(tmp_path, repo):
     payload = _payload(tmp_path, tree_commit=repo["pre"])
     (payload / "repo").mkdir()
-    materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
-    assert sorted(p.name for p in (payload / "repo").iterdir()) == ["a.txt"]
+    materialize_worktree(repo["path"], payload)
+    assert sorted(p.name for p in (payload / "repo").iterdir()) == [".git", "a.txt"]
 
 
-def test_dest_symlink_to_empty_dir_fails_closed(tmp_path, repo, snapshot_bin):
+def test_dest_symlink_to_empty_dir_fails_closed(tmp_path, repo):
     payload = _payload(tmp_path, tree_commit=repo["pre"])
     target = tmp_path / "empty-target"
     target.mkdir()
     (payload / "repo").symlink_to(target)
     with pytest.raises(WorktreeError, match="cannot replace the empty destination") as err:
-        materialize_worktree(repo["path"], payload, snapshot_bin=snapshot_bin)
+        materialize_worktree(repo["path"], payload)
     assert repo["pre"] in str(err.value)
-
-
-def test_snapshot_binary_not_executable_fails_closed(tmp_path, repo):
-    payload = _payload(tmp_path, tree_commit=repo["pre"])
-    fake = tmp_path / "non-exec-snapshot"
-    fake.write_text("#!/bin/sh\nexit 0\n")
-    fake.chmod(0o644)
-    with pytest.raises(WorktreeError, match="cannot run the snapshot tool"):
-        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
-
-
-def test_snapshot_binary_missing_fails_closed(tmp_path, repo):
-    payload = _payload(tmp_path, tree_commit=repo["pre"])
-    with pytest.raises(WorktreeError, match="cannot run the snapshot tool"):
-        materialize_worktree(repo["path"], payload, snapshot_bin=tmp_path / "missing-bin")
-
-
-def test_snapshot_nonzero_exit_fails_closed(tmp_path, repo):
-    fake = tmp_path / "failing-snapshot"
-    fake.write_text("#!/bin/sh\necho boom >&2\nexit 3\n")
-    fake.chmod(0o755)
-    payload = _payload(tmp_path, tree_commit=repo["pre"])
-    with pytest.raises(WorktreeError) as err:
-        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
-    assert repo["pre"] in str(err.value) and "boom" in str(err.value)
-    assert not (payload / "repo").exists()
-
-
-@pytest.mark.parametrize("post", [
-    'rm "$OUT/history.json"',
-    "printf '[]' > \"$OUT/history.json\"",
-    "printf 'not json' > \"$OUT/history.json\"",
-])
-def test_bad_history_fails_closed(tmp_path, repo, snapshot_bin, post):
-    fake = _wrapper(tmp_path, snapshot_bin, post)
-    payload = _payload(tmp_path, tree_commit=repo["pre"])
-    with pytest.raises(WorktreeError) as err:
-        materialize_worktree(repo["path"], payload, snapshot_bin=fake)
-    assert repo["pre"] in str(err.value) and "history.json" in str(err.value)
-    assert not (payload / "repo").exists()

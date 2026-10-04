@@ -81,7 +81,7 @@ def build_skeleton(
     dest: str | Path,
     *,
     org: str = "tracebench",
-    base_image: str = "tracebench/peasant-base:latest",
+    base_image: str = "tracebench/task-runtime:latest",
     workdir: str = "/workdir",
     task_version: str = "1.0.0",
     agent_timeout_sec: float = 3600.0,

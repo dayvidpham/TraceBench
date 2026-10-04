@@ -98,7 +98,7 @@ def test_skeleton_task_toml_parses(tmp_path, standard_dump, standard_index) -> N
     assert config["metadata"]["pr_number"] == 22
     assert config["agent"]["network_mode"] == "no-network"
     assert config["verifier"]["network_mode"] == "no-network"
-    assert config["environment"]["docker_image"] == "tracebench/peasant-base:latest"
+    assert config["environment"]["docker_image"] == "tracebench/task-runtime:latest"
     assert config["environment"]["workdir"] == "/workdir"
     assert config["environment"]["network_mode"] == "public"
 
