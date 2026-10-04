@@ -235,6 +235,7 @@ def test_skeleton_renders_pr_body_as_goal(tmp_path, body_dump, standard_index) -
     assert "/workdir/prior-traces" in instruction
     assert "Benchmark split" not in instruction
     assert "- Size:" not in instruction
+    assert "Run the repository's tests without the `-race` flag." in instruction
 
 
 def test_skeleton_renders_without_body_placeholder(tmp_path, standard_dump, standard_index) -> None:
