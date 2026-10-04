@@ -8,6 +8,9 @@ provider you run with, e.g. local `docker`).
 Goal: agents that can do real engineering work **without** hacking their way out
 — no curl-ing solutions, no pip-installing bypasses, no exfiltrating tests.
 
+See [docs/architecture.md](docs/architecture.md) for C4 diagrams and call
+sequences of the corpus and task-generation system.
+
 ## How isolation works
 
 Each task declares a network policy in `task.toml`:
