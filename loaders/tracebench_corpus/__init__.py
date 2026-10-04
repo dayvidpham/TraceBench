@@ -15,6 +15,7 @@ from .task import (
     TaskPayload,
     clear_generated,
     load_pr_index,
+    payload_test_patterns,
     repo_family,
 )
 
@@ -47,6 +48,7 @@ __all__ = [
     "load_target_configs",
     "materialize_golden_tests",
     "materialize_worktree",
+    "payload_test_patterns",
     "repo_family",
     "task_slug",
     "write_oracle",
