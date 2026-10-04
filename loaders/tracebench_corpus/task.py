@@ -10,7 +10,8 @@ A task payload contains:
    at the pre-PR state. Left empty here; ``repo-request.json`` states exactly
    what must be materialized.
 4. ``tests/`` - integration point for the repository tooling: every test file
-   at the merged state (the golden suite). Left empty here.
+   at the merged state. Left empty here. The manifest identifies PR-changed
+   cases within that full suite when a local repo is available.
 
 The prior traces cover the sampled pull requests only: the corpus is a sample,
 not the repository's full history. ``develop`` keeps one commit per pull
@@ -35,6 +36,7 @@ from typing import Any
 
 from .corpus import Corpus
 from .target_config import TargetConfiguration
+from .test_manifest import build_test_manifest
 
 #: Repository suffixes that belong to the same codebase family. The
 #: prerelease archive is the live repository's pre-launch history, so a task
@@ -60,7 +62,10 @@ DEFAULT_TEST_PATTERNS = (
 
 #: Entries this tool owns inside a payload or task directory. ``--force``
 #: clears exactly these; caller-authored files elsewhere are never touched.
-GENERATED_ENTRIES = ("prior-traces", "repo", "tests", "pr.json", "task.json", "repo-request.json")
+GENERATED_ENTRIES = (
+    "prior-traces", "repo", "tests", "pr.json", "task.json", "repo-request.json",
+    "test-manifest.json",
+)
 
 _GIT_BINARY = "git"
 
@@ -167,6 +172,10 @@ class TaskBuilder:
         (dest / "tests").mkdir(exist_ok=True)
 
         basis, boundary_commit, cutoff_time, merge_commit = self.boundary(pr)
+        test_manifest = (
+            build_test_manifest(self.repo_dir, boundary_commit, merge_commit)
+            if self.repo_dir and boundary_commit else None
+        )
         cutoff_ms = _iso_to_ms(cutoff_time)
         family = repo_family(pr["repo"])
         own_sessions = {trace.session_id for trace in self.corpus.sessions_for_pr(pr_id)}
@@ -261,6 +270,8 @@ class TaskBuilder:
             ),
         }
         _write_json(dest / "repo-request.json", repo_request)
+        if test_manifest is not None:
+            _write_json(dest / "test-manifest.json", test_manifest)
         _write_json(
             dest / "task.json",
             {
@@ -274,6 +285,7 @@ class TaskBuilder:
                 "target_configuration": target_config.to_dict() if target_config else None,
                 "missing_sessions": len(missing),
                 "repo_request": "repo-request.json",
+                "test_manifest": "test-manifest.json" if test_manifest is not None else None,
             },
         )
         return TaskPayload(
