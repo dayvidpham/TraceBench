@@ -351,6 +351,15 @@ class TaskBuilder:
                 "missing_sessions": sorted(missing),
                 "metadata_schema_version": self.corpus.manifest.get("metadata_schema_version"),
                 "push_contract_version": self.corpus.manifest.get("push_contract_version"),
+                # Redaction decision: pr.json `body` is the already-public pull
+                # request description and stays raw (no redaction pipeline); the
+                # redaction pipeline covers private session transcripts and
+                # metadata only.
+                "body_redaction": (
+                    "pr.json body is the already-public pull request description "
+                    "and is stored raw; redaction covers session transcripts and "
+                    "metadata only"
+                ),
             },
         )
         repo_request = {
