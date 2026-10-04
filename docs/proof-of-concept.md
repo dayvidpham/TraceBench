@@ -1,14 +1,8 @@
-# Proof of concept: run the peasant-344 MVP and the generated pipeline
+# Proof of concept: run an eval with the generated pipeline
 
-Two end-to-end paths prove the benchmark works:
-
-1. **`tasks/peasant-344`** — the hand-built feasibility task (one PR, sealed oracle,
-   fail-to-pass verifier). Expected: **reward 1.0**.
-2. **The generated pipeline** — the loader turns a PR list into Harbor tasks and a job
-   config, then Harbor runs them. Expected: **0 exceptions, ~0.998** (the residual is a
-   documented calibration set).
-
-Both were last validated on 2026-10-04 (see the PR #51 review report).
+The loader turns a list of merged pull requests into runnable Harbor tasks and one Harbor job
+config; Harbor runs the job. Expected: **0 exceptions, ~0.998** (the residual is a documented
+calibration set). Validated on 2026-10-04 (see the PR #51 review report).
 
 ## Dependencies
 
@@ -17,8 +11,8 @@ Both were last validated on 2026-10-04 (see the PR #51 review report).
 | podman ≥ 5 | container runtime (Harbor's `podman` environment) | system package |
 | Harbor ≥ 0.23 | task runner (`harbor run`) | `uv tool install harbor` |
 | docker-compose v2 | Harbor's podman provider shells out to `docker compose` | your package manager; Nix users get it from the devShell |
-| git | the loader resolves boundaries and packs the secure worktree | devShell |
-| Go ≥ 1.25 | `tracebench-sample` index/dump and the `snapshot` module (not needed to run tasks) | devShell |
+| git | the loader resolves boundaries and packs the secure worktree | your package manager |
+| Go ≥ 1.25 | `tracebench-sample` index/dump and the `snapshot` module (not needed to run tasks) | your package manager |
 | a `peasant-labs/peasant` clone | source of `tree_commit` / `merge_commit` | `git clone` |
 | a corpus dump + index | prior traces and PR metadata | `go run ./cmd/tracebench-sample index` + `dump` |
 
@@ -48,19 +42,7 @@ Harbor's compose teardown runs `down --rmi local`, which removes the image a tas
 the script re-tags `:latest` from them and fails closed when a rebuild is needed. If `:keep` is
 gone, rebuild per `tasks/_base/README.md`.
 
-## Path 1 — the hand-built MVP (`tasks/peasant-344`)
-
-```bash
-scripts/ensure-task-images.sh
-harbor run -p tasks/peasant-344 -a oracle -e podman
-```
-
-Harbor builds the task image `FROM tracebench/peasant-base:838a6dd0…`, checks out the pre-PR
-commit, truncates the history, rebuilds at the base commit, then the oracle applies
-`solution/oracle.patch` and the verifier runs the fail-to-pass tests. Expect **reward 1.0** in
-about a minute (the image build dominates). Inspect with `harbor view jobs`.
-
-## Path 2 — the generated pipeline
+## Run the generated pipeline
 
 Generate a task set from a PR list:
 

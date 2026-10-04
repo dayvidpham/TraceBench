@@ -223,8 +223,8 @@ flowchart TB
 
 | Key | Contents |
 |---|---|
-| `job_name` | The run id: `--run-id`, or `<label>-<12 hex>` derived from the target configuration and the pull request list. |
-| `n_attempts` | `3`. Repeats are pooled by run id. |
+| `job_name` | The run id: `--run-id`, or a generated UUIDv7 prefixed by `--run-label`. |
+| `n_attempts` | `3`. Repeats are separate runs; group them by cell. |
 | `tasks` | One `{path, source}` per task that was built; `source` is the run id. |
 | `agents` | One agent: the configuration's harness, model, and `reasoning_effort`, or `oracle`; `env.TRACEBENCH_RUN_ID`. |
 | `verifier.env` | `TRACEBENCH_RUN_ID`. |
@@ -780,7 +780,7 @@ sequenceDiagram
   participant sk as build_skeleton
   cli->>cli: read_pr_list(--prs), load_pr_index, load_repository_specs(--spec)
   cli->>pl: run_pipeline(corpus, pr_ids, dest, repo_dir, pr_index, specs, run_id)
-  pl->>pl: derive_run_id(config, task_set_revision) when no --run-id
+  pl->>pl: new_run_id(label) when no --run-id
   loop each pull request
     pl->>bt: build_task(builder, pr_id, dest)
     bt->>bt: find_repository_spec(specs, repo)

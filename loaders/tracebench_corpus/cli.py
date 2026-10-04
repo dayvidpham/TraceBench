@@ -134,12 +134,12 @@ def main(argv: list[str] | None = None) -> int:
     pipeline_parser.add_argument("--target-config", default=None, help="configuration name in --target-configs")
     pipeline_parser.add_argument(
         "--run-id", default=None,
-        help="run id (an empty value counts as absent; default: derived from the target "
-        "configuration, which then requires --target-configs and --target-config)",
+        help="run id (an empty value counts as absent; default: a generated UUIDv7, which "
+        "requires --target-configs and --target-config)",
     )
     pipeline_parser.add_argument(
         "--run-label", default=None,
-        help="label of a derived run id (default: tracebench-<configuration name>); "
+        help="prefix of the generated UUIDv7 run id (default: none); "
         "an error together with --run-id",
     )
     pipeline_parser.add_argument(

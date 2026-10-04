@@ -75,8 +75,8 @@ oracle, and the task with its verifier. It writes `<dest>/payloads/`, `<dest>/ta
 `<dest>/job-config.yaml` (run id, `n_attempts: 3`, `TRACEBENCH_RUN_ID`). A failed task names
 the failed part and the others still build. Validate a built task with
 `harbor run -p <dest>/tasks/<name> -a oracle -e podman` when Harbor is installed: generated tasks
-score around 0.998 (the residual is the documented calibration set) and the hand-built
-`tasks/peasant-344` MVP scores 1.0. The full runbook — dependencies, image setup with the `:keep`
+score around 0.998 (the residual is the documented calibration set). The full runbook —
+dependencies, image setup with the `:keep`
 re-tag step, and troubleshooting — is [`docs/proof-of-concept.md`](docs/proof-of-concept.md).
 
 To modify it: the test and build command per repository live in the repository adaptation spec
@@ -181,6 +181,6 @@ Workflow skills live in `.claude/skills/`:
 | `issue-handler` | Carry one issue through worktree, implementation, review, CI, and merge. |
 | `issue-orchestrator` | Run several approved issues as dependency-aware lanes. |
 | `epic-composer` | Turn follow-up items into approved epics and sub-issues. |
-| `review-wave` | Run the three-reviewer wave and publish one curated report. |
+| `review-wave` | Run the single-reviewer wave (all axes, lean mandate) and publish one curated report. |
 | `reviewer` | Independently review a PR or a wave and return ranked findings. |
-| `c4-model` | Draw software architecture in ASCII C4. |
+| `c4-model` | Draw software architecture in C4: Mermaid for TraceBench docs, ASCII where no renderer exists. |
