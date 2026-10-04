@@ -191,7 +191,11 @@ Indexes land in `corpus/index/`, the sampled dataset in `corpus/dataset/`, and
 `schema.TranscriptContent` (`session_detail`), plus `pull_requests.jsonl` and
 `traces.jsonl` indexes. Transcripts pass through the `redact` pipeline at the
 standard level, metadata omits machine-specific paths, and `--pin-prs FILE`
-reproduces a previous sample. `--source village-pull` builds the same dump
+reproduces a previous sample. The frozen benchmark set is
+`data/tracebench/corpus-set.txt`: newline-delimited PR ids, the sampled corpus
+narrowed to the task set (pull requests whose changes exceed 5,000 lines are
+excluded). It feeds `--pin-prs` for the sampler and `--prs` for the task
+pipeline. `--source village-pull` builds the same dump
 from `peasant village pull` directories instead of the local database, with
 collective provenance in `village_pulls.jsonl`. `corpus/` is ignored by git.
 Sessions whose raw source is OpenCode's monolithic database are exported per
