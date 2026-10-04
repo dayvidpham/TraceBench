@@ -198,10 +198,15 @@ def job_agent(config: TargetConfiguration | None) -> dict[str, Any]:
                 "config needs an agent name. Add `harness:` to the target-configuration spec."
             )
         thinking_kwarg = THINKING_KWARG_BY_HARNESS.get(config.harness, DEFAULT_THINKING_KWARG)
+        kwargs: dict[str, Any] = {}
+        if config.version:
+            kwargs["version"] = config.version
+        if config.thinking:
+            kwargs[thinking_kwarg] = config.thinking
         agent: dict[str, Any] = {
             "name": config.harness,
             "model_name": config.model,
-            "kwargs": {thinking_kwarg: config.thinking} if config.thinking else {},
+            "kwargs": kwargs,
         }
     else:
         agent = {"name": "oracle", "model_name": None, "kwargs": {}}

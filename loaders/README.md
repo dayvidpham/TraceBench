@@ -115,7 +115,7 @@ tracebench-corpus --corpus corpus/dump task "peasant-labs/peasant#343" \
   repository: the prerelease archive is frozen pre-launch history and provides
   neither tasks nor context (an archive target fails closed).
 - **Target configuration.** `--target-config NAME` selects an entry from
-  `--target-configs SPEC`. The payload records the harness, model, and
+  `--target-configs SPEC`. The payload records the harness, model, version, and
   thinking level for the runner. The configuration does **not** filter prior
   context: the model receives every prior trace, independent of the
   configuration. A generated skeleton's `task.toml` metadata carries the
@@ -173,9 +173,10 @@ the PR-added or PR-modified cases within it.
 
 ### Target configurations
 
-A target configuration names the harness, model, and thinking level that a
-benchmark run uses (thinking is one of `none`, `low`, `medium`, `high`,
-`xhigh`):
+A target configuration names the harness, model, version, and thinking level
+that a benchmark run uses: `version` pins the harness CLI that the runner
+installs (omit it for the agent's default); thinking is one of `none`, `low`,
+`medium`, `high`, `xhigh`:
 
 ```yaml
 target_configurations:
@@ -183,11 +184,16 @@ target_configurations:
     harness: claude-code
     model: claude-sonnet-4-6
     thinking: high
+  - name: opencode-gpt-medium
+    harness: opencode
+    model: gpt-5.2-codex
+    version: "1.18.34"
+    thinking: medium
 ```
 
 `load_target_configs(path)` validates the spec (unique names, closed thinking
 set, known keys) and `find_target_config(configs, name)` selects one entry.
-The record always carries all three axes; a missing axis is `null` (stubbed).
+The record always carries all four axes; a missing axis is `null` (stubbed).
 The corpus does not carry a thinking level yet; the upstream work is tracked in
 `peasant-labs/schema#147` (schema field) and `peasant-labs/peasant#545`
 (populate at ingest).
@@ -341,7 +347,7 @@ tasks:
 agents:
   - name: oracle                   # or the configuration's harness
     model_name: null               # or the configuration's model
-    kwargs: {}                     # {variant|reasoning_effort: <thinking>} when set
+    kwargs: {}                     # {version: <version>} and {variant|reasoning_effort: <thinking>} when set
     env: {TRACEBENCH_RUN_ID: <run id>}
 verifier:
   env: {TRACEBENCH_RUN_ID: <run id>}
@@ -372,7 +378,7 @@ harbor run -c build/run-1/job-config.yaml
 | `worktree.py` | secure worktree: packs the ancestry of `tree_commit` into a fresh repo; asserts HEAD, tree, source-equal count, not shallow, no remotes, fix absent, clean `fsck` |
 | `oracle.py` | oracle: merge diff, `solve.sh`, equivalence check, the `task.json` `oracle` block |
 | `repository_spec.py` | repository adaptation spec: test and build command per repository |
-| `target_config.py` | target configurations: harness, model, thinking level |
+| `target_config.py` | target configurations: harness, model, version, thinking level |
 | `skeleton.py` | Harbor task directory, `test.sh`, verifier shipping |
 | `verifier.py` | the verifier that runs inside the task (standard library only) |
 | `pipeline.py` | the batch driver and the Harbor job config |
@@ -510,11 +516,11 @@ toolchain.
 
 ### Target configurations
 
-`--target-configs SPEC --target-config NAME` selects the harness, model, and
-thinking level (see [Target configurations](#target-configurations)). In the
-pipeline, the configuration fills `agents[0]` of the job config (`name` =
-harness, `model_name` = model, the harness's thinking kwarg = thinking:
-`variant` for OpenCode, `reasoning_effort` otherwise) and
+`--target-configs SPEC --target-config NAME` selects the harness, model,
+version, and thinking level (see [Target configurations](#target-configurations)).
+In the pipeline, the configuration fills `agents[0]` of the job config (`name` =
+harness, `model_name` = model, `kwargs.version` = version, the harness's
+thinking kwarg = thinking: `variant` for OpenCode, `reasoning_effort` otherwise) and
 derives the run id; without one, the job config uses the `oracle` agent and
 `--run-id` is required. A configuration used for a job config must name a
 harness.
