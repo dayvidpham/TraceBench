@@ -6,13 +6,15 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 import yaml
 from conftest import LIVE, TESTDATA, envelope, metadata
 
-from tracebench_corpus import Corpus, find_target_config
+from tracebench_corpus import Corpus
+from tracebench_corpus import pipeline as pipeline_module
 from tracebench_corpus.cli import main
 from tracebench_corpus.pipeline import (
     N_ATTEMPTS,
@@ -22,8 +24,10 @@ from tracebench_corpus.pipeline import (
     derive_run_id,
     read_pr_list,
     run_pipeline,
+    task_set_revision,
 )
 from tracebench_corpus.repository_spec import DEFAULT_REPOSITORY_SPECS
+from tracebench_corpus.target_config import TargetConfiguration
 from tracebench_corpus.worktree import SNAPSHOT_MODULE
 
 FIXTURE = yaml.safe_load((TESTDATA / "pipeline.yaml").read_text())
@@ -111,6 +115,11 @@ def test_two_prs_build_two_runnable_tasks(pipeline_env, tmp_path, snapshot_bin, 
             assert (task / part).exists(), f"{name} lacks {part}"
         assert not (task / "environment" / "repo" / ".git").exists()
         assert (task / "tests" / "golden" / "greet_test.go").is_file()
+    for name, sessions in FIXTURE["prior_traces"].items():
+        transcripts = dest / "tasks" / name / "environment" / "prior-traces" / "transcripts"
+        assert sorted(p.stem for p in transcripts.glob("*.jsonl")) == sessions, name
+    assert "s20" in (dest / "tasks" / "peasant-pr-0022" / "environment" / "prior-traces"
+                     / "transcripts" / "s20.jsonl").read_text()
     # The worktree is the pre-PR tree: #22's repo has #20's greet.go, not #22's.
     repo22 = dest / "tasks" / "peasant-pr-0022" / "environment" / "repo"
     assert "hi" in (repo22 / "greet.go").read_text()
@@ -132,8 +141,10 @@ def test_missing_part_fails_that_task_and_others_build(pipeline_env, tmp_path, s
     assert f"ok     {LIVE}#22" in captured.out
     assert "2 of 3 tasks failed" in captured.err
     assert (dest / "tasks" / "peasant-pr-0022" / "solution" / "oracle.patch").is_file()
-    config = yaml.safe_load((dest / "job-config.yaml").read_text())
+    config = yaml.safe_load((dest / "job-config-r.yaml").read_text())
     assert [Path(t["path"]).name for t in config["tasks"]] == ["peasant-pr-0022"]
+    assert config["agents"] == [{"name": "oracle", "model_name": None, "kwargs": {},
+                                 "env": {"TRACEBENCH_RUN_ID": "r"}}]
 
 
 @needs_go
@@ -143,25 +154,189 @@ def test_job_config_carries_run_id_attempts_and_env(pipeline_env, tmp_path, snap
     assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#20",
                 "--target-configs", str(configs), "--target-config", "opencode-gpt-medium",
                 "--job-config-format", "json") == 0
-    config = json.loads((dest / "job-config.json").read_text())
+    [path] = dest.glob("job-config-*.json")
+    config = json.loads(path.read_text())
     run_id = config["job_name"]
+    assert path.name == f"job-config-{run_id}.json"
     assert run_id.startswith("tracebench-opencode-gpt-medium-")
     assert config["n_attempts"] == N_ATTEMPTS == 3
+    assert config["metrics"] == [{"type": "mean"}, {"type": "min"}, {"type": "max"}]
     assert config["tasks"] == [{"path": str((dest / "tasks" / "peasant-pr-0020").resolve()), "source": run_id}]
     assert config["agents"] == [{
         "name": "opencode", "model_name": "gpt-5.2-codex",
-        "kwargs": {"reasoning_effort": "medium"}, "env": {RUN_ID_ENV: run_id},
+        "kwargs": {"reasoning_effort": "medium"}, "env": {"TRACEBENCH_RUN_ID": run_id},
     }]
-    assert config["verifier"] == {"env": {RUN_ID_ENV: run_id}}
+    assert config["verifier"] == {"env": {"TRACEBENCH_RUN_ID": run_id}}
+    assert RUN_ID_ENV == "TRACEBENCH_RUN_ID"
+
+
+def _case_config(case: dict) -> TargetConfiguration:
+    return TargetConfiguration(case["config"], case["harness"], case["model"], case["thinking"])
 
 
 @pytest.mark.parametrize("case", FIXTURE["run_ids"], ids=lambda c: c["config"])
-def test_derived_run_id(case, target_config_spec) -> None:
-    config = find_target_config(target_config_spec, case["config"])
+def test_derived_run_id(case) -> None:
+    config = _case_config(case)
     run_id = derive_run_id(config, "rev1", case["label"])
-    key = f"{config.harness}||{config.model}|{config.thinking}|rev1"
-    assert run_id == case["prefix"] + hashlib.sha256(key.encode()).hexdigest()[:12]
+    assert run_id == case["run_id"]
+    key = f"{config.harness}|{config.model}|{config.thinking}|rev1"
+    assert run_id.endswith("-" + hashlib.sha256(key.encode()).hexdigest()[:12])
     assert derive_run_id(config, "rev2", case["label"]) != run_id
+
+
+def test_provider_prefix_changes_the_run_id() -> None:
+    by_name = {case["config"]: _case_config(case) for case in FIXTURE["run_ids"]}
+    prefixed = by_name["claude-code-anthropic-sonnet"]
+    bare = TargetConfiguration(prefixed.name, prefixed.harness, "claude-sonnet-5", prefixed.thinking)
+    assert derive_run_id(prefixed, "rev1") != derive_run_id(bare, "rev1")
+
+
+def test_task_set_revision_is_stable_and_sensitive() -> None:
+    case = FIXTURE["task_set_revision"]
+    revision = task_set_revision(case["pr_ids"], case["index"])
+    assert revision == case["revision"]
+    assert task_set_revision(list(case["pr_ids"]), dict(case["index"])) == revision
+    for variant in case["changed"]:
+        assert task_set_revision(variant["pr_ids"], variant["index"]) != revision, variant["name"]
+
+
+def test_empty_run_id_counts_as_absent(standard_dump) -> None:
+    with pytest.raises(PipelineError, match="--run-id"):
+        run_pipeline(Corpus(standard_dump), [f"{LIVE}#22"], "/nonexistent", repo_dir=".",
+                     pr_index={}, specs=DEFAULT_REPOSITORY_SPECS, run_id="")
+
+
+def test_run_label_with_run_id_is_an_error(standard_dump) -> None:
+    with pytest.raises(PipelineError, match="--run-label"):
+        run_pipeline(Corpus(standard_dump), [f"{LIVE}#22"], "/nonexistent", repo_dir=".",
+                     pr_index={}, specs=DEFAULT_REPOSITORY_SPECS, run_id="r", run_label="nightly")
+
+
+def test_yaml_format_without_pyyaml_fails_closed(standard_dump, monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "yaml", None)  # blocks `import yaml`
+    with pytest.raises(PipelineError, match="needs PyYAML"):
+        run_pipeline(Corpus(standard_dump), [f"{LIVE}#22"], "/nonexistent", repo_dir=".",
+                     pr_index={}, specs=DEFAULT_REPOSITORY_SPECS, run_id="r",
+                     job_config_format="yaml")
+
+
+def test_agent_without_harness_fails_before_building(standard_dump, tmp_path) -> None:
+    with pytest.raises(PipelineError, match="no harness"):
+        run_pipeline(Corpus(standard_dump), [f"{LIVE}#22"], tmp_path / "out", repo_dir=".",
+                     pr_index={}, specs=DEFAULT_REPOSITORY_SPECS,
+                     target_config=TargetConfiguration("bare"))
+    assert not (tmp_path / "out").exists()
+
+
+def test_cli_without_run_id_or_target_config_exits_2(pipeline_env, tmp_path, capsys) -> None:
+    code = _cli(pipeline_env, tmp_path / "out", tmp_path / "no-snapshot", "--prs", f"{LIVE}#20")
+    assert code == 2
+    assert "--run-id" in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()
+
+
+def test_cli_run_label_with_run_id_exits_2(pipeline_env, tmp_path, capsys) -> None:
+    code = _cli(pipeline_env, tmp_path / "out", tmp_path / "no-snapshot", "--prs", f"{LIVE}#20",
+                "--run-id", "r", "--run-label", "nightly")
+    assert code == 2
+    assert "--run-label" in capsys.readouterr().err
+
+
+def _run(env: dict, dest: Path, pr_ids: list[str], **kwargs):
+    return run_pipeline(Corpus(env["dump"]), pr_ids, dest, repo_dir=env["repo"],
+                        pr_index=json_index(env["index"]),
+                        specs=kwargs.pop("specs", DEFAULT_REPOSITORY_SPECS),
+                        run_id=kwargs.pop("run_id", "r"), **kwargs)
+
+
+def json_index(path: Path) -> dict:
+    return {f"{r['repo']}#{r['number']}": r for r in json.loads(path.read_text())}
+
+
+def test_all_failed_run_writes_no_job_config(pipeline_env, tmp_path, capsys) -> None:
+    dest = tmp_path / "out"
+    code = _cli(pipeline_env, dest, tmp_path / "no-snapshot", "--prs", f"{LIVE}#99", "--run-id", "r")
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "no job config written: no task succeeded" in out
+    assert not list(dest.glob("job-config*"))
+
+
+def test_missing_repository_spec_names_the_part(pipeline_env, tmp_path) -> None:
+    result = _run(pipeline_env, tmp_path / "out", [f"{LIVE}#20"], specs=())
+    [task] = result.tasks
+    assert (task.status, task.failed_part) == ("failed", "repository spec")
+    assert "no repository spec matches" in task.error
+    assert result.job_config is None
+
+
+def test_malformed_corpus_record_names_it_and_others_build(pipeline_env, tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(pipeline_module, "materialize_worktree",
+                        lambda *a, **k: (_ for _ in ()).throw(OSError("stop after payload")))
+    corpus = Corpus(pipeline_env["dump"])
+    corpus.pull_requests[f"{LIVE}#20"]["number"] = None
+    result = run_pipeline(corpus, [f"{LIVE}#20", f"{LIVE}#22"], tmp_path / "out",
+                          repo_dir=pipeline_env["repo"], pr_index=json_index(pipeline_env["index"]),
+                          specs=DEFAULT_REPOSITORY_SPECS, run_id="r")
+    bad, other = result.tasks
+    assert (bad.failed_part, bad.status) == ("payload", "failed")
+    assert f"malformed corpus record for pull request {LIVE}#20" in bad.error
+    assert "None" in bad.error
+    # The other task got past the payload step to the next dependency.
+    assert other.failed_part == "environment/repo"
+    assert other.error == "stop after payload"
+
+
+def _boom(message: str):
+    def fail(*_args, **_kwargs):
+        raise ValueError(message)
+    return fail
+
+
+@pytest.mark.parametrize(
+    ("dependency", "part", "stub_worktree"),
+    [
+        ("materialize_worktree", "environment/repo", False),
+        ("build_oracle", "solution/oracle.patch", True),
+        ("build_skeleton", "task", True),
+    ],
+)
+def test_dependency_failure_names_its_part(pipeline_env, tmp_path, monkeypatch,
+                                           dependency, part, stub_worktree) -> None:
+    if stub_worktree:
+        monkeypatch.setattr(pipeline_module, "materialize_worktree", lambda *a, **k: None)
+    if dependency == "build_skeleton":
+        monkeypatch.setattr(pipeline_module, "build_oracle", lambda *a, **k: object())
+        monkeypatch.setattr(pipeline_module, "write_oracle", lambda *a, **k: None)
+    monkeypatch.setattr(pipeline_module, dependency, _boom(f"{dependency} broke"))
+    result = _run(pipeline_env, tmp_path / "out", [f"{LIVE}#20"])
+    [task] = result.tasks
+    assert (task.status, task.failed_part, task.error) == ("failed", part, f"{dependency} broke")
+    assert result.job_config is None
+
+
+@needs_go
+def test_rerun_without_force_keeps_config_and_force_recovers(pipeline_env, tmp_path, snapshot_bin,
+                                                             capsys) -> None:
+    dest = tmp_path / "out"
+    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#20", "--run-id", "r") == 0
+    config_path = dest / "job-config-r.yaml"
+    good = config_path.read_bytes()
+    capsys.readouterr()
+
+    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#20", "--run-id", "r") == 1
+    out = capsys.readouterr().out
+    assert "not empty" in out and "no job config written" in out
+    assert config_path.read_bytes() == good
+
+    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#22", "--run-id", "other") == 0
+    assert config_path.read_bytes() == good
+    assert (dest / "job-config-other.yaml").is_file()
+
+    assert _cli(pipeline_env, dest, snapshot_bin, "--prs", f"{LIVE}#20", "--run-id", "r",
+                "--force") == 0
+    assert f"ok     {LIVE}#20" in capsys.readouterr().out
+    assert yaml.safe_load(config_path.read_text())["job_name"] == "r"
 
 
 def test_run_id_is_required_without_target_config(standard_dump) -> None:
@@ -180,3 +355,12 @@ def test_pr_list_merges_flags_and_files(tmp_path) -> None:
         empty = tmp_path / "empty.txt"
         empty.write_text("\n")
         read_pr_list([str(empty)])
+
+
+@pytest.mark.parametrize("line", FIXTURE["malformed_pr_lines"])
+def test_malformed_pr_list_line_is_rejected(tmp_path, line) -> None:
+    listing = tmp_path / "prs.txt"
+    listing.write_text(f"{LIVE}#1\n{line}\n")
+    with pytest.raises(PipelineError, match="is not a pull request id") as info:
+        read_pr_list([str(listing)])
+    assert repr(line) in str(info.value)

@@ -10,10 +10,10 @@ from pathlib import Path
 
 from .corpus import Corpus, load_corpus
 from .oracle import build_oracle, payload_commits, payload_request, write_oracle
-from .pipeline import PipelineError, read_pr_list, run_pipeline
+from .pipeline import STATUS_OK, read_pr_list, run_pipeline
 from .repository_spec import find_repository_spec, load_repository_specs
 from .skeleton import build_skeleton
-from .target_config import find_target_config, load_target_configs
+from .target_config import TargetConfiguration, find_target_config, load_target_configs
 from .task import TaskBuilder, load_pr_index
 from .test_manifest import build_test_manifest
 
@@ -133,18 +133,22 @@ def main(argv: list[str] | None = None) -> int:
     pipeline_parser.add_argument("--target-configs", default=None, help="target-configuration spec")
     pipeline_parser.add_argument("--target-config", default=None, help="configuration name in --target-configs")
     pipeline_parser.add_argument(
-        "--run-id", default=None, help="run id (default: derived from the target configuration)"
+        "--run-id", default=None,
+        help="run id (an empty value counts as absent; default: derived from the target "
+        "configuration, which then requires --target-configs and --target-config)",
     )
     pipeline_parser.add_argument(
         "--run-label", default=None,
-        help="run id label when deriving (default: tracebench-<configuration name>)",
+        help="label of a derived run id (default: tracebench-<configuration name>); "
+        "an error together with --run-id",
     )
     pipeline_parser.add_argument(
         "--snapshot-bin", default=None, help="built snapshot binary (default: go run ./cmd/snapshot)"
     )
     pipeline_parser.add_argument(
         "--job-config-format", choices=("yaml", "json"), default=None,
-        help="job config format (default: yaml when PyYAML is installed, else json)",
+        help="format of job-config-<run id>.<ext> (default: yaml when PyYAML is installed, "
+        "else json); written only when at least one task built",
     )
     pipeline_parser.add_argument(
         "--force", action="store_true", help="rebuild existing payload and task directories"
@@ -208,16 +212,19 @@ def _bundle_all(corpus: Corpus, dest: Path, split: str | None) -> int:
     return 0
 
 
+def _target_config(args: argparse.Namespace) -> TargetConfiguration | None:
+    """The configuration named by ``--target-config`` in ``--target-configs`` (or None)."""
+    if not (args.target_config or args.target_configs):
+        return None
+    if not (args.target_config and args.target_configs):
+        raise ValueError("--target-config and --target-configs must be used together")
+    return find_target_config(load_target_configs(args.target_configs), args.target_config)
+
+
 def _task(corpus: Corpus, args: argparse.Namespace) -> int:
     try:
         index = load_pr_index(args.index) if args.index else None
-        target_config = None
-        if args.target_config or args.target_configs:
-            if not (args.target_config and args.target_configs):
-                raise ValueError("--target-config and --target-configs must be used together")
-            target_config = find_target_config(
-                load_target_configs(args.target_configs), args.target_config
-            )
+        target_config = _target_config(args)
         builder = TaskBuilder(
             corpus,
             pr_index=index,
@@ -315,13 +322,7 @@ def _oracle(args: argparse.Namespace) -> int:
 def _pipeline(corpus: Corpus, args: argparse.Namespace) -> int:
     try:
         pr_ids = read_pr_list(args.prs)
-        target_config = None
-        if args.target_config or args.target_configs:
-            if not (args.target_config and args.target_configs):
-                raise ValueError("--target-config and --target-configs must be used together")
-            target_config = find_target_config(
-                load_target_configs(args.target_configs), args.target_config
-            )
+        target_config = _target_config(args)
         result = run_pipeline(
             corpus,
             pr_ids,
@@ -336,15 +337,18 @@ def _pipeline(corpus: Corpus, args: argparse.Namespace) -> int:
             job_config_format=args.job_config_format,
             force=args.force,
         )
-    except (PipelineError, ValueError, OSError) as exc:
+    except (ValueError, OSError) as exc:  # PipelineError is a ValueError
         print(f"tracebench-corpus: {exc}", file=sys.stderr)
         return 2
     print(f"run {result.run_id}: {len(result.tasks)} tasks")
     for task in result.tasks:
         print(f"  {task.summary_line()}")
-    print(f"wrote {result.job_config}")
-    failed = [task for task in result.tasks if task.status != "ok"]
-    if failed:
+    if result.job_config is not None:
+        print(f"wrote {result.job_config}")
+    else:
+        print("no job config written: no task succeeded")
+    if not result.ok:
+        failed = [task for task in result.tasks if task.status != STATUS_OK]
         print(
             f"tracebench-corpus: {len(failed)} of {len(result.tasks)} tasks failed; "
             "fix the named part and re-run with --force",

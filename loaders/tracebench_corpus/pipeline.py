@@ -9,7 +9,7 @@ For each pull request, in order, the driver runs:
 
 A failure in one part fails that task, names the part, and leaves the other
 tasks running. The driver then writes a Harbor job config for the successful
-tasks. It never runs Harbor: running the job belongs to the eval pipeline.
+tasks (none when no task built). It never runs Harbor: running the job belongs to the eval pipeline.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from .corpus import Corpus
 from .golden import GoldenSuiteError
 from .oracle import build_oracle, payload_commits, payload_request, write_oracle
 from .repository_spec import RepositorySpec, find_repository_spec
-from .skeleton import build_skeleton, task_slug
+from .skeleton import build_skeleton, task_dir_name
 from .target_config import TargetConfiguration
 from .task import TaskBuilder
 from .worktree import materialize_worktree
@@ -37,18 +37,29 @@ RUN_ID_ENV = "TRACEBENCH_RUN_ID"
 #: Parts every built task directory must contain, relative to the task root.
 REQUIRED_TASK_PARTS = (
     "task.toml",
+    "instruction.md",
     "environment/repo",
+    "environment/prior-traces",
     "tests/golden",
     "tests/test.sh",
     "solution/oracle.patch",
+    "solution/solve.sh",
 )
+#: Aggregate metrics over the attempts of each task (repeats design).
+METRICS = ({"type": "mean"}, {"type": "min"}, {"type": "max"})
+#: Job config formats ``write_job_config`` accepts.
+JOB_CONFIG_FORMATS = ("yaml", "json")
 
 STATUS_OK = "ok"
 STATUS_FAILED = "failed"
 
 
 class PipelineError(ValueError):
-    """The pipeline cannot start (bad PR list, run id, or arguments)."""
+    """The pipeline cannot start (bad PR list, run id, agent, format, or arguments).
+
+    Raised before any task is built; per-task failures are reported in
+    ``TaskResult`` instead.
+    """
 
 
 @dataclass
@@ -120,23 +131,19 @@ def task_set_revision(pr_ids: list[str], pr_index: dict[str, dict[str, Any]]) ->
 
 
 def derive_run_id(config: TargetConfiguration, revision: str, label: str | None = None) -> str:
-    """``<label>-<first 12 hex of sha256(harness|provider|model|thinking|revision)>``.
+    """``<label>-<first 12 hex of sha256(harness|model|thinking|revision)>``.
 
-    ``provider`` is the ``provider/`` prefix of the model name ("" when absent).
+    A provider prefix (``anthropic/claude-sonnet-5``) stays part of the model
+    name, so the provider is covered without a separate term.
     The label defaults to ``tracebench-<configuration name>``.
     """
-    model = config.model or ""
-    provider = model.split("/", 1)[0] if "/" in model else ""
-    key = "|".join([config.harness or "", provider, model, config.thinking or "", revision])
+    key = "|".join([config.harness or "", config.model or "", config.thinking or "", revision])
     digest = hashlib.sha256(key.encode()).hexdigest()[:12]
     return f"{label or f'tracebench-{config.name}'}-{digest}"
 
 
-def job_config(
-    run_id: str, task_dirs: list[Path], config: TargetConfiguration | None
-) -> dict[str, Any]:
-    """The Harbor job config for ``task_dirs`` under ``run_id``."""
-    env = {RUN_ID_ENV: run_id}
+def job_agent(config: TargetConfiguration | None) -> dict[str, Any]:
+    """The Harbor agent block for ``config`` (the ``oracle`` agent when absent)."""
     if config is not None:
         if not config.harness:
             raise PipelineError(
@@ -150,35 +157,64 @@ def job_config(
         }
     else:
         agent = {"name": "oracle", "model_name": None, "kwargs": {}}
+    return agent
+
+
+def job_config(
+    run_id: str, task_dirs: list[Path], config: TargetConfiguration | None
+) -> dict[str, Any]:
+    """The Harbor job config for ``task_dirs`` under ``run_id``."""
+    env = {RUN_ID_ENV: run_id}
+    agent = job_agent(config)
     agent["env"] = dict(env)
     return {
         "job_name": run_id,
         "n_attempts": N_ATTEMPTS,
+        "metrics": [dict(metric) for metric in METRICS],
         "tasks": [{"path": str(path), "source": run_id} for path in task_dirs],
         "agents": [agent],
         "verifier": {"env": dict(env)},
     }
 
 
-def write_job_config(dest: Path, config: dict[str, Any], fmt: str | None = None) -> Path:
-    """Write ``job-config.yaml`` (PyYAML available) or ``job-config.json``."""
+def resolve_job_config_format(fmt: str | None) -> str:
+    """``yaml`` or ``json``; the default is yaml when PyYAML imports, else json."""
     if fmt is None:
         try:
             import yaml
-            fmt = "yaml"
         except ImportError:
-            fmt = "json"
+            return "json"
+        return "yaml"
+    if fmt not in JOB_CONFIG_FORMATS:
+        raise PipelineError(f"pipeline: unknown job config format {fmt!r}; use yaml or json")
+    if fmt == "yaml":
+        try:
+            import yaml
+        except ImportError:
+            raise PipelineError(
+                "pipeline: --job-config-format yaml needs PyYAML, which is not installed; "
+                "install it (pip install pyyaml) or pass --job-config-format json"
+            ) from None
+    return fmt
+
+
+def write_job_config(dest: Path, config: dict[str, Any], fmt: str | None = None) -> Path:
+    """Write ``job-config-<run id>.yaml`` or ``.json`` into ``dest``.
+
+    The file name carries the run id (``config["job_name"]``) so task sets with
+    different run ids in one destination never overwrite each other.
+    """
+    fmt = resolve_job_config_format(fmt)
     dest.mkdir(parents=True, exist_ok=True)
+    stem = f"job-config-{config['job_name']}"
     if fmt == "yaml":
         import yaml
 
-        path = dest / "job-config.yaml"
+        path = dest / f"{stem}.yaml"
         path.write_text(yaml.safe_dump(config, sort_keys=False))
-    elif fmt == "json":
-        path = dest / "job-config.json"
-        path.write_text(json.dumps(config, indent=2) + "\n")
     else:
-        raise PipelineError(f"pipeline: unknown job config format {fmt!r}; use yaml or json")
+        path = dest / f"{stem}.json"
+        path.write_text(json.dumps(config, indent=2) + "\n")
     return path
 
 
@@ -204,10 +240,18 @@ def build_task(
         pr = builder.corpus.pull_requests.get(pr_id)
         if pr is None:
             raise KeyError(f"pull request {pr_id} is not in the corpus; check the PR list")
-        name = f"{task_slug(pr['repo'])}-pr-{int(pr['number']):04d}"
+        try:
+            name = task_dir_name(pr["repo"], pr["number"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(
+                f"malformed corpus record for pull request {pr_id}: {exc}; "
+                "fix its `repo` and `number` fields in the corpus"
+            ) from None
         payload_dir = result.payload_dir = dest / "payloads" / name
         task_dir = result.task_dir = dest / "tasks" / name
+        part = "repository spec"
         spec = find_repository_spec(specs, pr["repo"])
+        part = "payload"
         if force and payload_dir.exists():
             shutil.rmtree(payload_dir)
         try:
@@ -260,7 +304,17 @@ def run_pipeline(
     job_config_format: str | None = None,
     force: bool = False,
 ) -> PipelineResult:
-    """Build every task, then write the job config for the tasks that succeeded."""
+    """Build every task, then write the job config for the tasks that succeeded.
+
+    No job config is written when no task built (``result.job_config`` is None).
+    """
+    if not run_id:
+        run_id = None
+    if run_id is not None and run_label:
+        raise PipelineError(
+            "pipeline: --run-label only applies when the run id is derived; pass either "
+            "--run-id or --run-label, not both"
+        )
     if run_id is None:
         if target_config is None:
             raise PipelineError(
@@ -268,6 +322,9 @@ def run_pipeline(
                 "so the run id is derived from the target configuration"
             )
         run_id = derive_run_id(target_config, task_set_revision(pr_ids, pr_index), run_label)
+    # Validate the agent and format now so a bad argument fails before building.
+    job_agent(target_config)
+    job_config_format = resolve_job_config_format(job_config_format)
     dest = Path(dest).resolve()
     repo_dir = Path(repo_dir).resolve()
     builder = TaskBuilder(corpus, pr_index=pr_index, repo_dir=repo_dir, materialize_tests=True)
@@ -280,7 +337,8 @@ def run_pipeline(
             )
         )
     built = [task.task_dir for task in result.tasks if task.status == STATUS_OK and task.task_dir]
-    result.job_config = write_job_config(
-        dest, job_config(run_id, built, target_config), job_config_format
-    )
+    if built:
+        result.job_config = write_job_config(
+            dest, job_config(run_id, built, target_config), job_config_format
+        )
     return result

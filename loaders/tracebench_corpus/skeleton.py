@@ -60,6 +60,22 @@ def task_slug(repo: str) -> str:
     return name.lower()
 
 
+def task_dir_name(repo: str, number: Any) -> str:
+    """Task directory name for a pull request: ``<slug>-pr-<NNNN>``.
+
+    Raises ``ValueError`` when ``number`` is not an integer.
+    """
+    if isinstance(number, bool) or not isinstance(number, int):
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"pull request number {number!r} for {repo!r} is not an integer; "
+                "fix the corpus record's `number` field"
+            ) from None
+    return f"{task_slug(repo)}-pr-{number:04d}"
+
+
 def build_skeleton(
     payload_dir: str | Path,
     dest: str | Path,
@@ -99,7 +115,7 @@ def build_skeleton(
     (dest / "solution").mkdir(parents=True, exist_ok=True)
     (dest / "tests" / "golden").mkdir(parents=True, exist_ok=True)
 
-    task_name = f"{org}/{task_slug(pr['repo'])}-pr-{pr['number']:04d}"
+    task_name = f"{org}/{task_dir_name(pr['repo'], pr['number'])}"
     pr_id = pr["id"]
 
     (dest / "task.toml").write_text(
